@@ -14,7 +14,7 @@ The application is going to be an interactive agent-driven schedule generator wh
 
 ## User Story Allocation
 
-*(red indicates priority: 1-low 2-preferrable 3-necessary 5-must 8-failure without)*
+*(number in front indicates priority: 1-low 2-preferrable 3-necessary 5-must 8-failure without)*
 
 ### Sprint 1
 
