@@ -2,6 +2,8 @@
 
 ## High-Level Architecture
 
+Figma Demo (Login and UI) : https://www.figma.com/design/eZ5TrmCSnNOotfLTZRJWoB/Login-and-UI?node-id=0-1&t=bjkvMTSjsYCVs7D5-1
+
 - **User's Machine**
   - Frontend (React + Vite + Tailwind)
     - LoginPage / SignupPage
