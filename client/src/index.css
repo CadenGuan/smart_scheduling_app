@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-teal: #00B4DB;
+  --color-teal-hover: #0098ba;
+  --color-magenta: #FF6B6B;
+  --color-magenta-hover: #fa5252;
+  --color-yellow: #F9CA24;
+  --color-yellow-hover: #e5b613;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+

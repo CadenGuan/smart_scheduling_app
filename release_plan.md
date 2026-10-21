@@ -1,8 +1,8 @@
 # Release Plan
 
 **Product name:** Smart Scheduling App
-**Revision number:** 1
-**Revision date:** 10/7/2026
+**Revision number:** 2
+**Revision date:** 10/20/2026
 
 ---
 
@@ -22,6 +22,8 @@ The application is going to be an interactive agent-driven schedule generator wh
 - **3** — As a planner of a schedule, I want to be able to preview the calendar in the software so that I know what I am getting.
 - **5** — As an interactor with the UI, I want all the buttons to be functional.
 - **2** — As a first-time user, I want to skip optional questions and come back to them later, so that I'm not forced to answer everything at once.
+- **5** — As a user, I want to sign in with my Google account, so that I can authenticate easily and link my student account.
+- **3** — As a user connecting with Google, I want to grant read-only access to my Google Calendar, so that my existing events and commitments can be imported as schedule constraints.
 
 ### Sprint 2
 
@@ -41,9 +43,12 @@ The application is going to be an interactive agent-driven schedule generator wh
 
 ### Sprint 4
 
-- **3** — As a user ready to import the calendar, I want the formatting of the calendar to be user-friendly.
-- **2** — As a user interacting with the interface, I want it to be visually appealing.
-- **2** — As a user who wants reminders, I want deadlines to be all-day events with alerts, so that I don't forget them.
+*(Note: In adherence to Agile principles, UI styling, responsive design, and visual polish are integrated continuously into each sprint's Definition of Done rather than isolated into a standalone phase).*
+
+- **5** — As a user ready to use my generated schedule, I want to export my plan into a standard calendar format (.ics) so that I can import it directly into my preferred calendar application (e.g. Google Calendar, Apple Calendar).
+- **3** — As a user ready to import the calendar, I want the formatting of the calendar export to be cleanly organized with accurate course metadata and location details.
+- **3** — As a user who wants reminders, I want deadlines and milestones to be all-day events with customizable alerts, so that I don't forget them.
+- **3** — As a user switching devices, I want to export and import my profile and preferences, so that I can continue where I left off without re-entering data.
 
 ---
 
@@ -51,7 +56,6 @@ The application is going to be an interactive agent-driven schedule generator wh
 
 - As a future developer hoping to extend the framework of the project, I want a container such that I can run the core logic on my own local environment.
 - As a student tracking conference deadline, I want a consolidated view, so that I can decide which to target.
-- As a user switching devices, I want to export and import my profile, so that I can continue where I left off.
 - As a user, I want to ensure that my information is secure.
 - As a user, I want the program to be time and space efficient.
 - As a future developer, I want a test suite, so that I can refactor with confidence.

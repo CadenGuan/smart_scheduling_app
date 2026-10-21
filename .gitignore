@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing and Coverage
+coverage/
+
+# Build artifacts
+dist/
+build/
+
+# Local databases and logs
+*.log
+npm-debug.log*
+*.db
+*.db-wal
+*.db-shm
+data/
+server/data/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS Files
+.DS_Store
+Thumbs.db
