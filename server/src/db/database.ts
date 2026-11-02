@@ -29,4 +29,15 @@ if (fs.existsSync(schemaPath)) {
   db.exec(schemaSql);
 }
 
+// Runtime migration safeguard: ensure preferences column exists in users table
+try {
+  const tableInfo = db.prepare('PRAGMA table_info(users)').all() as Array<{ name: string }>;
+  const hasPreferences = tableInfo.some((col) => col.name === 'preferences');
+  if (!hasPreferences) {
+    db.exec("ALTER TABLE users ADD COLUMN preferences TEXT DEFAULT '{}';");
+  }
+} catch (err) {
+  console.error('[Database] Migration error while verifying preferences column:', err);
+}
+
 export default db;

@@ -1,5 +1,7 @@
 import { z } from 'zod';
-import { StandingEnum } from './user.schema.js';
+import { StandingEnum, TargetTermEnum, TargetTerm, DayEnum, Day } from './user.schema.js';
+
+export { TargetTermEnum, TargetTerm, DayEnum, Day };
 
 export const GeSourceEnum = z.enum([
   'UCSC',
@@ -7,23 +9,6 @@ export const GeSourceEnum = z.enum([
   'Hybrid',
 ]);
 export type GeSource = z.infer<typeof GeSourceEnum>;
-
-export const TargetTermEnum = z.enum([
-  'Fall 2026',
-  'Winter 2027',
-  'Spring 2027',
-  'Summer 2027',
-]);
-export type TargetTerm = z.infer<typeof TargetTermEnum>;
-
-export const DayEnum = z.enum([
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-]);
-export type Day = z.infer<typeof DayEnum>;
 
 export const TimeWindowSchema = z.object({
   label: z.string().min(1, 'Label is required'),
@@ -70,4 +55,3 @@ export const OnboardingProgressPayloadSchema = z.object({
   completed: z.boolean().default(false),
 });
 export type OnboardingProgressPayload = z.infer<typeof OnboardingProgressPayloadSchema>;
-

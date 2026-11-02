@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
   ge_status TEXT,
   major_requirements_taken TEXT DEFAULT '[]',
   breaks_preference TEXT DEFAULT '[]',
+  preferences TEXT DEFAULT '{}',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -51,4 +52,3 @@ CREATE TABLE IF NOT EXISTS oauth_tokens (
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
-

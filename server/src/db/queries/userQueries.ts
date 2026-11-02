@@ -12,6 +12,7 @@ export interface UserRow {
   ge_status: string | null;
   major_requirements_taken: string | null;
   breaks_preference: string | null;
+  preferences: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -26,10 +27,11 @@ export const userQueries = {
     major: string;
     minor?: string | null;
     intended_major?: string | null;
+    preferences?: string | null;
   }): void => {
     const stmt = db.prepare(`
-      INSERT INTO users (user_id, email, password_hash, name, standing, major, minor, intended_major)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (user_id, email, password_hash, name, standing, major, minor, intended_major, preferences)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     stmt.run(
       user.user_id,
@@ -39,7 +41,8 @@ export const userQueries = {
       user.standing,
       user.major,
       user.minor || null,
-      user.intended_major || null
+      user.intended_major || null,
+      user.preferences || '{}'
     );
   },
 
@@ -63,6 +66,7 @@ export const userQueries = {
       ge_status?: string;
       major_requirements_taken?: string;
       breaks_preference?: string;
+      preferences?: string;
     }
   ): void => {
     const fields: string[] = ['updated_at = CURRENT_TIMESTAMP'];
@@ -95,6 +99,10 @@ export const userQueries = {
     if (updates.breaks_preference !== undefined) {
       fields.push('breaks_preference = ?');
       values.push(updates.breaks_preference);
+    }
+    if (updates.preferences !== undefined) {
+      fields.push('preferences = ?');
+      values.push(updates.preferences);
     }
 
     values.push(userId);
