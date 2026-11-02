@@ -45,4 +45,3 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     color: '#F9CA24', // Triadic Yellow
   },
 ];
-

@@ -10,7 +10,10 @@ export interface BaseCardState {
  * BaseCardComponent: Abstract class component providing reusable hover/focus
  * elevation handlers and customizable event hooks.
  */
-export abstract class BaseCardComponent<P = {}, S extends BaseCardState = BaseCardState> extends BaseComponent<P, S> {
+export abstract class BaseCardComponent<
+  P = {},
+  S extends BaseCardState = BaseCardState,
+> extends BaseComponent<P, S> {
   protected handleMouseEnter = (_event: React.MouseEvent<HTMLElement>): void => {
     this.safeSetState((prevState: any) => ({
       ...prevState,
@@ -39,4 +42,3 @@ export abstract class BaseCardComponent<P = {}, S extends BaseCardState = BaseCa
     }));
   };
 }
-

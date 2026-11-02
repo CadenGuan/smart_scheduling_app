@@ -3,11 +3,7 @@ import { StandingEnum, TargetTermEnum, TargetTerm, DayEnum, Day } from './user.s
 
 export { TargetTermEnum, TargetTerm, DayEnum, Day };
 
-export const GeSourceEnum = z.enum([
-  'UCSC',
-  'Community College / IGETC',
-  'Hybrid',
-]);
+export const GeSourceEnum = z.enum(['UCSC', 'Community College / IGETC', 'Hybrid']);
 export type GeSource = z.infer<typeof GeSourceEnum>;
 
 export const TimeWindowSchema = z.object({

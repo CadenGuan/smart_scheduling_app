@@ -36,7 +36,9 @@ export class AgentPlaceholder extends BaseComponent<AgentPlaceholderProps> {
           </div>
           <div className="flex justify-between">
             <span className="text-slate-400 font-medium">Standing / Major:</span>
-            <span className="font-bold text-slate-700">{user?.standing} • {user?.major}</span>
+            <span className="font-bold text-slate-700">
+              {user?.standing} • {user?.major}
+            </span>
           </div>
         </div>
 
@@ -44,8 +46,9 @@ export class AgentPlaceholder extends BaseComponent<AgentPlaceholderProps> {
         <div className="flex-1 bg-gradient-to-b from-slate-50 to-white rounded-xl border border-slate-200/80 p-4 flex flex-col justify-between">
           <div className="space-y-3">
             <p className="text-xs text-slate-600 leading-relaxed">
-              In <strong className="text-[#00B4DB]">Sprint 2</strong>, this panel will host your interactive AI scheduling partner.
-              The agent will negotiate complex degree prerequisites, balance workload capacity, and inspect Google Calendar busy windows.
+              In <strong className="text-[#00B4DB]">Sprint 2</strong>, this panel will host your
+              interactive AI scheduling partner. The agent will negotiate complex degree
+              prerequisites, balance workload capacity, and inspect Google Calendar busy windows.
             </p>
 
             <div className="pt-2">
@@ -74,18 +77,16 @@ export class AgentPlaceholder extends BaseComponent<AgentPlaceholderProps> {
               Sample Prompt Suggestions:
             </span>
             <div className="flex flex-wrap gap-1.5">
-              {[
-                'Why did you choose CSE 115A?',
-                'Move Friday classes',
-                'Find a lighter GE',
-              ].map((chip, idx) => (
-                <span
-                  key={idx}
-                  className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200 cursor-not-allowed opacity-80"
-                >
-                  💡 {chip}
-                </span>
-              ))}
+              {['Why did you choose CSE 115A?', 'Move Friday classes', 'Find a lighter GE'].map(
+                (chip, idx) => (
+                  <span
+                    key={idx}
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200 cursor-not-allowed opacity-80"
+                  >
+                    💡 {chip}
+                  </span>
+                )
+              )}
             </div>
           </div>
         </div>
@@ -111,4 +112,3 @@ export class AgentPlaceholder extends BaseComponent<AgentPlaceholderProps> {
     );
   }
 }
-

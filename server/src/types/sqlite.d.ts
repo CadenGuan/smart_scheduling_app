@@ -12,4 +12,3 @@ declare module 'node:sqlite' {
     run(...params: any[]): { changes: number | bigint; lastInsertRowid: number | bigint };
   }
 }
-

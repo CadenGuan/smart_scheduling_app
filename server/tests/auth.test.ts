@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { app } from '../src/app.js';
 
@@ -15,9 +15,7 @@ describe('Auth API Contract Tests', () => {
   let userId = '';
 
   it('POST /api/auth/register should create a new account and return signed JWT', async () => {
-    const res = await request(app)
-      .post('/api/auth/register')
-      .send(testUser);
+    const res = await request(app).post('/api/auth/register').send(testUser);
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
@@ -29,9 +27,7 @@ describe('Auth API Contract Tests', () => {
   });
 
   it('POST /api/auth/register should reject duplicate email with 409', async () => {
-    const res = await request(app)
-      .post('/api/auth/register')
-      .send(testUser);
+    const res = await request(app).post('/api/auth/register').send(testUser);
 
     expect(res.status).toBe(409);
     expect(res.body.success).toBe(false);
@@ -39,12 +35,10 @@ describe('Auth API Contract Tests', () => {
   });
 
   it('POST /api/auth/login should authenticate with valid credentials', async () => {
-    const res = await request(app)
-      .post('/api/auth/login')
-      .send({
-        email: testUser.email,
-        password: testUser.password,
-      });
+    const res = await request(app).post('/api/auth/login').send({
+      email: testUser.email,
+      password: testUser.password,
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -53,12 +47,10 @@ describe('Auth API Contract Tests', () => {
   });
 
   it('POST /api/auth/login should reject invalid password with 401', async () => {
-    const res = await request(app)
-      .post('/api/auth/login')
-      .send({
-        email: testUser.email,
-        password: 'WrongPassword!',
-      });
+    const res = await request(app).post('/api/auth/login').send({
+      email: testUser.email,
+      password: 'WrongPassword!',
+    });
 
     expect(res.status).toBe(401);
     expect(res.body.success).toBe(false);
@@ -97,4 +89,3 @@ describe('Auth API Contract Tests', () => {
     expect(res.body.data.standing).toBe('Junior');
   });
 });
-

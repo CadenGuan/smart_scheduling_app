@@ -98,7 +98,8 @@ class LoginPageComponent extends BaseFormView<WithRouterProps, LoginState> {
   };
 
   render() {
-    const { isSignUp, isSubmitting, googleLoading, isGoogleHovered, isSubmitHovered, errors } = this.state;
+    const { isSignUp, isSubmitting, googleLoading, isGoogleHovered, isSubmitHovered, errors } =
+      this.state;
 
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
@@ -186,7 +187,9 @@ class LoginPageComponent extends BaseFormView<WithRouterProps, LoginState> {
                       </label>
                       <select
                         value={this.state.standing}
-                        onChange={(e) => this.safeSetState({ standing: e.target.value as Standing })}
+                        onChange={(e) =>
+                          this.safeSetState({ standing: e.target.value as Standing })
+                        }
                         className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#00B4DB]"
                       >
                         <option value="Freshman">Freshman</option>
@@ -246,9 +249,7 @@ class LoginPageComponent extends BaseFormView<WithRouterProps, LoginState> {
                 onMouseEnter={() => this.safeSetState({ isSubmitHovered: true })}
                 onMouseLeave={() => this.safeSetState({ isSubmitHovered: false })}
                 className={`w-full mt-2 py-3 px-4 rounded-xl font-bold text-sm text-white shadow-lg transition-all duration-200 ${
-                  isSubmitHovered
-                    ? 'bg-[#0098ba] shadow-[#00B4DB]/30 scale-[1.01]'
-                    : 'bg-[#00B4DB]'
+                  isSubmitHovered ? 'bg-[#0098ba] shadow-[#00B4DB]/30 scale-[1.01]' : 'bg-[#00B4DB]'
                 }`}
               >
                 {isSubmitting ? 'Processing...' : isSignUp ? 'Create Account' : 'Log In'}
@@ -261,9 +262,7 @@ class LoginPageComponent extends BaseFormView<WithRouterProps, LoginState> {
                 onClick={this.toggleMode}
                 className="text-xs text-slate-500 hover:text-[#00B4DB] font-medium transition-colors"
               >
-                {isSignUp
-                  ? 'Already have an account? Log in'
-                  : "Don't have an account? Sign up"}
+                {isSignUp ? 'Already have an account? Log in' : "Don't have an account? Sign up"}
               </button>
             </div>
           </div>
@@ -274,4 +273,3 @@ class LoginPageComponent extends BaseFormView<WithRouterProps, LoginState> {
 }
 
 export const LoginPage = withRouter(LoginPageComponent);
-

@@ -14,12 +14,13 @@ export const errorHandler = (
 ): void => {
   const statusCode = err.statusCode || 500;
 
-  if (err instanceof ZodError) {
+  if (err instanceof ZodError || err.name === 'ZodError' || Array.isArray((err as any).issues)) {
+    const issues = (err as any).issues || (err as any).errors || [];
     res.status(400).json({
       success: false,
       error: 'VALIDATION_ERROR',
-      details: err.errors.map((e) => ({
-        path: e.path.join('.'),
+      details: issues.map((e: any) => ({
+        path: Array.isArray(e.path) ? e.path.join('.') : String(e.path ?? ''),
         message: e.message,
       })),
     });
@@ -32,4 +33,3 @@ export const errorHandler = (
     message: err.message || 'An unexpected error occurred',
   });
 };
-

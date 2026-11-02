@@ -30,7 +30,8 @@ export class StepIndicators extends BaseComponent<StepIndicatorsProps> {
 
             let bgClass = 'bg-white border-2 border-slate-300 text-slate-500';
             if (isCurrent) {
-              bgClass = 'bg-[#F9CA24] border-2 border-[#e5b613] text-slate-900 shadow-md ring-4 ring-[#F9CA24]/20';
+              bgClass =
+                'bg-[#F9CA24] border-2 border-[#e5b613] text-slate-900 shadow-md ring-4 ring-[#F9CA24]/20';
             } else if (isCompleted) {
               bgClass = 'bg-[#00B4DB] border-2 border-[#0098ba] text-white shadow-sm';
             } else if (isSkipped) {
@@ -64,4 +65,3 @@ export class StepIndicators extends BaseComponent<StepIndicatorsProps> {
     );
   }
 }
-

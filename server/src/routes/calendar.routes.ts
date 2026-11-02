@@ -16,4 +16,3 @@ router.get('/preview', requireAuth, (_req: Request, res: Response) => {
 });
 
 export default router;
-

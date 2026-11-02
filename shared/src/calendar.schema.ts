@@ -1,12 +1,7 @@
 import { z } from 'zod';
 import { DayEnum } from './onboarding.schema.js';
 
-export const CourseTypeEnum = z.enum([
-  'MAJOR',
-  'GE',
-  'ELECTIVE',
-  'GOOGLE_CALENDAR_BUSY',
-]);
+export const CourseTypeEnum = z.enum(['MAJOR', 'GE', 'ELECTIVE', 'GOOGLE_CALENDAR_BUSY']);
 export type CourseType = z.infer<typeof CourseTypeEnum>;
 
 export const CalendarEventSchema = z.object({
@@ -31,4 +26,3 @@ export const CalendarPreviewResponseSchema = z.object({
   }),
 });
 export type CalendarPreviewResponse = z.infer<typeof CalendarPreviewResponseSchema>;
-

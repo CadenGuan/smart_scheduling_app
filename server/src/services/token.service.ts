@@ -12,14 +12,10 @@ export interface TokenPayload {
 
 export class TokenService {
   static generateSessionToken(payload: TokenPayload): string {
-    return jwt.sign(
-      { ...payload, jti: uuidv4() },
-      config.JWT_SECRET,
-      {
-        expiresIn: config.JWT_EXPIRES_IN as any,
-        algorithm: 'HS256',
-      }
-    );
+    return jwt.sign({ ...payload, jti: uuidv4() }, config.JWT_SECRET, {
+      expiresIn: config.JWT_EXPIRES_IN as any,
+      algorithm: 'HS256',
+    });
   }
 
   static verifyAndDecode(token: string): TokenPayload {

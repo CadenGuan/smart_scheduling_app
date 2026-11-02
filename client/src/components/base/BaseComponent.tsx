@@ -20,7 +20,9 @@ export abstract class BaseComponent<P = {}, S = {}> extends React.Component<P, S
    * during an in-flight asynchronous promise.
    */
   protected safeSetState<K extends keyof S>(
-    state: ((prevState: Readonly<S>, props: Readonly<P>) => Pick<S, K> | S | null) | (Pick<S, K> | S | null),
+    state:
+      | ((prevState: Readonly<S>, props: Readonly<P>) => Pick<S, K> | S | null)
+      | (Pick<S, K> | S | null),
     callback?: () => void
   ): void {
     if (this._isMounted) {
@@ -34,4 +36,3 @@ export abstract class BaseComponent<P = {}, S = {}> extends React.Component<P, S
     }
   }
 }
-

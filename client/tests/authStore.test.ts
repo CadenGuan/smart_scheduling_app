@@ -76,4 +76,3 @@ describe('Client Auth Store', () => {
     expect(localStorage.getItem('token')).toBeNull();
   });
 });
-

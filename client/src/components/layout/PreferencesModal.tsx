@@ -69,7 +69,9 @@ export class PreferencesModal extends BaseComponent<PreferencesModalProps, Prefe
           <div className="p-6 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xl">✏️</span>
-              <h2 className="text-lg font-bold text-slate-800">Edit Degree & Scheduling Preferences</h2>
+              <h2 className="text-lg font-bold text-slate-800">
+                Edit Degree & Scheduling Preferences
+              </h2>
             </div>
             <button
               type="button"
@@ -161,4 +163,3 @@ export class PreferencesModal extends BaseComponent<PreferencesModalProps, Prefe
     );
   }
 }
-

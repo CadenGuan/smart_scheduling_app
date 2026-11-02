@@ -4,11 +4,7 @@ import { GoogleAuthService } from '../services/google.service.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validate.middleware.js';
-import {
-  RegisterRequestSchema,
-  LoginRequestSchema,
-  GoogleAuthRequestSchema,
-} from 'shared';
+import { RegisterRequestSchema, LoginRequestSchema, GoogleAuthRequestSchema } from 'shared';
 
 const router = Router();
 
@@ -51,4 +47,3 @@ router.post(
 );
 
 export default router;
-

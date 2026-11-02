@@ -36,7 +36,6 @@ export class CourseCard extends BaseCardComponent<CourseCardProps, BaseCardState
     const { isHovered } = this.state;
     const activeHover = isHovered || isHoveredGlobally;
 
-    const isMajor = event.type === 'MAJOR';
     const isGE = event.type === 'GE';
     const isGoogle = event.type === 'GOOGLE_CALENDAR_BUSY';
 
@@ -61,11 +60,12 @@ export class CourseCard extends BaseCardComponent<CourseCardProps, BaseCardState
           <span className="font-bold text-xs truncate">{event.title}</span>
         </div>
         <div className="text-[11px] opacity-80 mt-0.5 flex items-center justify-between">
-          <span>{event.startTime} - {event.endTime}</span>
+          <span>
+            {event.startTime} - {event.endTime}
+          </span>
           {event.location && <span className="truncate max-w-[80px]">{event.location}</span>}
         </div>
       </div>
     );
   }
 }
-

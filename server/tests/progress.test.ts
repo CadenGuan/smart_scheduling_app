@@ -81,4 +81,3 @@ describe('Progress & Calendar API Tests', () => {
     expect(workShift.color).toBe('#F9CA24'); // Triadic Yellow
   });
 });
-

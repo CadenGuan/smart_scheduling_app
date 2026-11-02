@@ -4,13 +4,7 @@ import { StepIndicators } from '../components/onboarding/StepIndicators';
 import { ProgressService } from '../services/progressService';
 import { useAuthStore } from '../store/authStore';
 import { withRouter, WithRouterProps } from '../utils/withRouter';
-import {
-  OnboardingQuestionnaire,
-  Standing,
-  GeSource,
-  TargetTerm,
-  Day,
-} from 'shared';
+import { OnboardingQuestionnaire, Standing, GeSource, TargetTerm, Day } from 'shared';
 
 const UCSC_LOWER_DIV_COURSES = [
   'CSE 12: Computer Systems & Assembly Language',
@@ -126,29 +120,27 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
 
   handleToggleCourse = (course: string): void => {
     const list = this.state.formData.majorRequirementsTaken || [];
-    const updated = list.includes(course)
-      ? list.filter((c) => c !== course)
-      : [...list, course];
+    const updated = list.includes(course) ? list.filter((c) => c !== course) : [...list, course];
     this.handleFieldChange('majorRequirementsTaken', updated);
   };
 
   handleToggleGE = (code: string): void => {
     const list = this.state.formData.geCategoriesRemaining || [];
-    const updated = list.includes(code)
-      ? list.filter((c) => c !== code)
-      : [...list, code];
+    const updated = list.includes(code) ? list.filter((c) => c !== code) : [...list, code];
     this.handleFieldChange('geCategoriesRemaining', updated);
   };
 
   handleToggleDay = (day: Day): void => {
     const list = this.state.formData.preferredFreeDays || [];
-    const updated = list.includes(day)
-      ? list.filter((d) => d !== day)
-      : [...list, day];
+    const updated = list.includes(day) ? list.filter((d) => d !== day) : [...list, day];
     this.handleFieldChange('preferredFreeDays', updated);
   };
 
-  saveCurrentProgress = async (nextStep: number, isSkipping: boolean = false, isCompleted: boolean = false): Promise<void> => {
+  saveCurrentProgress = async (
+    nextStep: number,
+    isSkipping: boolean = false,
+    isCompleted: boolean = false
+  ): Promise<void> => {
     const user = useAuthStore.getState().user;
     if (!user?.userId) return;
 
@@ -211,11 +203,15 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
       case 1:
         return (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-slate-800">Step 1: Personal & Academic Profile</h2>
+            <h2 className="text-xl font-bold text-slate-800">
+              Step 1: Personal & Academic Profile
+            </h2>
             <p className="text-xs text-slate-500">Provide your basic degree information.</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Full Name</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Full Name
+                </label>
                 <input
                   type="text"
                   value={formData.name}
@@ -224,7 +220,9 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Email</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Email
+                </label>
                 <input
                   type="email"
                   value={formData.email}
@@ -235,7 +233,9 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Class Standing</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Class Standing
+                </label>
                 <select
                   value={formData.standing}
                   onChange={(e) => this.handleFieldChange('standing', e.target.value as Standing)}
@@ -249,7 +249,9 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Primary Major</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Primary Major
+                </label>
                 <input
                   type="text"
                   value={formData.major}
@@ -260,7 +262,9 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Minor (Optional)</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Minor (Optional)
+                </label>
                 <input
                   type="text"
                   placeholder="e.g. Bioinformatics"
@@ -270,7 +274,9 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Intended Major (Optional)</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Intended Major (Optional)
+                </label>
                 <input
                   type="text"
                   placeholder="For proposed students"
@@ -287,7 +293,9 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
         return (
           <div className="space-y-4">
             <h2 className="text-xl font-bold text-slate-800">Step 2: Major Requirements Taken</h2>
-            <p className="text-xs text-slate-500">Select prerequisite courses you have already completed or waived.</p>
+            <p className="text-xs text-slate-500">
+              Select prerequisite courses you have already completed or waived.
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto p-1">
               {UCSC_LOWER_DIV_COURSES.map((course) => {
                 const code = course.split(':')[0];
@@ -317,9 +325,13 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
       case 3:
         return (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-slate-800">Step 3: General Education (GE) Status</h2>
+            <h2 className="text-xl font-bold text-slate-800">
+              Step 3: General Education (GE) Status
+            </h2>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-2">GE Fulfillment Source</label>
+              <label className="block text-xs font-semibold text-slate-700 uppercase mb-2">
+                GE Fulfillment Source
+              </label>
               <div className="grid grid-cols-3 gap-3">
                 {(['UCSC', 'Community College / IGETC', 'Hybrid'] as GeSource[]).map((src) => (
                   <button
@@ -339,7 +351,9 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-2">Remaining GE Requirements</label>
+              <label className="block text-xs font-semibold text-slate-700 uppercase mb-2">
+                Remaining GE Requirements
+              </label>
               <div className="grid grid-cols-3 gap-2">
                 {GE_CATEGORIES.map((cat) => {
                   const isSelected = formData.geCategoriesRemaining?.includes(cat.code);
@@ -366,13 +380,19 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
       case 4:
         return (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-slate-800">Step 4: Quarter Target & Unit Capacity</h2>
+            <h2 className="text-xl font-bold text-slate-800">
+              Step 4: Quarter Target & Unit Capacity
+            </h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Target Quarter</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Target Quarter
+                </label>
                 <select
                   value={formData.targetTerm}
-                  onChange={(e) => this.handleFieldChange('targetTerm', e.target.value as TargetTerm)}
+                  onChange={(e) =>
+                    this.handleFieldChange('targetTerm', e.target.value as TargetTerm)
+                  }
                   className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm"
                 >
                   <option value="Fall 2026">Fall 2026</option>
@@ -382,14 +402,18 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Target Credits ({formData.targetCredits} Units)</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Target Credits ({formData.targetCredits} Units)
+                </label>
                 <input
                   type="range"
                   min="10"
                   max="20"
                   step="1"
                   value={formData.targetCredits}
-                  onChange={(e) => this.handleFieldChange('targetCredits', parseInt(e.target.value, 10))}
+                  onChange={(e) =>
+                    this.handleFieldChange('targetCredits', parseInt(e.target.value, 10))
+                  }
                   className="w-full mt-2 accent-[#00B4DB]"
                 />
                 <div className="flex justify-between text-[11px] text-slate-400 mt-1">
@@ -405,11 +429,17 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
       case 5:
         return (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-slate-800">Step 5: Scheduling Preferences & Constraints</h2>
-            <p className="text-xs text-slate-500">Define your preferred class hours and free days.</p>
+            <h2 className="text-xl font-bold text-slate-800">
+              Step 5: Scheduling Preferences & Constraints
+            </h2>
+            <p className="text-xs text-slate-500">
+              Define your preferred class hours and free days.
+            </p>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Earliest Start Time</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Earliest Start Time
+                </label>
                 <input
                   type="time"
                   value={formData.earliestStartTime || '09:00'}
@@ -418,7 +448,9 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Latest End Time</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                  Latest End Time
+                </label>
                 <input
                   type="time"
                   value={formData.latestEndTime || '18:00'}
@@ -429,7 +461,9 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-2">Preferred Free / Light Days</label>
+              <label className="block text-xs font-semibold text-slate-700 uppercase mb-2">
+                Preferred Free / Light Days
+              </label>
               <div className="flex gap-2">
                 {DAYS.map((day) => {
                   const isSelected = formData.preferredFreeDays?.includes(day);
@@ -459,7 +493,8 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
   }
 
   render() {
-    const { currentStep, skippedSteps, isSubmitting, isSkipHovered, isNextHovered, isLoading } = this.state;
+    const { currentStep, skippedSteps, isSubmitting, isSkipHovered, isNextHovered, isLoading } =
+      this.state;
 
     if (isLoading) {
       return (
@@ -504,7 +539,9 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
                   onMouseLeave={() => this.safeSetState({ isSkipHovered: false })}
                   disabled={isSubmitting}
                   className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    isSkipHovered ? 'text-[#FF6B6B] bg-[#FFEBEB]' : 'text-slate-500 hover:text-slate-700'
+                    isSkipHovered
+                      ? 'text-[#FF6B6B] bg-[#FFEBEB]'
+                      : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
                   Skip this step
@@ -518,9 +555,7 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
                 onMouseLeave={() => this.safeSetState({ isNextHovered: false })}
                 disabled={isSubmitting}
                 className={`px-6 py-2.5 rounded-xl font-bold text-sm text-white shadow-md transition-all ${
-                  isNextHovered
-                    ? 'bg-[#0098ba] shadow-[#00B4DB]/30 scale-[1.02]'
-                    : 'bg-[#00B4DB]'
+                  isNextHovered ? 'bg-[#0098ba] shadow-[#00B4DB]/30 scale-[1.02]' : 'bg-[#00B4DB]'
                 }`}
               >
                 {isSubmitting ? 'Saving...' : currentStep === 5 ? 'Finish Onboarding' : 'Next →'}
@@ -534,4 +569,3 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
 }
 
 export const OnboardingPage = withRouter(OnboardingPageComponent);
-

@@ -42,13 +42,21 @@ export class ProgressService {
         major: answers.major,
         minor: answers.minor,
         intended_major: answers.intendedMajor,
-        ge_status: answers.geSource ? JSON.stringify({ source: answers.geSource, remaining: answers.geCategoriesRemaining || [] }) : undefined,
-        major_requirements_taken: answers.majorRequirementsTaken ? JSON.stringify(answers.majorRequirementsTaken) : undefined,
-        breaks_preference: answers.scheduledBreaks ? JSON.stringify(answers.scheduledBreaks) : undefined,
+        ge_status: answers.geSource
+          ? JSON.stringify({
+              source: answers.geSource,
+              remaining: answers.geCategoriesRemaining || [],
+            })
+          : undefined,
+        major_requirements_taken: answers.majorRequirementsTaken
+          ? JSON.stringify(answers.majorRequirementsTaken)
+          : undefined,
+        breaks_preference: answers.scheduledBreaks
+          ? JSON.stringify(answers.scheduledBreaks)
+          : undefined,
       });
     }
 
     return this.getProgress(userId);
   }
 }
-

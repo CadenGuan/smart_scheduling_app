@@ -30,7 +30,9 @@ export class GoogleAuthService {
       }
     } else {
       try {
-        const decoded: any = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString('utf8'));
+        const decoded: any = JSON.parse(
+          Buffer.from(idToken.split('.')[1], 'base64').toString('utf8')
+        );
         if (decoded?.email) {
           email = decoded.email.toLowerCase();
           name = decoded.name || 'UCSC Student';

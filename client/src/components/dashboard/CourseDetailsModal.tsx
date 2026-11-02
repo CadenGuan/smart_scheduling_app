@@ -17,15 +17,17 @@ export class CourseDetailsModal extends BaseComponent<CourseDetailsModalProps> {
     const badgeColor = isMajor
       ? 'bg-[#E0F7FA] text-[#0098ba]'
       : isGE
-      ? 'bg-[#FFEBEB] text-[#FF6B6B]'
-      : 'bg-[#FFFDE7] text-[#e5b613]';
+        ? 'bg-[#FFEBEB] text-[#FF6B6B]'
+        : 'bg-[#FFFDE7] text-[#e5b613]';
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
         <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex items-start justify-between">
             <div>
-              <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2 ${badgeColor}`}>
+              <span
+                className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2 ${badgeColor}`}
+              >
                 {event.type}
               </span>
               <h3 className="text-lg font-bold text-slate-900">{event.title}</h3>
@@ -58,7 +60,9 @@ export class CourseDetailsModal extends BaseComponent<CourseDetailsModalProps> {
             </div>
             <div className="flex items-center justify-between">
               <span className="font-medium text-slate-500">Time:</span>
-              <span className="font-semibold text-slate-800">{event.startTime} – {event.endTime}</span>
+              <span className="font-semibold text-slate-800">
+                {event.startTime} – {event.endTime}
+              </span>
             </div>
           </div>
 
@@ -76,4 +80,3 @@ export class CourseDetailsModal extends BaseComponent<CourseDetailsModalProps> {
     );
   }
 }
-

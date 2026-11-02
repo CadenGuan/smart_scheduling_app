@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
-import { userQueries, UserRow } from '../db/queries/userQueries.js';
+import { userQueries } from '../db/queries/userQueries.js';
 import { sessionQueries } from '../db/queries/sessionQueries.js';
 import { progressQueries } from '../db/queries/progressQueries.js';
 import { TokenService } from './token.service.js';
@@ -138,4 +138,3 @@ export class AuthService {
     sessionQueries.deleteSession(token);
   }
 }
-

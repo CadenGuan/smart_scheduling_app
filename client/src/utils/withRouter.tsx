@@ -14,22 +14,12 @@ export interface WithRouterProps {
   params: Params;
 }
 
-export function withRouter<P extends object>(
-  Component: React.ComponentType<P & WithRouterProps>
-) {
+export function withRouter<P extends object>(Component: React.ComponentType<P & WithRouterProps>) {
   return function ComponentWithRouterProp(props: P) {
     const location = useLocation();
     const navigate = useNavigate();
     const params = useParams();
 
-    return (
-      <Component
-        {...props}
-        location={location}
-        navigate={navigate}
-        params={params}
-      />
-    );
+    return <Component {...props} location={location} navigate={navigate} params={params} />;
   };
 }
-

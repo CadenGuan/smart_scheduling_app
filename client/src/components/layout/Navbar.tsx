@@ -37,7 +37,9 @@ export class Navbar extends BaseComponent<NavbarProps, NavbarState> {
                 UCSC
               </span>
             </h1>
-            <span className="text-[11px] text-slate-400 font-medium">Smart Degree & Calendar Planner</span>
+            <span className="text-[11px] text-slate-400 font-medium">
+              Smart Degree & Calendar Planner
+            </span>
           </div>
         </div>
 
@@ -83,4 +85,3 @@ export class Navbar extends BaseComponent<NavbarProps, NavbarState> {
     );
   }
 }
-

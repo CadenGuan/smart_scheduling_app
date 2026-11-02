@@ -1,10 +1,5 @@
 import { apiClient } from './apiClient';
-import {
-  RegisterRequest,
-  LoginRequest,
-  GoogleAuthRequest,
-  AuthResponse,
-} from 'shared';
+import { RegisterRequest, LoginRequest, GoogleAuthRequest, AuthResponse } from 'shared';
 
 export class AuthService {
   static async register(data: RegisterRequest): Promise<AuthResponse['data']> {
@@ -31,4 +26,3 @@ export class AuthService {
     }
   }
 }
-

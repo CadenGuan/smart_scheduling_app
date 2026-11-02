@@ -110,7 +110,10 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
             {/* Hour time labels column */}
             <div className="border-r border-slate-100 bg-slate-50/30">
               {HOURS.map((hour) => (
-                <div key={hour} className="h-[60px] text-[11px] font-medium text-slate-400 text-right pr-2 pt-1 border-b border-slate-100">
+                <div
+                  key={hour}
+                  className="h-[60px] text-[11px] font-medium text-slate-400 text-right pr-2 pt-1 border-b border-slate-100"
+                >
                   {hour > 12 ? `${hour - 12} PM` : hour === 12 ? '12 PM' : `${hour} AM`}
                 </div>
               ))}
@@ -155,4 +158,3 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
     );
   }
 }
-

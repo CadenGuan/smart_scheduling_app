@@ -13,7 +13,9 @@ router.get(
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.params.id;
     if (req.user?.userId !== userId) {
-      res.status(403).json({ success: false, error: 'FORBIDDEN', message: 'Unauthorized profile access' });
+      res
+        .status(403)
+        .json({ success: false, error: 'FORBIDDEN', message: 'Unauthorized profile access' });
       return;
     }
 
@@ -29,7 +31,9 @@ router.put(
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.params.id;
     if (req.user?.userId !== userId) {
-      res.status(403).json({ success: false, error: 'FORBIDDEN', message: 'Unauthorized profile access' });
+      res
+        .status(403)
+        .json({ success: false, error: 'FORBIDDEN', message: 'Unauthorized profile access' });
       return;
     }
 
@@ -39,4 +43,3 @@ router.put(
 );
 
 export default router;
-

@@ -5,11 +5,7 @@ export interface AuthenticatedRequest extends Request {
   user?: TokenPayload;
 }
 
-export const requireAuth = (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-): void => {
+export const requireAuth = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     res.status(401).json({
@@ -25,7 +21,7 @@ export const requireAuth = (
     const payload = TokenService.verifyAndDecode(token);
     req.user = payload;
     next();
-  } catch (error) {
+  } catch {
     res.status(401).json({
       success: false,
       error: 'INVALID_OR_EXPIRED_TOKEN',
@@ -33,4 +29,3 @@ export const requireAuth = (
     });
   }
 };
-

@@ -45,9 +45,10 @@ class DashboardPageComponent extends BaseComponent<WithRouterProps, DashboardSta
       }
 
       // 2. Fetch seeded calendar preview data
-      const res = await apiClient.get<{ success: boolean; data: { term: string; totalCredits: number; events: CalendarEvent[] } }>(
-        '/api/calendar/preview'
-      );
+      const res = await apiClient.get<{
+        success: boolean;
+        data: { term: string; totalCredits: number; events: CalendarEvent[] };
+      }>('/api/calendar/preview');
 
       this.safeSetState({
         events: res.data.events,
@@ -68,7 +69,9 @@ class DashboardPageComponent extends BaseComponent<WithRouterProps, DashboardSta
     this.safeSetState({ isPreferencesOpen: false });
   };
 
-  handleSavePreferences = async (updates: Partial<UserProfile & { preferences: any }>): Promise<void> => {
+  handleSavePreferences = async (
+    updates: Partial<UserProfile & { preferences: any }>
+  ): Promise<void> => {
     const { user } = this.state;
     if (!user?.userId) return;
 
@@ -88,7 +91,9 @@ class DashboardPageComponent extends BaseComponent<WithRouterProps, DashboardSta
     if (isLoading) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50">
-          <div className="text-slate-500 font-semibold text-sm">Loading your schedule dashboard...</div>
+          <div className="text-slate-500 font-semibold text-sm">
+            Loading your schedule dashboard...
+          </div>
         </div>
       );
     }
@@ -126,4 +131,3 @@ class DashboardPageComponent extends BaseComponent<WithRouterProps, DashboardSta
 }
 
 export const DashboardPage = withRouter(DashboardPageComponent);
-

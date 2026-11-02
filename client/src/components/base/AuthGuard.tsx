@@ -1,6 +1,5 @@
 import React from 'react';
 import { Navigate, Location } from 'react-router-dom';
-import { useAuthStore } from '../../store/authStore';
 import { BaseComponent } from './BaseComponent';
 
 interface AuthGuardProps {
@@ -26,4 +25,3 @@ export class AuthGuard extends BaseComponent<AuthGuardProps> {
     return <>{children}</>;
   }
 }
-
