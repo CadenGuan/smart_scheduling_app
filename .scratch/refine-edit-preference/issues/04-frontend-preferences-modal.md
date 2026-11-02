@@ -5,9 +5,10 @@
 
 **Blocked by:** 02: Dedicated Preferences & Unified Profile API Endpoints
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Add `updatePreferences` and `getPreferences` to `client/src/services/userService.ts`
-- [ ] Redesign `client/src/components/layout/PreferencesModal.tsx` with 3 sections
-- [ ] Add target term dropdown, credit slider (10-20), earliest/latest time inputs, and free days checkboxes
-- [ ] Implement input validation, loading spinner state, and error handling
+- [x] Add `updatePreferences` and `getPreferences` to `client/src/services/userService.ts`
+- [x] Redesign `client/src/components/layout/PreferencesModal.tsx` with 3 sections
+- [x] Add target term dropdown, credit slider (10-20), earliest/latest time inputs, and free days checkboxes
+- [x] Implement input validation, loading spinner state, and error handling
+

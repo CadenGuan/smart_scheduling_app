@@ -76,7 +76,19 @@ class DashboardPageComponent extends BaseComponent<WithRouterProps, DashboardSta
     if (!user?.userId) return;
 
     const updatedUser = await UserService.updateProfile(user.userId, updates);
-    this.safeSetState({ user: updatedUser });
+
+    // Re-fetch dynamically recalculated schedule
+    const res = await apiClient.get<{
+      success: boolean;
+      data: { term: string; totalCredits: number; events: CalendarEvent[] };
+    }>('/api/calendar/preview');
+
+    this.safeSetState({
+      user: updatedUser,
+      events: res.data.events,
+      term: res.data.term,
+      totalCredits: res.data.totalCredits,
+    });
   };
 
   handleLogout = async (): Promise<void> => {
@@ -86,7 +98,7 @@ class DashboardPageComponent extends BaseComponent<WithRouterProps, DashboardSta
   };
 
   render() {
-    const { user, events, term, isPreferencesOpen, isLoading } = this.state;
+    const { user, events, term, totalCredits, isPreferencesOpen, isLoading } = this.state;
 
     if (isLoading) {
       return (
@@ -103,6 +115,7 @@ class DashboardPageComponent extends BaseComponent<WithRouterProps, DashboardSta
         <Navbar
           user={user}
           activeTerm={term}
+          totalCredits={totalCredits}
           onOpenPreferences={this.handleOpenPreferences}
           onLogout={this.handleLogout}
         />

@@ -5,6 +5,7 @@ import { UserProfile } from 'shared';
 interface NavbarProps {
   user: UserProfile | null;
   activeTerm: string;
+  totalCredits?: number;
   onOpenPreferences: () => void;
   onLogout: () => void;
 }
@@ -20,7 +21,7 @@ export class Navbar extends BaseComponent<NavbarProps, NavbarState> {
   }
 
   render() {
-    const { user, activeTerm, onOpenPreferences, onLogout } = this.props;
+    const { user, activeTerm, totalCredits, onOpenPreferences, onLogout } = this.props;
     const { isPrefHovered } = this.state;
 
     return (
@@ -43,10 +44,18 @@ export class Navbar extends BaseComponent<NavbarProps, NavbarState> {
           </div>
         </div>
 
-        {/* Center: Active Term Indicator */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100/80 border border-slate-200 text-xs font-semibold text-slate-600">
-          <span className="w-2 h-2 rounded-full bg-[#00B4DB]"></span>
-          <span>Target: {activeTerm}</span>
+        {/* Center: Active Term & Credits Indicator */}
+        <div className="hidden sm:flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100/80 border border-slate-200 text-xs font-semibold text-slate-600">
+            <span className="w-2 h-2 rounded-full bg-[#00B4DB]"></span>
+            <span>Target: {activeTerm}</span>
+          </div>
+          {totalCredits !== undefined && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E0F7FA] border border-[#00B4DB]/30 text-xs font-bold text-[#0098ba]">
+              <span>📚</span>
+              <span>{totalCredits} Credits</span>
+            </div>
+          )}
         </div>
 
         {/* Right: Preferences Trigger & User Actions */}

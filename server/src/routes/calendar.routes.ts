@@ -39,7 +39,10 @@ router.get('/preview', requireAuth, (req: AuthenticatedRequest, res: Response) =
   const mappedCourses: CalendarEvent[] = selectedCourses.map((course) => {
     let conflictBadge: string | undefined = undefined;
 
-    if (preferredFreeDays.length > 0 && course.days.some((day) => preferredFreeDays.includes(day))) {
+    if (
+      preferredFreeDays.length > 0 &&
+      course.days.some((day) => preferredFreeDays.includes(day))
+    ) {
       conflictBadge = 'Spans preferred free day';
     } else if (earliestStartTime && course.startTime < earliestStartTime) {
       conflictBadge = 'Starts before preferred time';

@@ -409,7 +409,9 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
       expect(res.body.data.term).toBe('Fall 2026');
       expect(res.body.data.totalCredits).toBe(10);
       // 2 academic courses (5 credits each) + 1 google busy event
-      const academicEvents = res.body.data.events.filter((e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      const academicEvents = res.body.data.events.filter(
+        (e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
       expect(academicEvents.length).toBe(2);
     });
 
