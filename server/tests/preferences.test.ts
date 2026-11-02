@@ -382,4 +382,86 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
       expect(hasPreferencesCol).toBe(true);
     });
   });
+
+  // =========================================================================
+  // 7. DYNAMIC SCHEDULE RECALCULATION & CONFLICT BADGING (Ticket 03)
+  // =========================================================================
+  describe('7. Dynamic Schedule Recalculation & Conflict Badges', () => {
+    it('GET /api/calendar/preview recalculates based on user targetTerm and targetCredits', async () => {
+      // Arrange: update User A preferences to 10 credits in Fall 2026
+      await request(app)
+        .put(`/api/users/${userAId}/preferences`)
+        .set('Authorization', `Bearer ${userAToken}`)
+        .send({
+          targetTerm: 'Fall 2026',
+          targetCredits: 10,
+          preferredFreeDays: [],
+        });
+
+      // Act
+      const res = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${userAToken}`);
+
+      // Assert
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.term).toBe('Fall 2026');
+      expect(res.body.data.totalCredits).toBe(10);
+      // 2 academic courses (5 credits each) + 1 google busy event
+      const academicEvents = res.body.data.events.filter((e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academicEvents.length).toBe(2);
+    });
+
+    it('GET /api/calendar/preview attaches conflict badge when course meets on preferred free day', async () => {
+      // Arrange: User A wants Friday off, but CSE 115A meets Mon/Wed/Fri
+      await request(app)
+        .put(`/api/users/${userAId}/preferences`)
+        .set('Authorization', `Bearer ${userAToken}`)
+        .send({
+          targetTerm: 'Winter 2027',
+          targetCredits: 15,
+          preferredFreeDays: ['Friday'],
+        });
+
+      // Act
+      const res = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${userAToken}`);
+
+      // Assert
+      expect(res.status).toBe(200);
+      const cse115a = res.body.data.events.find((e: any) => e.id === 'cse-115a-lec');
+      expect(cse115a).toBeDefined();
+      expect(cse115a.conflictBadge).toBe('Spans preferred free day');
+
+      // Math 21 meets Tue/Thu, should NOT have a conflict badge
+      const math21 = res.body.data.events.find((e: any) => e.id === 'math-21-lec');
+      expect(math21.conflictBadge).toBeUndefined();
+    });
+
+    it('GET /api/calendar/preview attaches conflict badge when course starts before earliestStartTime', async () => {
+      // Arrange: User A wants classes no earlier than 10:00, but CSE 115A starts at 09:00
+      await request(app)
+        .put(`/api/users/${userAId}/preferences`)
+        .set('Authorization', `Bearer ${userAToken}`)
+        .send({
+          targetTerm: 'Winter 2027',
+          targetCredits: 15,
+          earliestStartTime: '10:00',
+          preferredFreeDays: [],
+        });
+
+      // Act
+      const res = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${userAToken}`);
+
+      // Assert
+      expect(res.status).toBe(200);
+      const cse115a = res.body.data.events.find((e: any) => e.id === 'cse-115a-lec');
+      expect(cse115a).toBeDefined();
+      expect(cse115a.conflictBadge).toBe('Starts before preferred time');
+    });
+  });
 });

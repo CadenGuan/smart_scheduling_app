@@ -5,10 +5,11 @@
 
 **Blocked by:** 01: Shared Schema & Database Preferences Foundation, 02: Dedicated Preferences & Unified Profile API Endpoints
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Update `server/src/routes/calendar.routes.ts` to inspect user preferences from database
-- [ ] Implement course pool selection matching target credits and term
-- [ ] Evaluate preferred free day and time constraints against scheduled meetings
-- [ ] Attach `conflictBadge` to calendar events when constraints are compromised
-- [ ] Verify with tests in `server/tests/preferences.test.ts`
+- [x] Update `server/src/routes/calendar.routes.ts` to inspect user preferences from database
+- [x] Implement course pool selection matching target credits and term
+- [x] Evaluate preferred free day and time constraints against scheduled meetings
+- [x] Attach `conflictBadge` to calendar events when constraints are compromised
+- [x] Verify with tests in `server/tests/preferences.test.ts`
+

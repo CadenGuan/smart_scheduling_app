@@ -11,6 +11,7 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     startTime: '09:00',
     endTime: '10:10',
     color: '#00B4DB', // Triadic Teal
+    credits: 5,
   },
   {
     id: 'math-21-lec',
@@ -22,6 +23,7 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     startTime: '13:15',
     endTime: '14:50',
     color: '#00B4DB', // Triadic Teal
+    credits: 5,
   },
   {
     id: 'art-10f-lec',
@@ -33,6 +35,31 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     startTime: '15:20',
     endTime: '16:55',
     color: '#FF6B6B', // Triadic Magenta
+    credits: 5,
+  },
+  {
+    id: 'cse-130-lec',
+    title: 'CSE 130: Principles of Systems Design',
+    type: 'MAJOR',
+    instructor: 'Peter Alvaro',
+    location: 'Stevenson 150',
+    days: ['Monday', 'Wednesday'],
+    startTime: '11:40',
+    endTime: '12:45',
+    color: '#00B4DB',
+    credits: 5,
+  },
+  {
+    id: 'phil-11-lec',
+    title: 'PHIL 11: Critical Thinking',
+    type: 'GE',
+    instructor: 'Daniel Guevara',
+    location: 'Humanities 206',
+    days: ['Tuesday', 'Thursday'],
+    startTime: '17:20',
+    endTime: '18:55',
+    color: '#FF6B6B',
+    credits: 5,
   },
   {
     id: 'gcal-work-shift',
@@ -43,5 +70,6 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     startTime: '10:00',
     endTime: '12:00',
     color: '#F9CA24', // Triadic Yellow
+    credits: 0,
   },
 ];
