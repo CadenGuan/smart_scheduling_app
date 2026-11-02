@@ -2,6 +2,7 @@
   "name": "smart-scheduling-app",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Smart Scheduling App for UCSC Students",
   "workspaces": [
     "shared",
@@ -12,11 +13,19 @@
     "dev": "concurrently \"npm run dev --workspace=server\" \"npm run dev --workspace=client\"",
     "build": "npm run build --workspace=shared && npm run build --workspace=server && npm run build --workspace=client",
     "test": "npm run test --workspaces --if-present",
+    "test:coverage": "npm run test --workspaces --if-present -- --coverage",
     "typecheck": "npm run typecheck --workspaces",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"{client,server,shared}/{src,tests}/**/*.{ts,tsx,json}\"",
+    "format:check": "prettier --check \"{client,server,shared}/{src,tests}/**/*.{ts,tsx,json}\"",
     "clean": "rm -rf node_modules shared/node_modules server/node_modules client/node_modules shared/dist server/dist client/dist"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@typescript-eslint/eslint-plugin": "^8.72.1",
+    "@typescript-eslint/parser": "^8.72.1",
+    "concurrently": "^8.2.2",
+    "eslint": "^10.14.0",
+    "prettier": "^3.9.10"
   }
 }
-
