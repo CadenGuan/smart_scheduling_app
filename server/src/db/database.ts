@@ -11,10 +11,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Ensure data directory exists
-const dbDir = path.dirname(config.DB_PATH);
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
-}
+export const ensureDbDirectory = (dbPath: string = config.DB_PATH): void => {
+  const dbDir = path.dirname(dbPath);
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+  }
+};
+ensureDbDirectory();
 
 // Open SQLite database with busy_timeout and WAL mode using native Node.js DatabaseSync
 export const db = new DatabaseSync(config.DB_PATH);
@@ -30,14 +33,17 @@ if (fs.existsSync(schemaPath)) {
 }
 
 // Runtime migration safeguard: ensure preferences column exists in users table
-try {
-  const tableInfo = db.prepare('PRAGMA table_info(users)').all() as Array<{ name: string }>;
-  const hasPreferences = tableInfo.some((col) => col.name === 'preferences');
-  if (!hasPreferences) {
-    db.exec("ALTER TABLE users ADD COLUMN preferences TEXT DEFAULT '{}';");
+export const runPreferencesMigration = (targetDb: any = db): void => {
+  try {
+    const tableInfo = targetDb.prepare('PRAGMA table_info(users)').all() as Array<{ name: string }>;
+    const hasPreferences = tableInfo.some((col) => col.name === 'preferences');
+    if (!hasPreferences) {
+      targetDb.exec("ALTER TABLE users ADD COLUMN preferences TEXT DEFAULT '{}';");
+    }
+  } catch (err) {
+    console.error('[Database] Migration error while verifying preferences column:', err);
   }
-} catch (err) {
-  console.error('[Database] Migration error while verifying preferences column:', err);
-}
+};
+runPreferencesMigration(db);
 
 export default db;

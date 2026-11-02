@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useAuthStore } from '../src/store/authStore';
 
 // Mock localStorage for Node test environment if not present
@@ -74,5 +74,27 @@ describe('Client Auth Store', () => {
     expect(state.token).toBeNull();
     expect(state.user).toBeNull();
     expect(localStorage.getItem('token')).toBeNull();
+  });
+
+  it('handles stored token and valid user on initialization', async () => {
+    localStorage.setItem('token', 'initial-token-123');
+    localStorage.setItem('user', JSON.stringify({ userId: 'u1', email: 'slug@ucsc.edu' }));
+
+    vi.resetModules();
+    const mod = await import('../src/store/authStore');
+    const state = mod.useAuthStore.getState();
+    expect(state.token).toBe('initial-token-123');
+    expect(state.user?.email).toBe('slug@ucsc.edu');
+  });
+
+  it('handles invalid JSON in localStorage safely on initialization', async () => {
+    localStorage.setItem('user', '{invalid json');
+    localStorage.setItem('token', 'stored-token');
+
+    vi.resetModules();
+    const mod = await import('../src/store/authStore');
+    const state = mod.useAuthStore.getState();
+    expect(state.user).toBeNull();
+    expect(state.token).toBe('stored-token');
   });
 });

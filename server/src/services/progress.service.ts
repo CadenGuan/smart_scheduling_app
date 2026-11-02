@@ -45,7 +45,7 @@ export class ProgressService {
         ge_status: answers.geSource
           ? JSON.stringify({
               source: answers.geSource,
-              remaining: answers.geCategoriesRemaining || [],
+              remaining: answers.geCategoriesRemaining ?? [],
             })
           : undefined,
         major_requirements_taken: answers.majorRequirementsTaken

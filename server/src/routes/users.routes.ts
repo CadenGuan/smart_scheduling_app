@@ -39,11 +39,9 @@ router.get(
         minor: user.minor,
         intendedMajor: user.intended_major,
         geStatus: user.ge_status ? JSON.parse(user.ge_status) : null,
-        majorRequirementsTaken: user.major_requirements_taken
-          ? JSON.parse(user.major_requirements_taken)
-          : [],
-        breaksPreference: user.breaks_preference ? JSON.parse(user.breaks_preference) : [],
-        preferences: user.preferences ? JSON.parse(user.preferences) : {},
+        majorRequirementsTaken: JSON.parse(user.major_requirements_taken || '[]'),
+        breaksPreference: JSON.parse(user.breaks_preference || '[]'),
+        preferences: JSON.parse(user.preferences || '{}'),
         createdAt: user.created_at,
         updatedAt: user.updated_at,
       },
