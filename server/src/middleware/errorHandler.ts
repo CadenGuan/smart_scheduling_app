@@ -14,11 +14,12 @@ export const errorHandler = (
 ): void => {
   const statusCode = err.statusCode || 500;
 
-  if (err instanceof ZodError) {
+  if (err instanceof ZodError || err.name === 'ZodError') {
+    const zodErr = err as ZodError;
     res.status(400).json({
       success: false,
       error: 'VALIDATION_ERROR',
-      details: err.errors.map((e) => ({
+      details: (zodErr.errors || []).map((e) => ({
         path: e.path.join('.'),
         message: e.message,
       })),

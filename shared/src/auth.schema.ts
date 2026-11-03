@@ -22,6 +22,11 @@ export const GoogleAuthRequestSchema = z.object({
 });
 export type GoogleAuthRequest = z.infer<typeof GoogleAuthRequestSchema>;
 
+export const GoogleCodeRequestSchema = z.object({
+  code: z.string().min(1, 'Authorization code is required'),
+});
+export type GoogleCodeRequest = z.infer<typeof GoogleCodeRequestSchema>;
+
 export const AuthResponseSchema = z.object({
   success: z.boolean(),
   data: z.object({

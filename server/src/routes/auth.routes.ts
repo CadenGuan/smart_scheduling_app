@@ -8,6 +8,7 @@ import {
   RegisterRequestSchema,
   LoginRequestSchema,
   GoogleAuthRequestSchema,
+  GoogleCodeRequestSchema,
 } from 'shared';
 
 const router = Router();
@@ -26,6 +27,24 @@ router.post(
   validateBody(LoginRequestSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const result = await AuthService.login(req.body);
+    res.status(200).json({ success: true, data: result });
+  })
+);
+
+router.get(
+  '/google/url',
+  asyncHandler(async (_req: Request, res: Response) => {
+    const authUrlData = GoogleAuthService.getAuthUrl();
+    res.status(200).json({ success: true, data: authUrlData });
+  })
+);
+
+router.post(
+  '/google/code',
+  validateBody(GoogleCodeRequestSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { code } = req.body;
+    const result = await GoogleAuthService.exchangeCode(code);
     res.status(200).json({ success: true, data: result });
   })
 );

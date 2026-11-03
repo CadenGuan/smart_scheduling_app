@@ -47,8 +47,20 @@ CREATE TABLE IF NOT EXISTS oauth_tokens (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 5. Conversations Table (Interactive Agent History)
+CREATE TABLE IF NOT EXISTS conversations (
+  message_id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  sender TEXT NOT NULL CHECK (sender IN ('USER', 'AGENT', 'SYSTEM')),
+  content TEXT NOT NULL,
+  tool_calls TEXT DEFAULT NULL,
+  metadata TEXT DEFAULT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes for fast query lookups
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_user_created ON conversations(user_id, created_at ASC);
 

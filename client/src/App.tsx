@@ -41,6 +41,18 @@ export class App extends BaseComponent {
             }
           />
 
+          {/* Root OAuth & Dashboard Fallback */}
+          <Route
+            path="/"
+            element={
+              typeof window !== 'undefined' && (window.location.search.includes('code=') || window.location.search.includes('error=')) ? (
+                <Navigate to={`/login${window.location.search}`} replace />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
+            }
+          />
+
           {/* Root Fallback */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

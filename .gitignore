@@ -27,3 +27,11 @@ server/data/
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Python & Agent Service
+__pycache__/
+*.py[cod]
+*$py.class
+agent_service/.venv/
+agent_service/db.sqlite3
+

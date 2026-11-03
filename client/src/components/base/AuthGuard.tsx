@@ -16,10 +16,14 @@ export class AuthGuard extends BaseComponent<AuthGuardProps> {
     const isAuthenticated = !!token;
 
     if (requireAuth && !isAuthenticated) {
-      return <Navigate to="/login" replace />;
+      return <Navigate to={`/login${window.location.search}`} replace />;
     }
 
     if (!requireAuth && isAuthenticated) {
+      // If returning with Google OAuth code or error, let LoginPage handle it
+      if (typeof window !== 'undefined' && (window.location.search.includes('code=') || window.location.search.includes('error='))) {
+        return <>{children}</>;
+      }
       return <Navigate to="/dashboard" replace />;
     }
 
