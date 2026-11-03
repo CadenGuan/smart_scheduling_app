@@ -16,7 +16,8 @@ npm-debug.log*
 *.db
 *.db-wal
 *.db-shm
-data/
+data/*
+!data/courses.json
 server/data/
 
 # Environment variables
