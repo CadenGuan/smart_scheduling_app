@@ -403,6 +403,515 @@ describe('CalendarService Domain Service Test Suite', () => {
     });
   });
 
+  describe('Pinned Course Overrides & Greedy Conflict Oracle Suite', () => {
+    it('unconditionally schedules pinned courses even when they fall on preferred free days', () => {
+      const pool: CalendarEvent[] = [
+        {
+          id: 'pinned-free-day',
+          title: 'CSE 115A (Forced Friday)',
+          type: 'MAJOR',
+          days: ['Friday'],
+          startTime: '10:00',
+          endTime: '11:30',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+        },
+        {
+          id: 'unpinned-1',
+          title: 'MATH 21',
+          type: 'MAJOR',
+          days: ['Monday', 'Wednesday'],
+          startTime: '10:00',
+          endTime: '11:30',
+          color: '#00B4DB',
+          credits: 5,
+        },
+        {
+          id: 'unpinned-2',
+          title: 'CSE 130',
+          type: 'MAJOR',
+          days: ['Tuesday', 'Thursday'],
+          startTime: '10:00',
+          endTime: '11:30',
+          color: '#00B4DB',
+          credits: 5,
+        },
+      ];
+
+      const preview = CalendarService.getPreview(
+        undefined,
+        {
+          targetCredits: 10,
+          preferredFreeDays: ['Friday'],
+        },
+        pool
+      );
+
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+
+      const pinnedEvent = academic.find((c) => c.id === 'pinned-free-day');
+      expect(pinnedEvent).toBeDefined();
+      expect(pinnedEvent?.pinned).toBe(true);
+      expect(pinnedEvent?.conflictBadges).toContain('Spans preferred free day');
+      expect(pinnedEvent?.conflictBadge).toContain('Spans preferred free day');
+
+      // The second course should not fall on Friday
+      const unpinnedSelected = academic.find((c) => c.id !== 'pinned-free-day');
+      expect(unpinnedSelected?.days).not.toContain('Friday');
+      expect(unpinnedSelected?.conflictBadges).toBeUndefined();
+    });
+
+    it('unconditionally schedules pinned courses even when violating earliest/latest time preferences', () => {
+      const pool: CalendarEvent[] = [
+        {
+          id: 'early-pinned',
+          title: 'Early Morning Lecture',
+          type: 'MAJOR',
+          days: ['Monday'],
+          startTime: '07:30',
+          endTime: '08:45',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+        },
+        {
+          id: 'late-pinned',
+          title: 'Late Evening Lab',
+          type: 'MAJOR',
+          days: ['Tuesday'],
+          startTime: '18:30',
+          endTime: '20:00',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+        },
+      ];
+
+      const preview = CalendarService.getPreview(
+        undefined,
+        {
+          targetCredits: 10,
+          earliestStartTime: '09:00',
+          latestEndTime: '17:00',
+        },
+        pool
+      );
+
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+
+      const early = academic.find((c) => c.id === 'early-pinned');
+      expect(early).toBeDefined();
+      expect(early?.conflictBadges).toContain('Starts before preferred time');
+      expect(early?.conflictBadge).toBe('Starts before preferred time');
+
+      const late = academic.find((c) => c.id === 'late-pinned');
+      expect(late).toBeDefined();
+      expect(late?.conflictBadges).toContain('Ends after preferred time');
+      expect(late?.conflictBadge).toBe('Ends after preferred time');
+    });
+
+    it('schedules overlapping pinned courses and attaches collision badges to both', () => {
+      const collidingPinned: CalendarEvent[] = [
+        {
+          id: 'pinned-overlap-1',
+          title: 'CSE 101 Lecture A',
+          type: 'MAJOR',
+          days: ['Monday', 'Wednesday'],
+          startTime: '10:00',
+          endTime: '11:30',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+        },
+        {
+          id: 'pinned-overlap-2',
+          title: 'CSE 130 Lecture B',
+          type: 'MAJOR',
+          days: ['Monday', 'Wednesday'],
+          startTime: '10:30',
+          endTime: '12:00',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+        },
+      ];
+
+      const preview = CalendarService.getPreview(undefined, { targetCredits: 10 }, collidingPinned);
+
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+
+      academic.forEach((course) => {
+        expect(course.pinned).toBe(true);
+        expect(course.conflictBadges).toContain('Time conflict with another course');
+        expect(course.conflictBadge).toContain('Time conflict with another course');
+      });
+    });
+
+    it('attaches collision badge to both pinned and unpinned courses when a forced course collides with an unpinned course', () => {
+      const pool: CalendarEvent[] = [
+        {
+          id: 'pinned-forced',
+          title: 'Forced Seminar',
+          type: 'MAJOR',
+          days: ['Monday'],
+          startTime: '10:00',
+          endTime: '11:30',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+        },
+        {
+          id: 'unpinned-colliding',
+          title: 'Colliding Candidate',
+          type: 'MAJOR',
+          days: ['Monday'],
+          startTime: '10:30',
+          endTime: '12:00',
+          color: '#00B4DB',
+          credits: 5,
+        },
+      ];
+
+      // Pool only has 2 courses and target is 10 credits (2 courses)
+      const preview = CalendarService.getPreview(undefined, { targetCredits: 10 }, pool);
+
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+
+      const pinned = academic.find((c) => c.id === 'pinned-forced');
+      const unpinned = academic.find((c) => c.id === 'unpinned-colliding');
+
+      expect(pinned?.conflictBadges).toContain('Time conflict with another course');
+      expect(unpinned?.conflictBadges).toContain('Time conflict with another course');
+    });
+
+    it('fills remaining quota from non-pinned candidates while actively avoiding collisions with pinned courses', () => {
+      const pool: CalendarEvent[] = [
+        {
+          id: 'pinned-anchor',
+          title: 'CSE 101 (Anchor)',
+          type: 'MAJOR',
+          days: ['Monday', 'Wednesday'],
+          startTime: '09:00',
+          endTime: '10:15',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+        },
+        {
+          id: 'unpinned-colliding',
+          title: 'CSE 115A (Colliding with Anchor)',
+          type: 'MAJOR',
+          days: ['Monday', 'Wednesday'],
+          startTime: '09:30',
+          endTime: '10:45',
+          color: '#00B4DB',
+          credits: 5,
+        },
+        {
+          id: 'unpinned-clear-1',
+          title: 'MATH 21 (Afternoon Clear)',
+          type: 'MAJOR',
+          days: ['Monday', 'Wednesday'],
+          startTime: '13:00',
+          endTime: '14:15',
+          color: '#00B4DB',
+          credits: 5,
+        },
+        {
+          id: 'unpinned-clear-2',
+          title: 'ART 10F (Tuesday/Thursday Clear)',
+          type: 'GE',
+          days: ['Tuesday', 'Thursday'],
+          startTime: '10:00',
+          endTime: '11:30',
+          color: '#FF6B6B',
+          credits: 5,
+        },
+      ];
+
+      // Request 15 credits (3 courses: 1 pinned anchor + 2 unpinned)
+      const preview = CalendarService.getPreview(undefined, { targetCredits: 15 }, pool);
+
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(3);
+      expect(preview.totalCredits).toBe(15);
+
+      const ids = academic.map((c) => c.id);
+      expect(ids).toContain('pinned-anchor');
+      expect(ids).toContain('unpinned-clear-1');
+      expect(ids).toContain('unpinned-clear-2');
+      expect(ids).not.toContain('unpinned-colliding');
+
+      // None of the chosen courses should have collision badges
+      academic.forEach((course) => {
+        expect(course.conflictBadges).toBeUndefined();
+        expect(course.conflictBadge).toBeUndefined();
+      });
+    });
+
+    it('keeps all pinned courses when pinned count exceeds target course quota', () => {
+      const pool: CalendarEvent[] = [
+        {
+          id: 'p1',
+          title: 'Pinned 1',
+          type: 'MAJOR',
+          days: ['Monday'],
+          startTime: '09:00',
+          endTime: '10:00',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+        },
+        {
+          id: 'p2',
+          title: 'Pinned 2',
+          type: 'MAJOR',
+          days: ['Tuesday'],
+          startTime: '09:00',
+          endTime: '10:00',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+        },
+        {
+          id: 'p3',
+          title: 'Pinned 3',
+          type: 'MAJOR',
+          days: ['Wednesday'],
+          startTime: '09:00',
+          endTime: '10:00',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+        },
+        {
+          id: 'p4',
+          title: 'Pinned 4',
+          type: 'MAJOR',
+          days: ['Thursday'],
+          startTime: '09:00',
+          endTime: '10:00',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+        },
+        {
+          id: 'unpinned-extra',
+          title: 'Unpinned Extra',
+          type: 'ELECTIVE',
+          days: ['Friday'],
+          startTime: '09:00',
+          endTime: '10:00',
+          color: '#9B51E0',
+          credits: 5,
+        },
+      ];
+
+      // Target credits is 10 (which normally requests 2 courses), but 4 courses are pinned
+      const preview = CalendarService.getPreview(undefined, { targetCredits: 10 }, pool);
+
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(4);
+      expect(preview.totalCredits).toBe(20);
+
+      const ids = academic.map((c) => c.id);
+      expect(ids).toEqual(['p1', 'p2', 'p3', 'p4']);
+      expect(ids).not.toContain('unpinned-extra');
+    });
+
+    it('accumulates multiple individual and collision conflict badges accurately', () => {
+      const pool: CalendarEvent[] = [
+        {
+          id: 'multi-conflict-pinned',
+          title: 'Overconstrained Class',
+          type: 'MAJOR',
+          days: ['Friday'],
+          startTime: '08:00',
+          endTime: '09:30',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+        },
+        {
+          id: 'colliding-friday',
+          title: 'Friday Morning Collision',
+          type: 'MAJOR',
+          days: ['Friday'],
+          startTime: '09:00',
+          endTime: '10:30',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+        },
+      ];
+
+      const preview = CalendarService.getPreview(
+        undefined,
+        {
+          targetCredits: 10,
+          preferredFreeDays: ['Friday'],
+          earliestStartTime: '08:30',
+        },
+        pool
+      );
+
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+
+      const multi = academic.find((c) => c.id === 'multi-conflict-pinned');
+      expect(multi).toBeDefined();
+      expect(multi?.conflictBadges).toContain('Spans preferred free day');
+      expect(multi?.conflictBadges).toContain('Starts before preferred time');
+      expect(multi?.conflictBadges).toContain('Time conflict with another course');
+      expect(multi?.conflictBadge).toBe(
+        'Spans preferred free day, Starts before preferred time, Time conflict with another course'
+      );
+
+      const other = academic.find((c) => c.id === 'colliding-friday');
+      expect(other).toBeDefined();
+      expect(other?.conflictBadges).toContain('Spans preferred free day');
+      expect(other?.conflictBadges).toContain('Time conflict with another course');
+      expect(other?.conflictBadges).not.toContain('Starts before preferred time');
+    });
+
+    it('attaches "Exceeds max back-to-back hours" badge when pinned courses cause consecutive clustering', () => {
+      const pool: CalendarEvent[] = [
+        {
+          id: 'pinned-b2b-1',
+          title: 'Lecture 1',
+          type: 'MAJOR',
+          days: ['Monday'],
+          startTime: '09:00',
+          endTime: '11:00',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+        },
+        {
+          id: 'pinned-b2b-2',
+          title: 'Lecture 2',
+          type: 'MAJOR',
+          days: ['Monday'],
+          startTime: '11:15',
+          endTime: '13:15',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+        },
+      ];
+
+      const preview = CalendarService.getPreview(
+        undefined,
+        {
+          targetCredits: 10,
+          maxBackToBackHours: 2,
+        },
+        pool
+      );
+
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+
+      academic.forEach((course) => {
+        expect(course.conflictBadges).toContain('Exceeds max back-to-back hours');
+      });
+    });
+
+    it('deduplicates candidate courses with identical IDs across pinned and unpinned pools', () => {
+      const pool: CalendarEvent[] = [
+        {
+          id: 'duplicate-course',
+          title: 'Duplicate CSE 101 (Pinned)',
+          type: 'MAJOR',
+          days: ['Monday'],
+          startTime: '10:00',
+          endTime: '11:00',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+        },
+        {
+          id: 'duplicate-course',
+          title: 'Duplicate CSE 101 (Unpinned)',
+          type: 'MAJOR',
+          days: ['Monday'],
+          startTime: '10:00',
+          endTime: '11:00',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: false,
+        },
+        {
+          id: 'other-course',
+          title: 'MATH 21',
+          type: 'MAJOR',
+          days: ['Tuesday'],
+          startTime: '10:00',
+          endTime: '11:00',
+          color: '#00B4DB',
+          credits: 5,
+        },
+      ];
+
+      const preview = CalendarService.getPreview(undefined, { targetCredits: 10 }, pool);
+
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+      expect(preview.totalCredits).toBe(10);
+
+      const dupCourse = academic.find((c) => c.id === 'duplicate-course');
+      expect(dupCourse).toBeDefined();
+      expect(dupCourse?.pinned).toBe(true);
+    });
+
+    it('handles empty candidate pool gracefully with 0 totalCredits and 0 events', () => {
+      const preview = CalendarService.getPreview(undefined, { targetCredits: 15 }, []);
+
+      expect(preview.events).toHaveLength(0);
+      expect(preview.totalCredits).toBe(0);
+    });
+
+    it('preserves backwards compatibility when candidate pool has no pinned courses', () => {
+      const pool: CalendarEvent[] = [
+        {
+          id: 'clean-1',
+          title: 'Clean Course 1',
+          type: 'MAJOR',
+          days: ['Monday'],
+          startTime: '09:00',
+          endTime: '10:00',
+          color: '#00B4DB',
+          credits: 5,
+        },
+        {
+          id: 'clean-2',
+          title: 'Clean Course 2',
+          type: 'MAJOR',
+          days: ['Tuesday'],
+          startTime: '09:00',
+          endTime: '10:00',
+          color: '#00B4DB',
+          credits: 5,
+        },
+      ];
+
+      const preview = CalendarService.getPreview(undefined, { targetCredits: 10 }, pool);
+
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+      expect(preview.totalCredits).toBe(10);
+      academic.forEach((c) => {
+        expect(c.pinned).toBeFalsy();
+        expect(c.conflictBadges).toBeUndefined();
+      });
+    });
+  });
+
   describe('Curriculum Prerequisite DAG & Degree Progress Suite', () => {
     it('returns the 18 UCSC CS core courses structured into tiers 1 through 5', () => {
       const dag = CalendarService.getCurriculumDag();

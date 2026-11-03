@@ -170,7 +170,7 @@ export class CalendarService {
     }
 
     const termMatchedPool = pool.filter(
-      (e) => e.type !== 'GOOGLE_CALENDAR_BUSY' && (!e.term || e.term === term)
+      (e) => e.type !== 'GOOGLE_CALENDAR_BUSY' && (!e.term || e.term === term || Boolean(e.pinned))
     );
     const academicPool =
       termMatchedPool.length > 0
@@ -185,10 +185,29 @@ export class CalendarService {
 
     const courseCount = Math.max(1, Math.min(academicPool.length, Math.round(targetCredits / 5)));
 
-    // Greedy candidate selection prioritizing conflict-free and non-colliding courses
-    const selectedCandidates: CalendarEvent[] = [];
-    const remainingCandidates = [...academicPool];
+    // Partition candidates into pinned (unconditionally scheduled) and unpinned
+    const uniquePinned: CalendarEvent[] = [];
+    const seenIds = new Set<string>();
+    for (const course of academicPool) {
+      if (course.pinned && !seenIds.has(course.id)) {
+        seenIds.add(course.id);
+        uniquePinned.push(course);
+      }
+    }
 
+    const uniqueUnpinned: CalendarEvent[] = [];
+    for (const course of academicPool) {
+      if (!course.pinned && !seenIds.has(course.id)) {
+        seenIds.add(course.id);
+        uniqueUnpinned.push(course);
+      }
+    }
+
+    // Pinned courses bypass greedy omission and are unconditionally selected first
+    const selectedCandidates: CalendarEvent[] = [...uniquePinned];
+    const remainingCandidates: CalendarEvent[] = [...uniqueUnpinned];
+
+    // If pinned courses are fewer than courseCount, fill remaining slots greedily
     while (selectedCandidates.length < courseCount && remainingCandidates.length > 0) {
       const scored = remainingCandidates.map((candidate) => {
         const indBadges = getIndividualConflicts(
