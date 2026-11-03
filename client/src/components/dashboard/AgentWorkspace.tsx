@@ -199,9 +199,9 @@ export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWork
                 <div className="flex flex-col gap-1.5">
                   {[
                     'What GE requirements do I have left?',
-                    'Recommend courses for a 15-credit quarter',
+                    'What is the prerequisite path to CSE 130?',
+                    'What happens if I drop CSE 101?',
                     'Why should I take CSE 101?',
-                    'How does CSE 115A fit with my schedule?',
                   ].map((chip, idx) => (
                     <button
                       key={idx}

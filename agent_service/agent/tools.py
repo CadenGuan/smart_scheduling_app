@@ -1,6 +1,7 @@
 import json
 from typing import Dict, Any, List
 from langchain_core.tools import tool
+from .dag_solver import get_prerequisite_chain, get_downstream_impact, audit_degree_progress
 
 # Context storage passed into tools at runtime
 _active_context: Dict[str, Any] = {}
@@ -61,10 +62,61 @@ def explain_course_rationale(course_code: str = "") -> str:
         'targetCredits': prefs.get('targetCredits', 15),
     })
 
+@tool
+def find_prerequisite_path(target_course: str) -> str:
+    """Finds the shortest prerequisite chain to unlock an advanced UCSC Computer Science course using the prerequisite DAG solver."""
+    prefs = _active_context.get('preferences', {})
+    completed = prefs.get('majorRequirementsTaken', [])
+    chain = get_prerequisite_chain(target_course, completed)
+    return json.dumps(chain)
+
+@tool
+def assess_drop_impact(course_code: str) -> str:
+    """Evaluates the ripple effect and blocked downstream requirements if a student drops a specific course."""
+    impact = get_downstream_impact(course_code)
+    return json.dumps(impact)
+
+@tool
+def audit_degree_progress_tool(query: str = "") -> str:
+    """Audits completed courses against core UCSC CS major requirements, returning progress percentage and unblocked courses."""
+    prefs = _active_context.get('preferences', {})
+    completed = prefs.get('majorRequirementsTaken', [])
+    audit = audit_degree_progress(completed)
+    return json.dumps(audit)
+
+@tool
+def update_schedule_preferences(
+    target_credits: int = 15,
+    preferred_free_days: List[str] = None,
+    earliest_start_time: str = None,
+    latest_end_time: str = None,
+    max_back_to_back_hours: int = None,
+) -> str:
+    """Action tool that modifies the student's weekly scheduling constraints and target credits, updating their calendar preview."""
+    updates: Dict[str, Any] = {'targetCredits': target_credits}
+    if preferred_free_days is not None:
+        updates['preferredFreeDays'] = preferred_free_days
+    if earliest_start_time is not None:
+        updates['earliestStartTime'] = earliest_start_time
+    if latest_end_time is not None:
+        updates['latestEndTime'] = latest_end_time
+    if max_back_to_back_hours is not None:
+        updates['maxBackToBackHours'] = max_back_to_back_hours
+
+    return json.dumps({
+        'status': 'PREFERENCES_UPDATED',
+        'action': 'UPDATE_PREFERENCES',
+        'updates': updates,
+    })
+
 def get_inspection_tools():
     return [
         inspect_student_profile,
         query_degree_ge_requirements,
         inspect_calendar_schedule,
         explain_course_rationale,
+        find_prerequisite_path,
+        assess_drop_impact,
+        audit_degree_progress_tool,
+        update_schedule_preferences,
     ]

@@ -126,6 +126,56 @@ describe('Interactive Agent & Conversation API Contract Tests', () => {
       expect(hasRationaleTool).toBe(true);
     });
 
+    it('POST /api/agent/chat should answer prerequisite path queries with DAG solver', async () => {
+      const prompt = 'What is the prerequisite path to take CSE 130?';
+      const res = await request(app)
+        .post('/api/agent/chat')
+        .set('Authorization', `Bearer ${userTokenA}`)
+        .send({ prompt });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.agentMessage.content).toContain('CSE 130');
+      const hasPrereqTool = res.body.data.agentMessage.toolCalls.some(
+        (tc: any) => tc.tool === 'find_prerequisite_path'
+      );
+      expect(hasPrereqTool).toBe(true);
+    });
+
+    it('POST /api/agent/chat should evaluate drop course impact and flag gatekeepers', async () => {
+      const prompt = 'What happens if I drop CSE 101?';
+      const res = await request(app)
+        .post('/api/agent/chat')
+        .set('Authorization', `Bearer ${userTokenA}`)
+        .send({ prompt });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.agentMessage.content).toContain('downstream degree audit');
+      const hasDropTool = res.body.data.agentMessage.toolCalls.some(
+        (tc: any) => tc.tool === 'assess_drop_impact'
+      );
+      expect(hasDropTool).toBe(true);
+    });
+
+    it('POST /api/agent/chat should execute preference updates server-side and mutate SQLite user preferences', async () => {
+      const prompt = 'Please change my target credits to 12';
+      const res = await request(app)
+        .post('/api/agent/chat')
+        .set('Authorization', `Bearer ${userTokenA}`)
+        .send({ prompt });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.agentMessage.content).toContain('12 credits');
+
+      // Verify server updated SQLite database
+      const user = userQueries.findUserById(userIdA);
+      expect(user?.preferences).toBeDefined();
+      const prefs = JSON.parse(user!.preferences || '{}');
+      expect(prefs.targetCredits).toBe(12);
+    });
+
     it('GET /api/agent/messages should return recent messages in chronological order', async () => {
       const res = await request(app)
         .get('/api/agent/messages')

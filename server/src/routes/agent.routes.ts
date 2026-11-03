@@ -5,6 +5,7 @@ import { requireAuth, AuthenticatedRequest } from '../middleware/auth.middleware
 import { validateBody } from '../middleware/validate.middleware.js';
 import { AgentChatRequestSchema } from 'shared';
 import { conversationQueries } from '../db/queries/conversationQueries.js';
+import { userQueries } from '../db/queries/userQueries.js';
 import { ContextService } from '../services/context.service.js';
 import { AgentService } from '../services/agent.service.js';
 
@@ -35,6 +36,34 @@ router.post(
 
     // 3. Query Django Agent Service
     const agentResult = await AgentService.queryAgent(prompt, context);
+
+    // 3.5 Execute server-side actions triggered by agent tool calls
+    if (agentResult.toolCalls && Array.isArray(agentResult.toolCalls)) {
+      for (const tc of agentResult.toolCalls) {
+        if (tc.tool === 'update_schedule_preferences') {
+          try {
+            const output = typeof tc.output === 'string' ? JSON.parse(tc.output) : tc.output;
+            if (output && output.action === 'UPDATE_PREFERENCES' && output.updates) {
+              const existingUser = userQueries.findUserById(userId);
+              let currentPrefs: any = {};
+              if (existingUser?.preferences) {
+                try {
+                  currentPrefs = JSON.parse(existingUser.preferences);
+                } catch {
+                  currentPrefs = {};
+                }
+              }
+              const updatedPrefs = { ...currentPrefs, ...output.updates };
+              userQueries.updateUserProfile(userId, {
+                preferences: JSON.stringify(updatedPrefs),
+              });
+            }
+          } catch {
+            // Ignore malformed tool output
+          }
+        }
+      }
+    }
 
     // 4. Persist agent response
     const agentMessageId = uuidv4();

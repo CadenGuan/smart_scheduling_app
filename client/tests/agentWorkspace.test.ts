@@ -80,7 +80,8 @@ describe('AgentWorkspace Component Suite', () => {
       expect(html).toContain('Junior • Computer Science B.S.');
       expect(html).toContain('How can Sammy help you today?');
       expect(html).toContain('What GE requirements do I have left?');
-      expect(html).toContain('Recommend courses for a 15-credit quarter');
+      expect(html).toContain('What is the prerequisite path to CSE 130?');
+      expect(html).toContain('What happens if I drop CSE 101?');
       expect(html).toContain('Why should I take CSE 101?');
     });
 
