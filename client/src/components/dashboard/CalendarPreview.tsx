@@ -3,6 +3,7 @@ import { BaseComponent } from '../base/BaseComponent';
 import { CourseCard } from './CourseCard';
 import { CourseDetailsModal } from './CourseDetailsModal';
 import { PrereqTreeModal } from './PrereqTreeModal';
+import { DeadlinesModal } from './DeadlinesModal';
 import { CalendarEvent, Day } from 'shared';
 import { CalendarService } from '../../services/calendarService';
 
@@ -16,6 +17,7 @@ interface CalendarPreviewState {
   selectedEvent: CalendarEvent | null;
   isExporting: boolean;
   isRoadmapOpen: boolean;
+  isDeadlinesOpen: boolean;
 }
 
 const DAYS: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -29,6 +31,7 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
       selectedEvent: null,
       isExporting: false,
       isRoadmapOpen: false,
+      isDeadlinesOpen: false,
     };
   }
 
@@ -79,7 +82,8 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
 
   render() {
     const { events, term } = this.props;
-    const { hoveredCourseId, selectedEvent, isExporting, isRoadmapOpen } = this.state;
+    const { hoveredCourseId, selectedEvent, isExporting, isRoadmapOpen, isDeadlinesOpen } =
+      this.state;
 
     return (
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
@@ -109,7 +113,7 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Prereq Roadmap Button */}
             <button
               type="button"
               data-tour="prereq-roadmap"
@@ -118,6 +122,16 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
               title="View UCSC Computer Science prerequisite DAG and degree progress"
             >
               <span>🗺️ Prereq Roadmap</span>
+            </button>
+
+            {/* Conference & Research Deadlines Button */}
+            <button
+              type="button"
+              onClick={() => this.safeSetState({ isDeadlinesOpen: true })}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 border shadow-xs bg-white text-slate-700 border-slate-200 hover:border-[#00B4DB] hover:text-[#00B4DB] hover:bg-slate-50"
+              title="View CS research conference deadlines and undergraduate symposiums"
+            >
+              <span>🎯 Deadlines</span>
             </button>
 
             {/* Export .ics Button */}
@@ -211,6 +225,12 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
         <PrereqTreeModal
           isOpen={isRoadmapOpen}
           onClose={() => this.safeSetState({ isRoadmapOpen: false })}
+        />
+
+        {/* Research & Conference Deadlines Modal */}
+        <DeadlinesModal
+          isOpen={isDeadlinesOpen}
+          onClose={() => this.safeSetState({ isDeadlinesOpen: false })}
         />
       </div>
     );

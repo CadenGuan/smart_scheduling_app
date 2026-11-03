@@ -1,4 +1,5 @@
 import { apiClient } from './apiClient';
+import { ConferenceDeadline } from 'shared';
 
 export class CalendarService {
   /**
@@ -31,6 +32,38 @@ export class CalendarService {
   }> {
     const res = await apiClient.get<{ success: boolean; data: any }>('/api/calendar/curriculum');
     return res.data;
+  }
+
+  /**
+   * Fetches the consolidated list of academic and research conference deadlines.
+   */
+  static async getConferenceDeadlines(
+    topic?: string,
+    tier?: string
+  ): Promise<{
+    totalCount: number;
+    deadlines: ConferenceDeadline[];
+    topics: string[];
+  }> {
+    const params = new URLSearchParams();
+    if (topic && topic !== 'ALL') params.set('topic', topic);
+    if (tier && tier !== 'ALL') params.set('tier', tier);
+
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await apiClient.get<{ success: boolean; data: any }>(`/api/calendar/deadlines${qs}`);
+    return res.data;
+  }
+
+  /**
+   * Exports academic and conference deadlines into an RFC 5545 .ics string.
+   */
+  static async exportDeadlinesIcs(topic?: string, tier?: string): Promise<string> {
+    const params = new URLSearchParams();
+    if (topic && topic !== 'ALL') params.set('topic', topic);
+    if (tier && tier !== 'ALL') params.set('tier', tier);
+
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return apiClient.getText(`/api/calendar/deadlines/export${qs}`);
   }
 
   /**

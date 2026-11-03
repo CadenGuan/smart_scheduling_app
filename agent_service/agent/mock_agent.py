@@ -38,6 +38,25 @@ def run_mock_agent(
             f"💡 **Built-In Alerts:** All class meetings include **15-minute reminders**, and academic milestones (like Add/Drop and Finals) come with **1-day advance alarms**!"
         )
 
+    # Scenario 1.5: Research & Academic Conference Deadlines (Product Backlog Item 2)
+    elif any(k in prompt_lower for k in ['conference', 'research', 'deadline', 'symposium', 'publish', 'call for papers', 'cfp']):
+        tool_calls_simulated.append({
+            'tool': 'query_conference_deadlines',
+            'output': {
+                'recommendedVenues': ['UCSC URS', 'ICSE SRC', 'SIGCSE', 'OSDI', 'NeurIPS'],
+                'targetAudience': 'UCSC CS Undergraduates & Researchers',
+            }
+        })
+        response = (
+            f"Here are the key academic conference and undergraduate research deadlines to keep on your radar! 🎯\n\n"
+            f"### High-Impact Opportunities for UCSC CS Students:\n"
+            f"1. **UCSC Undergraduate Research Symposium (URS)** – *Early May 2027* (Abstracts Due April 15). Fantastic local venue to showcase capstone projects or senior theses.\n"
+            f"2. **ACM SIGCSE Technical Symposium (Student Research Track)** – *Early March 2027*. Ideal for CS education and curriculum tooling research.\n"
+            f"3. **ICSE Student Research Competition (SRC)** – *Late May 2027*. Flagship software engineering venue for student innovations.\n"
+            f"4. **USENIX OSDI & NeurIPS** – Tier-1 premier venues for systems design and machine learning.\n\n"
+            f"💡 **Sync to Your Calendar:** Click the **'🎯 Deadlines'** button in your schedule header to filter by research topic or click **'Export Deadlines .ics'** to load them into your calendar!"
+        )
+
     # Scenario 2: Dropping a Course Impact (Sprint 3 Priority 3 User Story)
     elif 'drop' in prompt_lower or 'withdraw' in prompt_lower:
         course_hint = "CSE 101"

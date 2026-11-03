@@ -278,3 +278,21 @@ class AgentApiTests(TestCase):
         self.assertTrue(data['success'])
         self.assertIn('Export .ics', data['data']['response'])
         self.assertIn('RFC 5545', data['data']['response'])
+
+    def test_conference_deadlines_query(self):
+        payload = {
+            'prompt': 'What research conference deadlines should I look out for?',
+            'student': {'name': 'Sammy Slug', 'major': 'Computer Science B.S.', 'standing': 'Junior'},
+            'preferences': {'targetCredits': 15},
+            'currentSchedule': [],
+            'history': []
+        }
+        res = self.client.post('/api/agent/process/', data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['success'])
+        self.assertIn('conference and undergraduate research deadlines', data['data']['response'])
+        self.assertIn('UCSC Undergraduate Research Symposium', data['data']['response'])
+        self.assertIn('ICSE Student Research Competition', data['data']['response'])
+        tool_names = [tc['tool'] for tc in data['data']['toolCalls']]
+        self.assertIn('query_conference_deadlines', tool_names)

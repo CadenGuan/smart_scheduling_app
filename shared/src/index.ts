@@ -3,6 +3,7 @@ export * from './auth.schema.js';
 export * from './onboarding.schema.js';
 export * from './calendar.schema.js';
 export * from './agent.schema.js';
+export * from './deadline.schema.js';
 
 // Explicit re-exports for CommonJS/Rollup interop
 export {
@@ -35,4 +36,13 @@ export {
   ConflictBadgeSchema,
   CalendarEventSchema,
   CalendarPreviewResponseSchema,
+  CurriculumNodeStatusEnum,
+  CurriculumNodeSchema,
+  CurriculumDagResponseSchema,
 } from './calendar.schema.js';
+
+export {
+  ConferenceTierEnum,
+  ConferenceDeadlineSchema,
+  DeadlinesResponseSchema,
+} from './deadline.schema.js';

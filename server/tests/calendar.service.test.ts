@@ -7,6 +7,7 @@ import {
   courseExceedsBackToBack,
   wouldExceedBackToBack,
 } from '../src/services/calendar.service.js';
+import { DeadlinesService } from '../src/services/deadlines.service.js';
 import { CalendarEvent } from 'shared';
 import { userQueries } from '../src/db/queries/userQueries.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -498,6 +499,68 @@ describe('CalendarService Domain Service Test Suite', () => {
       const dag = CalendarService.getCurriculumDag(testUserId);
       expect(dag.completedCount).toBe(3);
       expect(dag.nodes.find((n) => n.code === 'MATH 21')?.status).toBe('COMPLETED');
+    });
+  });
+
+  describe('DeadlinesService & Academic Research Opportunities', () => {
+    it('returns all conference deadlines with computed statuses and topics list', () => {
+      // Use fixed reference date
+      const refDate = new Date('2027-01-01T00:00:00Z');
+      const result = DeadlinesService.getDeadlines(undefined, undefined, refDate);
+
+      expect(result.totalCount).toBeGreaterThan(5);
+      expect(result.topics).toContain('Software Engineering');
+      expect(result.topics).toContain('Systems');
+      expect(result.topics).toContain('AI & Machine Learning');
+
+      // Check specific deadline properties
+      const urs = result.deadlines.find((d) => d.id === 'ucsc-urs-2027');
+      expect(urs).toBeDefined();
+      expect(urs?.tier).toBe('Undergraduate Showcase');
+      expect(urs?.status).toBe('OPEN');
+      expect(urs?.daysUntilDeadline).toBeGreaterThan(0);
+    });
+
+    it('filters deadlines accurately by topic and tier', () => {
+      const refDate = new Date('2027-01-01T00:00:00Z');
+
+      // Filter by topic 'Software Engineering'
+      const seResult = DeadlinesService.getDeadlines('Software Engineering', undefined, refDate);
+      expect(seResult.deadlines.length).toBeGreaterThan(0);
+      for (const d of seResult.deadlines) {
+        expect(d.topics).toContain('Software Engineering');
+      }
+
+      // Filter by tier 'Undergraduate Showcase'
+      const ugResult = DeadlinesService.getDeadlines(undefined, 'Undergraduate Showcase', refDate);
+      expect(ugResult.deadlines.length).toBeGreaterThan(0);
+      for (const d of ugResult.deadlines) {
+        expect(d.tier).toBe('Undergraduate Showcase');
+      }
+
+      // Filter by both
+      const combined = DeadlinesService.getDeadlines('Software Engineering', 'Undergraduate Showcase', refDate);
+      expect(combined.deadlines.length).toBeGreaterThan(0);
+      for (const d of combined.deadlines) {
+        expect(d.topics).toContain('Software Engineering');
+        expect(d.tier).toBe('Undergraduate Showcase');
+      }
+    });
+
+    it('generates standard RFC 5545 .ics calendar with VALARM 1-day advance triggers', () => {
+      const refDate = new Date('2027-01-01T00:00:00Z');
+      const { deadlines } = DeadlinesService.getDeadlines(undefined, undefined, refDate);
+      const ics = DeadlinesService.exportDeadlinesIcs(deadlines);
+
+      expect(ics).toContain('BEGIN:VCALENDAR');
+      expect(ics).toContain('VERSION:2.0');
+      expect(ics).toContain('X-WR-CALNAME:UCSC CS Research & Conference Deadlines');
+      expect(ics).toContain('BEGIN:VEVENT');
+      expect(ics).toContain('SUMMARY:🎯 [Deadline] UCSC URS 2027 Submission');
+      expect(ics).toContain('BEGIN:VALARM');
+      expect(ics).toContain('TRIGGER:-P1D');
+      expect(ics).toContain('END:VALARM');
+      expect(ics).toContain('END:VCALENDAR');
     });
   });
 });
