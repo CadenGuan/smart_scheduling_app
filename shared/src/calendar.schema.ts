@@ -39,3 +39,32 @@ export const CalendarPreviewResponseSchema = z.object({
   }),
 });
 export type CalendarPreviewResponse = z.infer<typeof CalendarPreviewResponseSchema>;
+
+export const CurriculumNodeStatusEnum = z.enum(['COMPLETED', 'READY_TO_ENROLL', 'LOCKED']);
+export type CurriculumNodeStatus = z.infer<typeof CurriculumNodeStatusEnum>;
+
+export const CurriculumNodeSchema = z.object({
+  code: z.string(),
+  title: z.string(),
+  credits: z.number(),
+  level: z.enum(['LOWER', 'UPPER', 'CAPSTONE']),
+  status: CurriculumNodeStatusEnum,
+  prerequisites: z.array(z.string()),
+  unmetPrerequisites: z.array(z.string()),
+  tier: z.number(),
+});
+export type CurriculumNode = z.infer<typeof CurriculumNodeSchema>;
+
+export const CurriculumDagResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.object({
+    major: z.string(),
+    totalCoreCount: z.number(),
+    completedCount: z.number(),
+    progressPercentage: z.number(),
+    nodes: z.array(CurriculumNodeSchema),
+    edges: z.array(z.tuple([z.string(), z.string()])),
+    readyToEnroll: z.array(z.string()),
+  }),
+});
+export type CurriculumDagResponse = z.infer<typeof CurriculumDagResponseSchema>;

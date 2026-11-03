@@ -9,6 +9,31 @@ export class CalendarService {
   }
 
   /**
+   * Fetches the UCSC CS curriculum prerequisite DAG and student degree progress.
+   */
+  static async getCurriculumDag(): Promise<{
+    major: string;
+    totalCoreCount: number;
+    completedCount: number;
+    progressPercentage: number;
+    nodes: Array<{
+      code: string;
+      title: string;
+      credits: number;
+      level: 'LOWER' | 'UPPER' | 'CAPSTONE';
+      status: 'COMPLETED' | 'READY_TO_ENROLL' | 'LOCKED';
+      prerequisites: string[];
+      unmetPrerequisites: string[];
+      tier: number;
+    }>;
+    edges: Array<[string, string]>;
+    readyToEnroll: string[];
+  }> {
+    const res = await apiClient.get<{ success: boolean; data: any }>('/api/calendar/curriculum');
+    return res.data;
+  }
+
+  /**
    * Triggers a browser download of an .ics file string.
    */
   static downloadIcs(content: string, filename: string = 'slug-schedule.ics'): void {

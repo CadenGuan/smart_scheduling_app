@@ -26,4 +26,13 @@ router.get('/export', requireAuth, (req: AuthenticatedRequest, res: Response) =>
   res.status(200).send(icsData);
 });
 
+// GET /api/calendar/curriculum
+router.get('/curriculum', requireAuth, (req: AuthenticatedRequest, res: Response) => {
+  const dag = CalendarService.getCurriculumDag(req.user?.userId);
+  res.status(200).json({
+    success: true,
+    data: dag,
+  });
+});
+
 export default router;

@@ -241,4 +241,130 @@ export class CalendarService {
       events: allEvents,
     };
   }
+
+  static getCurriculumDag(
+    userId?: string,
+    completedOverride?: string[]
+  ): {
+    major: string;
+    totalCoreCount: number;
+    completedCount: number;
+    progressPercentage: number;
+    nodes: Array<{
+      code: string;
+      title: string;
+      credits: number;
+      level: 'LOWER' | 'UPPER' | 'CAPSTONE';
+      status: 'COMPLETED' | 'READY_TO_ENROLL' | 'LOCKED';
+      prerequisites: string[];
+      unmetPrerequisites: string[];
+      tier: number;
+    }>;
+    edges: Array<[string, string]>;
+    readyToEnroll: string[];
+  } {
+    const completedSet = new Set<string>();
+
+    if (userId) {
+      const user = userQueries.findUserById(userId);
+      if (user?.major_requirements_taken) {
+        try {
+          const parsed = JSON.parse(user.major_requirements_taken);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((c) => completedSet.add(c.trim().toUpperCase()));
+          }
+        } catch {
+          // Ignore error
+        }
+      }
+    }
+
+    if (completedOverride) {
+      completedOverride.forEach((c) => completedSet.add(c.trim().toUpperCase()));
+    }
+
+    const nodes = UCSC_CS_CURRICULUM.map((course) => {
+      const isCompleted = completedSet.has(course.code.toUpperCase());
+      const unmet = course.prerequisites.filter((p) => !completedSet.has(p.toUpperCase()));
+      let status: 'COMPLETED' | 'READY_TO_ENROLL' | 'LOCKED' = 'LOCKED';
+
+      if (isCompleted) {
+        status = 'COMPLETED';
+      } else if (unmet.length === 0) {
+        status = 'READY_TO_ENROLL';
+      }
+
+      return {
+        code: course.code,
+        title: course.title,
+        credits: course.credits,
+        level: course.level,
+        status,
+        prerequisites: course.prerequisites,
+        unmetPrerequisites: isCompleted ? [] : unmet,
+        tier: course.tier,
+      };
+    });
+
+    const edges: Array<[string, string]> = [];
+    UCSC_CS_CURRICULUM.forEach((course) => {
+      course.prerequisites.forEach((p) => {
+        edges.push([p, course.code]);
+      });
+    });
+
+    const completedCount = nodes.filter((n) => n.status === 'COMPLETED').length;
+    const totalCoreCount = nodes.length;
+    const progressPercentage = Math.round((completedCount / totalCoreCount) * 100);
+    const readyToEnroll = nodes.filter((n) => n.status === 'READY_TO_ENROLL').map((n) => n.code);
+
+    return {
+      major: 'Computer Science B.S.',
+      totalCoreCount,
+      completedCount,
+      progressPercentage,
+      nodes,
+      edges,
+      readyToEnroll,
+    };
+  }
 }
+
+export interface CourseCatalogEntry {
+  code: string;
+  title: string;
+  credits: number;
+  level: 'LOWER' | 'UPPER' | 'CAPSTONE';
+  tier: number;
+  prerequisites: string[];
+}
+
+export const UCSC_CS_CURRICULUM: CourseCatalogEntry[] = [
+  // Tier 1: Foundations
+  { code: 'MATH 19A', title: 'Calculus for Sci/Eng I', credits: 5, level: 'LOWER', tier: 1, prerequisites: [] },
+  { code: 'MATH 19B', title: 'Calculus for Sci/Eng II', credits: 5, level: 'LOWER', tier: 1, prerequisites: ['MATH 19A'] },
+  { code: 'CSE 20', title: 'Beginning Python Programming', credits: 5, level: 'LOWER', tier: 1, prerequisites: [] },
+  { code: 'CSE 12', title: 'Computer Systems & Assembly', credits: 5, level: 'LOWER', tier: 1, prerequisites: [] },
+
+  // Tier 2: Lower Division Core
+  { code: 'MATH 21', title: 'Linear Algebra', credits: 5, level: 'LOWER', tier: 2, prerequisites: ['MATH 19B'] },
+  { code: 'CSE 16', title: 'Applied Discrete Mathematics', credits: 5, level: 'LOWER', tier: 2, prerequisites: ['MATH 19B'] },
+  { code: 'CSE 30', title: 'Programming Abstractions in Python', credits: 5, level: 'LOWER', tier: 2, prerequisites: ['CSE 20'] },
+  { code: 'CSE 13S', title: 'Computer Systems and C', credits: 5, level: 'LOWER', tier: 2, prerequisites: ['CSE 30', 'CSE 12'] },
+
+  // Tier 3: Core Gatekeeper
+  { code: 'CSE 101', title: 'Data Structures and Algorithms', credits: 5, level: 'UPPER', tier: 3, prerequisites: ['CSE 13S', 'CSE 16'] },
+
+  // Tier 4: Upper Division Core & Electives
+  { code: 'CSE 102', title: 'Analysis of Algorithms', credits: 5, level: 'UPPER', tier: 4, prerequisites: ['CSE 101'] },
+  { code: 'CSE 103', title: 'Computational Models', credits: 5, level: 'UPPER', tier: 4, prerequisites: ['CSE 101'] },
+  { code: 'CSE 107', title: 'Probability & Statistics for Engr', credits: 5, level: 'UPPER', tier: 4, prerequisites: ['CSE 101'] },
+  { code: 'CSE 115A', title: 'Intro to Software Engineering', credits: 5, level: 'UPPER', tier: 4, prerequisites: ['CSE 101'] },
+  { code: 'CSE 130', title: 'Principles of Computer Systems Design', credits: 5, level: 'UPPER', tier: 4, prerequisites: ['CSE 101', 'CSE 12'] },
+  { code: 'CSE 150', title: 'Computer Networks', credits: 5, level: 'UPPER', tier: 4, prerequisites: ['CSE 130'] },
+  { code: 'CSE 180', title: 'Database Systems I', credits: 5, level: 'UPPER', tier: 4, prerequisites: ['CSE 101'] },
+  { code: 'CSE 185S', title: 'Technical Writing for Engineers', credits: 5, level: 'UPPER', tier: 4, prerequisites: ['CSE 101'] },
+
+  // Tier 5: Capstone
+  { code: 'CSE 115B', title: 'Software Design Capstone', credits: 5, level: 'CAPSTONE', tier: 5, prerequisites: ['CSE 115A'] },
+];

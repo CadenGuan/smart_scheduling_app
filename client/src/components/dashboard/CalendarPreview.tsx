@@ -2,6 +2,7 @@ import React from 'react';
 import { BaseComponent } from '../base/BaseComponent';
 import { CourseCard } from './CourseCard';
 import { CourseDetailsModal } from './CourseDetailsModal';
+import { PrereqTreeModal } from './PrereqTreeModal';
 import { CalendarEvent, Day } from 'shared';
 import { CalendarService } from '../../services/calendarService';
 
@@ -14,6 +15,7 @@ interface CalendarPreviewState {
   hoveredCourseId: string | null;
   selectedEvent: CalendarEvent | null;
   isExporting: boolean;
+  isRoadmapOpen: boolean;
 }
 
 const DAYS: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -26,6 +28,7 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
       hoveredCourseId: null,
       selectedEvent: null,
       isExporting: false,
+      isRoadmapOpen: false,
     };
   }
 
@@ -76,7 +79,7 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
 
   render() {
     const { events, term } = this.props;
-    const { hoveredCourseId, selectedEvent, isExporting } = this.state;
+    const { hoveredCourseId, selectedEvent, isExporting, isRoadmapOpen } = this.state;
 
     return (
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
@@ -105,6 +108,16 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
                 <span>Busy</span>
               </div>
             </div>
+
+            {/* Action Buttons */}
+            <button
+              type="button"
+              onClick={() => this.safeSetState({ isRoadmapOpen: true })}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 border shadow-xs bg-white text-slate-700 border-slate-200 hover:border-[#00B4DB] hover:text-[#00B4DB] hover:bg-slate-50"
+              title="View UCSC Computer Science prerequisite DAG and degree progress"
+            >
+              <span>🗺️ Prereq Roadmap</span>
+            </button>
 
             {/* Export .ics Button */}
             <button
@@ -191,6 +204,12 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
 
         {/* Course Details Modal */}
         <CourseDetailsModal event={selectedEvent} onClose={this.handleCloseModal} />
+
+        {/* Prerequisite Roadmap Modal */}
+        <PrereqTreeModal
+          isOpen={isRoadmapOpen}
+          onClose={() => this.safeSetState({ isRoadmapOpen: false })}
+        />
       </div>
     );
   }

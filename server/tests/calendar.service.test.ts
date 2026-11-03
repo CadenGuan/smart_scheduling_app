@@ -400,4 +400,104 @@ describe('CalendarService Domain Service Test Suite', () => {
       expect(ids).not.toContain('sel-2-colliding');
     });
   });
+
+  describe('Curriculum Prerequisite DAG & Degree Progress Suite', () => {
+    it('returns the 18 UCSC CS core courses structured into tiers 1 through 5', () => {
+      const dag = CalendarService.getCurriculumDag();
+
+      expect(dag.major).toBe('Computer Science B.S.');
+      expect(dag.totalCoreCount).toBe(18);
+      expect(dag.nodes).toHaveLength(18);
+      expect(dag.edges.length).toBeGreaterThan(15);
+
+      // Verify foundational courses are Tier 1
+      const math19a = dag.nodes.find((n) => n.code === 'MATH 19A');
+      expect(math19a).toBeDefined();
+      expect(math19a?.tier).toBe(1);
+      expect(math19a?.prerequisites).toEqual([]);
+
+      // Verify CSE 101 is Tier 3 Gatekeeper
+      const cse101 = dag.nodes.find((n) => n.code === 'CSE 101');
+      expect(cse101).toBeDefined();
+      expect(cse101?.tier).toBe(3);
+      expect(cse101?.prerequisites).toContain('CSE 13S');
+      expect(cse101?.prerequisites).toContain('CSE 16');
+
+      // Verify Capstone is Tier 5
+      const cse115b = dag.nodes.find((n) => n.code === 'CSE 115B');
+      expect(cse115b).toBeDefined();
+      expect(cse115b?.tier).toBe(5);
+      expect(cse115b?.level).toBe('CAPSTONE');
+    });
+
+    it('identifies initial open courses as READY_TO_ENROLL for empty student history', () => {
+      const dag = CalendarService.getCurriculumDag(undefined, []);
+
+      expect(dag.completedCount).toBe(0);
+      expect(dag.progressPercentage).toBe(0);
+
+      // Open courses: MATH 19A, CSE 20, CSE 12
+      expect(dag.readyToEnroll).toContain('MATH 19A');
+      expect(dag.readyToEnroll).toContain('CSE 20');
+      expect(dag.readyToEnroll).toContain('CSE 12');
+
+      // Locked courses requiring prerequisites
+      const cse101 = dag.nodes.find((n) => n.code === 'CSE 101');
+      expect(cse101?.status).toBe('LOCKED');
+      expect(cse101?.unmetPrerequisites).toEqual(['CSE 13S', 'CSE 16']);
+    });
+
+    it('updates node statuses and computes progress percentage for student coursework', () => {
+      // Completed: MATH 19A, MATH 19B, CSE 20, CSE 30, CSE 12, CSE 13S, CSE 16
+      const completed = [
+        'MATH 19A',
+        'MATH 19B',
+        'CSE 20',
+        'CSE 30',
+        'CSE 12',
+        'CSE 13S',
+        'CSE 16',
+      ];
+      const dag = CalendarService.getCurriculumDag(undefined, completed);
+
+      expect(dag.completedCount).toBe(7);
+      expect(dag.progressPercentage).toBe(Math.round((7 / 18) * 100)); // 39%
+
+      // Completed nodes have status COMPLETED and empty unmetPrerequisites
+      const cse13s = dag.nodes.find((n) => n.code === 'CSE 13S');
+      expect(cse13s?.status).toBe('COMPLETED');
+      expect(cse13s?.unmetPrerequisites).toEqual([]);
+
+      // CSE 101 was unblocked because both CSE 13S and CSE 16 are completed
+      const cse101 = dag.nodes.find((n) => n.code === 'CSE 101');
+      expect(cse101?.status).toBe('READY_TO_ENROLL');
+      expect(cse101?.unmetPrerequisites).toEqual([]);
+      expect(dag.readyToEnroll).toContain('CSE 101');
+
+      // Capstone CSE 115B is still LOCKED
+      const cse115b = dag.nodes.find((n) => n.code === 'CSE 115B');
+      expect(cse115b?.status).toBe('LOCKED');
+      expect(cse115b?.unmetPrerequisites).toContain('CSE 115A');
+    });
+
+    it('reads completed major requirements directly from SQLite user record', () => {
+      const testUserId = uuidv4();
+      userQueries.createUser({
+        user_id: testUserId,
+        email: `dag-user-${Date.now()}@ucsc.edu`,
+        password_hash: 'hash123',
+        name: 'DAG Student',
+        standing: 'Senior',
+        major: 'Computer Science B.S.',
+      });
+
+      userQueries.updateUserProfile(testUserId, {
+        major_requirements_taken: JSON.stringify(['MATH 19A', 'MATH 19B', 'MATH 21']),
+      });
+
+      const dag = CalendarService.getCurriculumDag(testUserId);
+      expect(dag.completedCount).toBe(3);
+      expect(dag.nodes.find((n) => n.code === 'MATH 21')?.status).toBe('COMPLETED');
+    });
+  });
 });
