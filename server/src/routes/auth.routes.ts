@@ -4,6 +4,7 @@ import { GoogleAuthService } from '../services/google.service.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validate.middleware.js';
+import { createRateLimiter } from '../middleware/rateLimiter.js';
 import {
   RegisterRequestSchema,
   LoginRequestSchema,
@@ -13,8 +14,16 @@ import {
 
 const router = Router();
 
+export const authRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  maxRequests: 20,
+  message: 'Too many authentication attempts. Please try again later.',
+  skipInTests: true,
+});
+
 router.post(
   '/register',
+  authRateLimiter,
   validateBody(RegisterRequestSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const result = await AuthService.register(req.body);
@@ -24,6 +33,7 @@ router.post(
 
 router.post(
   '/login',
+  authRateLimiter,
   validateBody(LoginRequestSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const result = await AuthService.login(req.body);

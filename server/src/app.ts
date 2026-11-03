@@ -9,14 +9,17 @@ import progressRoutes from './routes/progress.routes.js';
 import calendarRoutes from './routes/calendar.routes.js';
 import agentRoutes from './routes/agent.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { securityHeadersMiddleware } from './middleware/security.middleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const app = express();
 
+app.disable('x-powered-by');
+app.use(securityHeadersMiddleware);
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 // API Routes
 app.use('/api/auth', authRoutes);
