@@ -34,6 +34,10 @@ def process_agent_query(request: HttpRequest) -> JsonResponse:
             schedule=schedule,
             history=history
         )
+        if not isinstance(result, dict):
+            result = {'response': str(result), 'proposedCourses': [], 'toolCalls': []}
+        result.setdefault('proposedCourses', [])
+        result.setdefault('toolCalls', [])
         return JsonResponse({'success': True, 'data': result}, status=200)
     except Exception as e:
         return JsonResponse({'success': False, 'error': f'Agent execution error: {str(e)}'}, status=500)

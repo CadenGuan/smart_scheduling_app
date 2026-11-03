@@ -1,6 +1,7 @@
 import re
 from typing import Dict, Any, List
 from .dag_solver import get_prerequisite_chain, get_downstream_impact, audit_degree_progress
+from .tools import find_courses, get_course_catalog, is_course_requested_or_pinned
 
 def run_mock_agent(
     prompt: str,
@@ -26,9 +27,60 @@ def run_mock_agent(
     target_credits = preferences.get('targetCredits', 15)
 
     tool_calls_simulated = []
+    proposed_courses = []
+
+    term_match = re.search(r'\b(Winter|Spring|Summer|Fall)\s+\d{4}\b', prompt, re.IGNORECASE)
+    term = term_match.group(0).title() if term_match else "Winter 2027"
+
+    catalog = get_course_catalog()
+
+    # Identify any pinned or explicitly requested courses in the prompt
+    pinned_courses = []
+    for c in catalog:
+        if is_course_requested_or_pinned(prompt, c):
+            c_copy = dict(c)
+            c_copy['pinned'] = True
+            pinned_courses.append(c_copy)
+
+    # Scenario 0: Explicit Course Addition / Pinning Request
+    if pinned_courses:
+        pinned_codes = [f"`{c.get('code')}`" for c in pinned_courses]
+
+        complementary = []
+        for default_code in ['CSE 115A', 'CSE 101', 'CSE 130', 'ART 10F', 'PHIL 11']:
+            if not any(pc.get('code') == default_code for pc in pinned_courses):
+                matches = find_courses(query=default_code, term=term)
+                if matches:
+                    comp = dict(matches[0])
+                    comp['pinned'] = False
+                    complementary.append(comp)
+
+        proposed_courses = list(pinned_courses) + complementary[:4]
+
+        tool_calls_simulated.append({
+            'tool': 'search_course_catalog',
+            'args': {'query': pinned_courses[0].get('code', ''), 'term': term},
+            'output': [c['id'] for c in proposed_courses],
+        })
+
+        details_list = []
+        for pc in pinned_courses:
+            days_str = ", ".join(pc.get('days', []))
+            details_list.append(
+                f"- **`{pc.get('code')}` ({pc.get('title')})**: {days_str} {pc.get('startTime')}-{pc.get('endTime')} ({pc.get('credits')} credits) in {pc.get('location')}"
+            )
+        details_text = "\n".join(details_list)
+
+        response = (
+            f"I have added {', '.join(pinned_codes)} to your proposed schedule and pinned {'them' if len(pinned_courses) > 1 else 'it'} as requested! 📌\n\n"
+            f"### Pinned Course Details:\n"
+            f"{details_text}\n\n"
+            f"I also queried the {term} catalog for complementary major requirements and GEs to balance your workload towards your **{target_credits}-credit** goal. "
+            f"Your weekly preview grid has been refreshed with zero time conflicts!"
+        )
 
     # Scenario 1: Calendar Export (Sprint 4 Priority 5 User Story)
-    if 'export' in prompt_lower or 'download schedule' in prompt_lower or '.ics' in prompt_lower or 'google calendar' in prompt_lower or 'apple calendar' in prompt_lower:
+    elif 'export' in prompt_lower or 'download schedule' in prompt_lower or '.ics' in prompt_lower or 'google calendar' in prompt_lower or 'apple calendar' in prompt_lower:
         response = (
             f"You can easily export your planned schedule into standard RFC 5545 `.ics` format! 🗓️\n\n"
             f"### How to Export Your Calendar:\n"
@@ -125,12 +177,25 @@ def run_mock_agent(
                 'updates': {'targetCredits': new_target},
             }
         })
+        light_courses = []
+        for code in ['CSE 101', 'ART 10F']:
+            matches = find_courses(query=code, term=term)
+            if matches:
+                c_copy = dict(matches[0])
+                c_copy['pinned'] = False
+                light_courses.append(c_copy)
+        proposed_courses = light_courses
+        tool_calls_simulated.append({
+            'tool': 'search_course_catalog',
+            'args': {'query': 'lightened', 'term': term},
+            'output': [c['id'] for c in proposed_courses],
+        })
         response = (
             f"I hear you! Pacing yourself is essential for maintaining strong GPA and mental well-being at UCSC. 💙\n\n"
             f"I have automatically adjusted your target credit preference from **{target_credits} credits** down to **{new_target} credits**.\n\n"
             f"### Sammy's Lightened Schedule Proposal:\n"
             f"- Keep **1 primary core programming lab** (e.g. `CSE 101` or `CSE 115A`)\n"
-            f"- Pair it with **1 lighter general education course** (e.g. `PHIL 9` or `ART 10F`)\n"
+            f"- Pair it with **1 lighter general education course** (e.g. `PHIL 11` or `ART 10F`)\n"
             f"- Drop the extra 5-unit upper division elective to avoid conflicting final project deadlines.\n\n"
             f"Your schedule preview grid has been refreshed with this balanced pacing!"
         )
@@ -175,6 +240,16 @@ def run_mock_agent(
                         course_hint = code.upper()
                         break
 
+        why_courses = []
+        for code in [course_hint, 'CSE 115A', 'ART 10F']:
+            matches = find_courses(query=code, term=term)
+            if matches:
+                c_copy = dict(matches[0])
+                c_copy['pinned'] = False
+                if not any(wc['id'] == c_copy['id'] for wc in why_courses):
+                    why_courses.append(c_copy)
+        proposed_courses = why_courses
+
         response = (
             f"Here is why Sammy recommends **`{course_hint}`** for your plan: 💡\n\n"
             f"1. **Prerequisite Unblocking:** As a **{standing}** in `{major}`, `{course_hint}` is crucial for your degree velocity. Delaying it can bottleneck your upper-division electives.\n"
@@ -214,14 +289,40 @@ def run_mock_agent(
             'tool': 'query_degree_ge_requirements',
             'output': {'remaining': remaining_ges}
         })
+        ge_candidates = []
+        target_ges = remaining_ges if remaining_ges else ['CC', 'ER', 'PR-C']
+        for g in target_ges:
+            matches = find_courses(ge_type=g, term=term)
+            if matches:
+                m_copy = dict(matches[0])
+                m_copy['pinned'] = False
+                if not any(gc['id'] == m_copy['id'] for gc in ge_candidates):
+                    ge_candidates.append(m_copy)
+
+        for m_code in ['CSE 115A', 'CSE 101']:
+            m_matches = find_courses(query=m_code, term=term)
+            if m_matches:
+                m_copy = dict(m_matches[0])
+                m_copy['pinned'] = False
+                if not any(gc['id'] == m_copy['id'] for gc in ge_candidates):
+                    ge_candidates.append(m_copy)
+
+        proposed_courses = ge_candidates
+
+        tool_calls_simulated.append({
+            'tool': 'search_course_catalog',
+            'args': {'term': term, 'ge_type': ', '.join(remaining_ges) if remaining_ges else 'GE'},
+            'output': [c['id'] for c in proposed_courses],
+        })
+
         if remaining_ges:
             ge_list = ", ".join([f"`{g}`" for g in remaining_ges])
             response = (
                 f"Hey {name}! 🐌 Based on your degree progress, you currently have the following **General Education (GE)** requirements remaining: {ge_list}.\n\n"
                 f"### Recommended UCSC GE Courses for Next Quarter:\n"
-                f"- **`PHIL 9` (Introduction to Logic)** – Satisfies the `MF` or `ER` requirement while reinforcing formal proof thinking for upper-division CS.\n"
-                f"- **`ART 10F` (2D Design)** – Satisfies `PR` with a creative, studio-based workflow to balance heavy coding labs.\n"
-                f"- **`THEA 20` (Intro to Acting)** – Satisfies `IM` or `TA` with an interactive, collaborative format.\n\n"
+                f"- **`PHIL 11` (Critical Thinking)** – Satisfies the `CC` requirement while reinforcing formal proof thinking for upper-division CS.\n"
+                f"- **`HIS 10A` (United States History to 1877)** – Satisfies `ER` with structured reading and analytical discussion.\n"
+                f"- **`ART 10F` (2D Design)** – Satisfies `PR` with a creative, studio-based workflow to balance heavy coding labs.\n\n"
                 f"Pairing one of these with your required major courses will keep you on pace for your **{target_credits}-credit** target without overloading your finals week!"
             )
         else:
@@ -231,19 +332,63 @@ def run_mock_agent(
             )
 
     # Scenario 10: Course recommendations
-    elif 'cse' in prompt_lower or 'course' in prompt_lower or 'class' in prompt_lower or 'recommend' in prompt_lower or 'major' in prompt_lower:
+    elif 'cse' in prompt_lower or 'course' in prompt_lower or 'class' in prompt_lower or 'recommend' in prompt_lower or 'major' in prompt_lower or 'schedule' in prompt_lower or any(d in prompt_lower for d in ['math', 'ece', 'film', 'art', 'phil', 'his', 'econ', 'musc', 'astr', 'havc']):
         tool_calls_simulated.append({
             'tool': 'inspect_student_profile',
             'output': {'standing': standing, 'major': major}
         })
-        response = (
-            f"Here is Sammy's recommended plan for a **{standing}** in `{major}`: 📚\n\n"
-            f"### High-Priority Core Courses:\n"
-            f"1. **`CSE 101` (Algorithms & Abstract Data Types)** – Critical prerequisite gatekeeper for virtually all upper-division electives.\n"
-            f"2. **`CSE 115A` (Intro to Software Engineering)** – Hands-on team project course; excellent preparation for industry internships.\n"
-            f"3. **`CSE 130` (Principles of Computer Systems Design)** – Rigorous systems programming covering concurrency, virtual memory, and distributed primitives.\n\n"
-            f"💡 **Pro-Tip**: Avoid taking `CSE 101` and `CSE 130` in the exact same quarter unless you have a lighter third course, as both require heavy weekly programming assignments."
-        )
+
+        queried_dept = None
+        for d in ['MATH', 'ECE', 'FILM', 'ART', 'PHIL', 'HIS', 'ECON', 'MUSC', 'ASTR', 'HAVC']:
+            if d.lower() in prompt_lower:
+                queried_dept = d
+                break
+
+        if queried_dept:
+            dept_matches = find_courses(department=queried_dept, term=term)
+            proposed_courses = [dict(c, pinned=False) for c in dept_matches]
+            tool_calls_simulated.append({
+                'tool': 'search_course_catalog',
+                'args': {'department': queried_dept, 'term': term},
+                'output': [c['id'] for c in proposed_courses],
+            })
+            offerings = []
+            for c in proposed_courses:
+                days_str = ", ".join(c.get('days', []))
+                offerings.append(
+                    f"- **`{c.get('code')}` ({c.get('title')})**: {days_str} {c.get('startTime')}-{c.get('endTime')} ({c.get('credits')} credits) in {c.get('location')}"
+                )
+            response = (
+                f"Here are the active **{queried_dept}** courses available for **{term}**: 📚\n\n"
+                f"### Matching Course Offerings:\n"
+                + "\n".join(offerings) +
+                f"\n\nLet me know which ones you would like to incorporate into your schedule!"
+            )
+        else:
+            recs = []
+            for code in ['CSE 115A', 'CSE 130', 'CSE 101', 'ART 10F', 'PHIL 11']:
+                matches = find_courses(query=code, term=term)
+                if matches:
+                    c_copy = dict(matches[0])
+                    c_copy['pinned'] = False
+                    recs.append(c_copy)
+
+            proposed_courses = recs
+
+            tool_calls_simulated.append({
+                'tool': 'search_course_catalog',
+                'args': {'department': 'CSE', 'term': term},
+                'output': [c['id'] for c in proposed_courses],
+            })
+
+            response = (
+                f"Here is Sammy's recommended plan for a **{standing}** in `{major}`: 📚\n\n"
+                f"### High-Priority Core Courses:\n"
+                f"1. **`CSE 101` (Algorithms & Abstract Data Types)** – Critical prerequisite gatekeeper for virtually all upper-division electives.\n"
+                f"2. **`CSE 115A` (Intro to Software Engineering)** – Hands-on team project course; excellent preparation for industry internships.\n"
+                f"3. **`CSE 130` (Principles of Computer Systems Design)** – Rigorous systems programming covering concurrency, virtual memory, and distributed primitives.\n\n"
+                f"💡 **Pro-Tip**: Avoid taking `CSE 101` and `CSE 130` in the exact same quarter unless you have a lighter third course, as both require heavy weekly programming assignments."
+            )
 
     # Scenario 11: Calendar, schedule, conflicts, or breaks
     elif 'calendar' in prompt_lower or 'schedule' in prompt_lower or 'time' in prompt_lower or 'break' in prompt_lower or 'conflict' in prompt_lower:
@@ -278,6 +423,7 @@ def run_mock_agent(
 
     return {
         'response': response,
+        'proposedCourses': proposed_courses,
         'toolCalls': tool_calls_simulated,
         'model': 'mock-slug-advisor-v1',
     }

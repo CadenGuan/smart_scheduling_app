@@ -95,6 +95,7 @@ describe('PrereqTreeModal Component Test Suite', () => {
       readyToEnroll: ['CSE 20'],
       selectedCode: null,
       activeTier: 'ALL',
+      searchQuery: '',
       isLoading: false,
       error: null,
     };
@@ -143,6 +144,7 @@ describe('PrereqTreeModal Component Test Suite', () => {
       readyToEnroll: ['CSE 20'],
       selectedCode: 'CSE 20',
       activeTier: 'ALL',
+      searchQuery: '',
       isLoading: false,
       error: null,
     };
@@ -163,6 +165,53 @@ describe('PrereqTreeModal Component Test Suite', () => {
     // Clicking same course again deselects it
     modal.handleSelectCourse('CSE 101');
     expect(modal.state.selectedCode).toBeNull();
+  });
+
+  it('filters courses by search query matching code or title', () => {
+    const modal = new PrereqTreeModal({ isOpen: true, onClose: vi.fn() });
+    modal.state = {
+      nodes: mockNodes,
+      edges: [['CSE 13S', 'CSE 101']] as Array<[string, string]>,
+      major: 'Computer Science B.S.',
+      totalCoreCount: 18,
+      completedCount: 1,
+      progressPercentage: 6,
+      readyToEnroll: ['CSE 20'],
+      selectedCode: null,
+      activeTier: 'ALL',
+      searchQuery: 'CSE 101',
+      isLoading: false,
+      error: null,
+    };
+
+    const html = cleanHtml(renderToString(modal.render()));
+    expect(html).toContain('CSE 101');
+    expect(html).toContain('Data Structures and Algorithms');
+    expect(html).not.toContain('MATH 19A');
+    expect(html).not.toContain('CSE 20');
+  });
+
+  it('renders empty state when search query matches no courses', () => {
+    const modal = new PrereqTreeModal({ isOpen: true, onClose: vi.fn() });
+    modal.state = {
+      nodes: mockNodes,
+      edges: [],
+      major: 'Computer Science B.S.',
+      totalCoreCount: 18,
+      completedCount: 1,
+      progressPercentage: 6,
+      readyToEnroll: [],
+      selectedCode: null,
+      activeTier: 'ALL',
+      searchQuery: 'PHYS 999',
+      isLoading: false,
+      error: null,
+    };
+
+    const html = cleanHtml(renderToString(modal.render()));
+    expect(html).toContain('No courses match');
+    expect(html).toContain('PHYS 999');
+    expect(html).toContain('Try searching by course code');
   });
 
   it('renders error alert when loading fails', () => {

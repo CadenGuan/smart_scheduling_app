@@ -1,4 +1,5 @@
 import json
+import re
 from django.test import TestCase, Client
 from agent_api.prompt_builder import build_system_prompt, format_history_messages
 from agent.tools import (
@@ -10,6 +11,9 @@ from agent.tools import (
     find_prerequisite_path,
     assess_drop_impact,
     update_schedule_preferences,
+    search_course_catalog,
+    get_inspection_tools,
+    find_courses,
 )
 from agent.dag_solver import get_prerequisite_chain, get_downstream_impact, audit_degree_progress
 
@@ -296,3 +300,169 @@ class AgentApiTests(TestCase):
         self.assertIn('ICSE Student Research Competition', data['data']['response'])
         tool_names = [tc['tool'] for tc in data['data']['toolCalls']]
         self.assertIn('query_conference_deadlines', tool_names)
+
+    def test_search_course_catalog_tool_filters_and_attributes(self):
+        # 1. Verify registered in get_inspection_tools
+        tool_names = [t.name for t in get_inspection_tools()]
+        self.assertIn('search_course_catalog', tool_names)
+
+        # 2. Query specific course by code/keyword
+        raw = search_course_catalog.invoke({'query': 'CSE 130', 'term': 'Winter 2027'})
+        courses = json.loads(raw)
+        self.assertGreaterEqual(len(courses), 1)
+        cse130 = courses[0]
+        self.assertEqual(cse130['code'], 'CSE 130')
+        self.assertEqual(cse130['term'], 'Winter 2027')
+
+        # Verify all CalendarEvent attributes are present
+        required_attrs = ['id', 'title', 'type', 'days', 'startTime', 'endTime', 'credits', 'term', 'instructor', 'location', 'color']
+        for attr in required_attrs:
+            self.assertIn(attr, cse130, f"Missing required CalendarEvent attribute: {attr}")
+
+        self.assertIsInstance(cse130['days'], list)
+        self.assertGreaterEqual(len(cse130['days']), 1)
+        self.assertTrue(re.match(r'^\d{2}:\d{2}$', cse130['startTime']))
+        self.assertTrue(re.match(r'^\d{2}:\d{2}$', cse130['endTime']))
+        self.assertIsInstance(cse130['credits'], (int, float))
+
+        # 3. Query by department
+        math_raw = search_course_catalog.invoke({'department': 'MATH', 'term': 'Winter 2027'})
+        math_courses = json.loads(math_raw)
+        self.assertGreaterEqual(len(math_courses), 1)
+        for mc in math_courses:
+            self.assertTrue(mc['department'] == 'MATH' or mc['code'].startswith('MATH'))
+
+        # 4. Query by GE type
+        ge_raw = search_course_catalog.invoke({'ge_type': 'CC', 'term': 'Winter 2027'})
+        ge_courses = json.loads(ge_raw)
+        self.assertGreaterEqual(len(ge_courses), 1)
+        self.assertEqual(ge_courses[0]['ge'], 'CC')
+        self.assertEqual(ge_courses[0]['code'], 'PHIL 11')
+
+        # 5. Non-existent course query returns empty list
+        empty_raw = search_course_catalog.invoke({'query': 'NONEXISTENT999'})
+        empty_courses = json.loads(empty_raw)
+        self.assertEqual(empty_courses, [])
+
+    def test_process_query_course_recommendations_dual_output(self):
+        payload = {
+            'prompt': 'Recommend a 15-unit schedule for Winter 2027',
+            'student': {
+                'name': 'Sammy Slug',
+                'major': 'Computer Science B.S.',
+                'standing': 'Junior'
+            },
+            'preferences': {'targetCredits': 15},
+            'currentSchedule': [],
+            'history': []
+        }
+        res = self.client.post('/api/agent/process/', data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['success'])
+
+        # Verify dual-output format: response string and proposedCourses list
+        self.assertIn('response', data['data'])
+        self.assertIn('proposedCourses', data['data'])
+        self.assertIn('toolCalls', data['data'])
+
+        proposed = data['data']['proposedCourses']
+        self.assertIsInstance(proposed, list)
+        self.assertGreaterEqual(len(proposed), 3)
+
+        # Verify each candidate satisfies CalendarEvent attributes
+        for course in proposed:
+            self.assertIn('id', course)
+            self.assertIn('title', course)
+            self.assertIn('type', course)
+            self.assertIn('days', course)
+            self.assertIn('startTime', course)
+            self.assertIn('endTime', course)
+            self.assertIn('credits', course)
+            self.assertIn('color', course)
+            self.assertIn('pinned', course)
+            self.assertFalse(course['pinned'])
+
+        # Verify toolCalls includes search_course_catalog
+        tool_names = [tc['tool'] for tc in data['data']['toolCalls']]
+        self.assertIn('search_course_catalog', tool_names)
+
+    def test_process_query_pins_explicitly_requested_course(self):
+        payload = {
+            'prompt': 'I want CSE 130 on my schedule',
+            'student': {
+                'name': 'Sammy Slug',
+                'major': 'Computer Science B.S.',
+                'standing': 'Junior'
+            },
+            'preferences': {'targetCredits': 15},
+            'currentSchedule': [],
+            'history': []
+        }
+        res = self.client.post('/api/agent/process/', data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['success'])
+
+        proposed = data['data']['proposedCourses']
+        self.assertGreaterEqual(len(proposed), 1)
+
+        # Find CSE 130 and verify it is pinned
+        cse130 = next((c for c in proposed if c.get('code') == 'CSE 130'), None)
+        self.assertIsNotNone(cse130, "CSE 130 was not found in proposedCourses")
+        self.assertTrue(cse130['pinned'])
+
+        # Other complementary courses should not be pinned
+        unpinned = [c for c in proposed if c.get('code') != 'CSE 130']
+        for uc in unpinned:
+            self.assertFalse(uc['pinned'])
+
+    def test_process_query_pins_course_with_add_command(self):
+        payload = {
+            'prompt': 'Please add CSE 115A to my schedule',
+            'student': {
+                'name': 'Sammy Slug',
+                'major': 'Computer Science B.S.',
+                'standing': 'Junior'
+            },
+            'preferences': {'targetCredits': 15},
+            'currentSchedule': [],
+            'history': []
+        }
+        res = self.client.post('/api/agent/process/', data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['success'])
+
+        proposed = data['data']['proposedCourses']
+        cse115a = next((c for c in proposed if c.get('code') == 'CSE 115A'), None)
+        self.assertIsNotNone(cse115a, "CSE 115A was not found in proposedCourses")
+        self.assertTrue(cse115a['pinned'])
+
+    def test_process_query_ge_requirements_proposes_ge_courses(self):
+        payload = {
+            'prompt': 'What GE requirements do I have left?',
+            'student': {
+                'name': 'Sammy Slug',
+                'major': 'Computer Science B.S.',
+                'standing': 'Junior'
+            },
+            'preferences': {
+                'geStatus': {'remaining': ['CC', 'ER'], 'source': 'UCSC'},
+                'targetCredits': 15
+            },
+            'currentSchedule': [],
+            'history': []
+        }
+        res = self.client.post('/api/agent/process/', data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['success'])
+
+        proposed = data['data']['proposedCourses']
+        self.assertGreaterEqual(len(proposed), 2)
+
+        # Should propose courses matching CC (PHIL 11) and ER (HIS 10A)
+        proposed_codes = [c.get('code') for c in proposed]
+        self.assertIn('PHIL 11', proposed_codes)
+        self.assertIn('HIS 10A', proposed_codes)

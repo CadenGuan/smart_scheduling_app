@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient';
-import { ConferenceDeadline } from 'shared';
+import { CalendarEvent, ConferenceDeadline } from 'shared';
 
 export class CalendarService {
   /**

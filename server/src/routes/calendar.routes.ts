@@ -70,7 +70,9 @@ router.post('/events', requireAuth, (req: AuthenticatedRequest, res: Response) =
   const term = (req.body.term as string) || 'Winter 2027';
   const events = req.body.events || [];
   calendarQueries.saveUserCalendarEvents(userId, term, events);
-  res.status(200).json({ success: true, message: 'Schedule saved successfully', count: events.length });
+  res
+    .status(200)
+    .json({ success: true, message: 'Schedule saved successfully', count: events.length });
 });
 
 // GET /api/calendar/events - Retrieve saved custom schedule

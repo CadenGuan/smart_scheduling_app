@@ -1,7 +1,146 @@
+import os
+import re
 import json
-from typing import Dict, Any, List
+from pathlib import Path
+from typing import Dict, Any, List, Optional
 from langchain_core.tools import tool
 from .dag_solver import get_prerequisite_chain, get_downstream_impact, audit_degree_progress
+
+# Catalog cache
+_CATALOG_CACHE: Optional[List[Dict[str, Any]]] = None
+
+def get_course_catalog() -> List[Dict[str, Any]]:
+    """Loads and caches the course catalog dataset from data/courses.json."""
+    global _CATALOG_CACHE
+    if _CATALOG_CACHE is not None:
+        return _CATALOG_CACHE
+
+    possible_paths = [
+        os.environ.get('COURSES_DATA_PATH'),
+        str(Path(__file__).resolve().parents[2] / 'data' / 'courses.json'),
+        str(Path(__file__).resolve().parents[1] / 'data' / 'courses.json'),
+        str(Path.cwd() / 'data' / 'courses.json'),
+    ]
+    for p in possible_paths:
+        if p and os.path.exists(p):
+            try:
+                with open(p, 'r', encoding='utf-8') as f:
+                    _CATALOG_CACHE = json.load(f)
+                    return _CATALOG_CACHE
+            except Exception:
+                pass
+
+    _CATALOG_CACHE = []
+    return _CATALOG_CACHE
+
+def find_courses(
+    query: str = "",
+    term: str = "Winter 2027",
+    department: str = "",
+    ge_type: str = ""
+) -> List[Dict[str, Any]]:
+    """
+    Searches the in-memory course catalog matching query, term, department, and ge_type.
+    Returns a list of matching course dictionaries with full CalendarEvent attributes.
+    """
+    catalog = get_course_catalog()
+    results = []
+
+    q = (query or "").strip().lower()
+    t = (term or "").strip().lower()
+    dept = (department or "").strip().upper()
+    ge = (ge_type or "").strip().upper()
+
+    for course in catalog:
+        # Filter by term if provided
+        if t:
+            course_term = (course.get('term') or "").strip().lower()
+            if t not in course_term and course_term not in t:
+                continue
+
+        # Filter by department if provided
+        if dept:
+            course_dept = (course.get('department') or "").strip().upper()
+            course_code = (course.get('code') or "").strip().upper()
+            if dept != course_dept and not course_code.startswith(dept) and dept not in course_dept:
+                continue
+
+        # Filter by GE type if provided
+        if ge:
+            course_ge = (course.get('ge') or "").strip().upper()
+            if not course_ge:
+                continue
+            if ge not in course_ge and not course_ge.startswith(ge):
+                continue
+
+        # Filter by query keyword if provided
+        if q:
+            matchable = " ".join([
+                str(course.get('code') or ""),
+                str(course.get('title') or ""),
+                str(course.get('instructor') or ""),
+                str(course.get('location') or ""),
+                str(course.get('description') or ""),
+                str(course.get('department') or ""),
+                str(course.get('ge') or ""),
+            ]).lower()
+
+            tokens = q.split()
+            if q not in matchable and not all(token in matchable for token in tokens):
+                continue
+
+        course_copy = dict(course)
+        if 'color' not in course_copy:
+            course_copy['color'] = '#00B4DB'
+        results.append(course_copy)
+
+    return results
+
+def is_course_requested_or_pinned(prompt: str, course: Dict[str, Any]) -> bool:
+    """
+    Determines if the user explicitly requested, pinned, or demanded a specific course in their prompt.
+    """
+    if not prompt:
+        return False
+
+    prompt_lower = prompt.lower()
+    code = (course.get('code') or "").lower()
+    cid = (course.get('id') or "").lower()
+    code_no_space = code.replace(" ", "")
+
+    course_in_prompt = (
+        (code and re.search(r'\b' + re.escape(code) + r'\b', prompt_lower)) or
+        (code_no_space and re.search(r'\b' + re.escape(code_no_space) + r'\b', prompt_lower)) or
+        (cid and cid in prompt_lower)
+    )
+
+    if not course_in_prompt:
+        return False
+
+    # Negative checks: if course is specifically being dropped, asked about for prereqs/why, or replaced
+    if re.search(r'\b(drop|withdraw|remove|drop\s+out\s+of)\b[^.?!;,]*\b' + re.escape(code) + r'\b', prompt_lower):
+        return False
+    if re.search(r'\b(why\s+(?:do\s+you\s+)?recommend|prereq|prerequisite|path\s+to\s+take)\b[^.?!;,]*\b' + re.escape(code) + r'\b', prompt_lower):
+        return False
+    if re.search(r'\binstead\s+of\b[^.?!;,]*\b' + re.escape(code) + r'\b', prompt_lower):
+        return False
+
+    # Explicit pin keywords
+    if re.search(r'\bpin(?:ned)?\b', prompt_lower):
+        return True
+
+    # Demand / addition / want patterns
+    intent_patterns = [
+        rf'\b(want|need|add|take|include|enroll|demand|must\s+have|require|put|sign\s+up\s+for)\b[^.?!;,]*\b{re.escape(code)}\b',
+        rf'\b(want|need|add|take|include|enroll|demand|must\s+have|require|put|sign\s+up\s+for)\b[^.?!;,]*\b{re.escape(code_no_space)}\b',
+        rf'\b{re.escape(code)}\b[^.?!;,]*\b(instead|please|is\s+required|must\s+be)\b',
+        rf'\b{re.escape(code_no_space)}\b[^.?!;,]*\b(instead|please|is\s+required|must\s+be)\b',
+    ]
+    for pat in intent_patterns:
+        if re.search(pat, prompt_lower):
+            return True
+
+    return False
 
 # Context storage passed into tools at runtime
 _active_context: Dict[str, Any] = {}
@@ -109,6 +248,17 @@ def update_schedule_preferences(
         'updates': updates,
     })
 
+@tool
+def search_course_catalog(
+    query: str = "",
+    term: str = "Winter 2027",
+    department: str = "",
+    ge_type: str = ""
+) -> str:
+    """Searches the official UCSC course catalog by query keyword, term, department code, or GE requirement category."""
+    matches = find_courses(query=query, term=term, department=department, ge_type=ge_type)
+    return json.dumps(matches)
+
 def get_inspection_tools():
     return [
         inspect_student_profile,
@@ -119,4 +269,5 @@ def get_inspection_tools():
         assess_drop_impact,
         audit_degree_progress_tool,
         update_schedule_preferences,
+        search_course_catalog,
     ]

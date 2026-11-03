@@ -1,6 +1,8 @@
 import os
+import re
+import json
 from typing import Dict, Any, List
-from .tools import set_tool_context, get_inspection_tools
+from .tools import set_tool_context, get_inspection_tools, get_course_catalog, is_course_requested_or_pinned
 from .mock_agent import run_mock_agent
 from agent_api.prompt_builder import build_system_prompt, format_history_messages
 
@@ -79,8 +81,60 @@ def run_agent(
         else:
             content_text = ai_msg.content
 
+        # Extract proposed courses matching CalendarEvent schema
+        proposed_courses: List[Dict[str, Any]] = []
+        course_ids_seen = set()
+
+        # 1. Collect from executed search_course_catalog tool calls
+        for tc in tool_calls_executed:
+            if tc.get('tool') == 'search_course_catalog':
+                output_val = tc.get('output')
+                if isinstance(output_val, str):
+                    try:
+                        parsed = json.loads(output_val)
+                    except Exception:
+                        parsed = []
+                elif isinstance(output_val, list):
+                    parsed = output_val
+                else:
+                    parsed = []
+
+                if isinstance(parsed, list):
+                    for c in parsed:
+                        if isinstance(c, dict) and 'id' in c and c['id'] not in course_ids_seen:
+                            course_ids_seen.add(c['id'])
+                            proposed_courses.append(dict(c))
+
+        # 2. Collect any courses mentioned by code or id in agent output or user prompt
+        catalog = get_course_catalog()
+        combined_text = (str(content_text) + " " + prompt).lower()
+        for cat_course in catalog:
+            code_lower = (cat_course.get('code') or '').lower()
+            id_lower = (cat_course.get('id') or '').lower()
+            if cat_course['id'] not in course_ids_seen:
+                if (code_lower and re.search(r'\b' + re.escape(code_lower) + r'\b', combined_text)) or \
+                   (id_lower and id_lower in combined_text):
+                    course_ids_seen.add(cat_course['id'])
+                    proposed_courses.append(dict(cat_course))
+
+        # 3. Detect and set pinned status based on explicit user requests
+        for candidate in proposed_courses:
+            candidate['pinned'] = is_course_requested_or_pinned(prompt, candidate)
+
+        # Prioritize pinned courses and directly recommended courses
+        def get_priority(c: Dict[str, Any]) -> int:
+            if c.get('pinned'):
+                return 0
+            code_l = (c.get('code') or '').lower()
+            if code_l and re.search(r'\b' + re.escape(code_l) + r'\b', str(content_text).lower()):
+                return 1
+            return 2
+
+        proposed_courses.sort(key=get_priority)
+
         return {
             'response': str(content_text),
+            'proposedCourses': proposed_courses,
             'toolCalls': tool_calls_executed,
             'model': 'gemini-1.5-flash',
         }
@@ -88,5 +142,7 @@ def run_agent(
     except Exception as e:
         # Fallback to mock agent on API error or connection failure
         mock_result = run_mock_agent(prompt, student, preferences, schedule, history)
+        if 'proposedCourses' not in mock_result:
+            mock_result['proposedCourses'] = []
         mock_result['metadata'] = {'fallbackReason': str(e)}
         return mock_result
