@@ -59,8 +59,26 @@ CREATE TABLE IF NOT EXISTS conversations (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 6. User Calendar Events Table (Active and Agent-Generated Schedules)
+CREATE TABLE IF NOT EXISTS user_calendar_events (
+  event_id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  course_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  type TEXT NOT NULL,
+  days TEXT NOT NULL,
+  start_time TEXT NOT NULL,
+  end_time TEXT NOT NULL,
+  credits INTEGER DEFAULT 5,
+  term TEXT NOT NULL,
+  pinned BOOLEAN DEFAULT 0,
+  conflict_badges TEXT DEFAULT '[]',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes for fast query lookups
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_user_created ON conversations(user_id, created_at ASC);
+CREATE INDEX IF NOT EXISTS idx_user_calendar_events_user_term ON user_calendar_events(user_id, term);

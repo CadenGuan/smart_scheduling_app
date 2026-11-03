@@ -48,4 +48,31 @@ export const runPreferencesMigration = (targetDb: any = db): void => {
 };
 runPreferencesMigration(db);
 
+// Runtime migration safeguard: ensure user_calendar_events table and index exist
+export const runCalendarEventsMigration = (targetDb: any = db): void => {
+  try {
+    targetDb.exec(`
+      CREATE TABLE IF NOT EXISTS user_calendar_events (
+        event_id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+        course_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        type TEXT NOT NULL,
+        days TEXT NOT NULL,
+        start_time TEXT NOT NULL,
+        end_time TEXT NOT NULL,
+        credits INTEGER DEFAULT 5,
+        term TEXT NOT NULL,
+        pinned BOOLEAN DEFAULT 0,
+        conflict_badges TEXT DEFAULT '[]',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_user_calendar_events_user_term ON user_calendar_events(user_id, term);
+    `);
+  } catch (err) {
+    console.error('[Database] Migration error while verifying user_calendar_events table:', err);
+  }
+};
+runCalendarEventsMigration(db);
+
 export default db;

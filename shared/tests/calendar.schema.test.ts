@@ -54,6 +54,20 @@ describe('Calendar Schema Architectural Contract Tests [TESTING_GOLDEN_RULES.md 
       expect(parsed.success).toBe(true);
     });
 
+    it('validates calendar event with pinned flag true and false', () => {
+      const pinnedEvent = {
+        ...validEvent,
+        pinned: true,
+      };
+      const unpinnedEvent = {
+        ...validEvent,
+        pinned: false,
+      };
+      expect(CalendarEventSchema.safeParse(pinnedEvent).success).toBe(true);
+      expect(CalendarEventSchema.safeParse(unpinnedEvent).success).toBe(true);
+      expect(CalendarEventSchema.parse(pinnedEvent).pinned).toBe(true);
+    });
+
     it('validates minimal calendar event without optional fields', () => {
       const minimalEvent = {
         id: 'gcal-shift',

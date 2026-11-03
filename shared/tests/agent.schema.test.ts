@@ -76,6 +76,65 @@ describe('Agent Zod Schema Contract Test Suite', () => {
       expect(parsed.success).toBe(true);
       expect(parsed.data.agentMessage.content).toBe('Welcome back!');
     });
+
+    it('validates agent chat response with proposedCourses and calendar preview', () => {
+      const payload = {
+        success: true,
+        data: {
+          userMessage: {
+            messageId: 'u-1',
+            userId: 'usr-1',
+            sender: 'USER',
+            content: 'Recommend CSE 101 and CSE 130',
+            createdAt: '2026-11-03T12:00:00Z',
+          },
+          agentMessage: {
+            messageId: 'a-1',
+            userId: 'usr-1',
+            sender: 'AGENT',
+            content: 'I have proposed CSE 101 and CSE 130 for your schedule.',
+            createdAt: '2026-11-03T12:00:01Z',
+          },
+          proposedCourses: [
+            {
+              id: 'cse-101-01',
+              title: 'CSE 101: Introduction to Data Structures and Algorithms',
+              type: 'MAJOR',
+              days: ['Tuesday', 'Thursday'],
+              startTime: '10:00',
+              endTime: '11:35',
+              color: '#00B4DB',
+              credits: 5,
+              term: 'Winter 2027',
+              pinned: true,
+            },
+          ],
+          preview: {
+            term: 'Winter 2027',
+            totalCredits: 5,
+            events: [
+              {
+                id: 'cse-101-01',
+                title: 'CSE 101: Introduction to Data Structures and Algorithms',
+                type: 'MAJOR',
+                days: ['Tuesday', 'Thursday'],
+                startTime: '10:00',
+                endTime: '11:35',
+                color: '#00B4DB',
+                credits: 5,
+                term: 'Winter 2027',
+                pinned: true,
+              },
+            ],
+          },
+        },
+      };
+      const parsed = AgentChatResponseSchema.parse(payload);
+      expect(parsed.success).toBe(true);
+      expect(parsed.data.proposedCourses).toHaveLength(1);
+      expect(parsed.data.proposedCourses?.[0].pinned).toBe(true);
+      expect(parsed.data.preview?.totalCredits).toBe(5);
+    });
   });
 
   describe('AgentMessagesResponseSchema and ClearChatResponseSchema', () => {
