@@ -2,7 +2,7 @@ import React from 'react';
 import { BaseComponent } from '../components/base/BaseComponent';
 import { Navbar } from '../components/layout/Navbar';
 import { PreferencesModal } from '../components/layout/PreferencesModal';
-import { AgentPlaceholder } from '../components/dashboard/AgentPlaceholder';
+import { AgentWorkspace } from '../components/dashboard/AgentWorkspace';
 import { CalendarPreview } from '../components/dashboard/CalendarPreview';
 import { apiClient } from '../services/apiClient';
 import { UserService } from '../services/userService';
@@ -131,9 +131,9 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
         />
 
         <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Panel: SlugAgent Placeholder (38% ~ 5 columns on desktop) */}
+          {/* Left Panel: SlugAgent Workspace (38% ~ 5 columns on desktop) */}
           <div className="lg:col-span-5 h-[calc(100vh-112px)] min-h-[600px]">
-            <AgentPlaceholder user={user} />
+            <AgentWorkspace user={user} />
           </div>
 
           {/* Right Panel: Weekly Calendar Grid Preview (62% ~ 7 columns on desktop) */}

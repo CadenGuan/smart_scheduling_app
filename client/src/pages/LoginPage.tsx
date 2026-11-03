@@ -35,6 +35,39 @@ class LoginPageComponent extends BaseFormView<WithRouterProps, LoginState> {
     };
   }
 
+  async componentDidMount() {
+    super.componentDidMount();
+    if (typeof window === 'undefined') return;
+
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const oauthError = params.get('error');
+
+    if (oauthError) {
+      this.setFieldError('general', `Google Sign-In was cancelled or failed (${oauthError}).`);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+
+    if (code) {
+      this.safeSetState({ googleLoading: true, errors: {} });
+      try {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        const data = await AuthService.exchangeGoogleCode(code);
+        useAuthStore.getState().setAuth(data.token, data.user);
+        if (data.onboardingCompleted) {
+          this.props.navigate('/dashboard');
+        } else {
+          this.props.navigate('/onboarding');
+        }
+      } catch (err: any) {
+        this.setFieldError('general', err.message || 'Failed to complete Google Sign-In.');
+      } finally {
+        this.safeSetState({ googleLoading: false });
+      }
+    }
+  }
+
   toggleMode = (): void => {
     this.safeSetState((prev) => ({
       isSignUp: !prev.isSignUp,
@@ -45,6 +78,12 @@ class LoginPageComponent extends BaseFormView<WithRouterProps, LoginState> {
   handleGoogleAuthClick = async (): Promise<void> => {
     this.safeSetState({ googleLoading: true, errors: {} });
     try {
+      const { configured, url } = await AuthService.getGoogleAuthUrl();
+      if (configured && url) {
+        window.location.href = url;
+        return;
+      }
+
       const data = await AuthService.googleAuth({
         idToken: 'mock-google-token-slug@ucsc.edu',
         isMock: true,

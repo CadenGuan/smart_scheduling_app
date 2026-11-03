@@ -16,4 +16,5 @@ export const config = {
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
   GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5173',
+  DJANGO_AGENT_URL: process.env.DJANGO_AGENT_URL || 'http://127.0.0.1:8000',
 };

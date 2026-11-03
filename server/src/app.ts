@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.routes.js';
 import usersRoutes from './routes/users.routes.js';
 import progressRoutes from './routes/progress.routes.js';
 import calendarRoutes from './routes/calendar.routes.js';
+import agentRoutes from './routes/agent.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -22,6 +23,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/users', progressRoutes);
 app.use('/api/calendar', calendarRoutes);
+app.use('/api/agent', agentRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

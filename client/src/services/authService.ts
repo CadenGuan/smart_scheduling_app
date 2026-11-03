@@ -12,6 +12,18 @@ export class AuthService {
     return res.data;
   }
 
+  static async getGoogleAuthUrl(): Promise<{ configured: boolean; url: string | null }> {
+    const res = await apiClient.get<{ success: boolean; data: { configured: boolean; url: string | null } }>(
+      '/api/auth/google/url'
+    );
+    return res.data;
+  }
+
+  static async exchangeGoogleCode(code: string): Promise<AuthResponse['data']> {
+    const res = await apiClient.post<AuthResponse>('/api/auth/google/code', { code });
+    return res.data;
+  }
+
   static async googleAuth(data: GoogleAuthRequest): Promise<AuthResponse['data']> {
     const res = await apiClient.post<AuthResponse>('/api/auth/google', data);
     return res.data;

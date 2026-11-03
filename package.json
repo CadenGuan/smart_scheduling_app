@@ -10,10 +10,14 @@
     "client"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace=server\" \"npm run dev --workspace=client\"",
+    "dev": "concurrently \"npm run dev --workspace=server\" \"npm run dev --workspace=client\" \"npm run dev:agent\"",
+    "dev:agent": "agent_service/.venv/bin/python agent_service/manage.py runserver 8000",
+    "setup:agent": "python3.12 -m venv agent_service/.venv && agent_service/.venv/bin/pip install -r agent_service/requirements.txt",
+    "db:reset": "rm -f data/app.db*",
     "build": "npm run build --workspace=shared && npm run build --workspace=server && npm run build --workspace=client",
     "test": "npm run test --workspaces --if-present",
     "test:coverage": "npm run test --workspaces --if-present -- --coverage",
+    "test:agent": "PYTHONPATH=agent_service DJANGO_SETTINGS_MODULE=agent_service.settings agent_service/.venv/bin/pytest agent_service/tests",
     "typecheck": "npm run typecheck --workspaces",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

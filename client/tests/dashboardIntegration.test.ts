@@ -324,7 +324,7 @@ describe('Dashboard Integration Test Suite (Ticket 05)', () => {
       expect(html).toContain('Edit Preferences');
 
       // SlugAgent Student snapshot
-      expect(html).toContain('Sammy Slug');
+      expect(html).toContain('SlugAgent Advisor');
       expect(html).toContain('Junior • Computer Science B.S.');
 
       // Calendar preview
