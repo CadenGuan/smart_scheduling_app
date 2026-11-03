@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CalendarEventSchema, CalendarPreviewResponseSchema } from './calendar.schema.js';
 
 export const AgentSenderEnum = z.enum(['USER', 'AGENT', 'SYSTEM']);
 export type AgentSender = z.infer<typeof AgentSenderEnum>;
@@ -28,6 +29,8 @@ export const AgentChatResponseSchema = z.object({
   data: z.object({
     userMessage: AgentMessageSchema,
     agentMessage: AgentMessageSchema,
+    proposedCourses: z.array(CalendarEventSchema).optional(),
+    preview: CalendarPreviewResponseSchema.shape.data.optional(),
   }),
 });
 export type AgentChatResponse = z.infer<typeof AgentChatResponseSchema>;

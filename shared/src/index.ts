@@ -42,6 +42,15 @@ export {
 } from './calendar.schema.js';
 
 export {
+  AgentSenderEnum,
+  AgentChatRequestSchema,
+  AgentMessageSchema,
+  AgentChatResponseSchema,
+  AgentMessagesResponseSchema,
+  ClearChatResponseSchema,
+} from './agent.schema.js';
+
+export {
   ConferenceTierEnum,
   ConferenceDeadlineSchema,
   DeadlinesResponseSchema,

@@ -27,6 +27,7 @@ export const CalendarEventSchema = z.object({
   term: z.string().optional(),
   conflictBadge: z.string().optional(),
   conflictBadges: z.array(ConflictBadgeSchema).optional(),
+  pinned: z.boolean().optional(),
 });
 export type CalendarEvent = z.infer<typeof CalendarEventSchema>;
 
