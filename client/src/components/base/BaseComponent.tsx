@@ -6,6 +6,7 @@ import React from 'react';
  */
 export abstract class BaseComponent<P = {}, S = {}> extends React.Component<P, S> {
   protected _isMounted: boolean = false;
+  protected _hasUnmounted: boolean = false;
 
   componentDidMount(): void {
     this._isMounted = true;
@@ -13,6 +14,7 @@ export abstract class BaseComponent<P = {}, S = {}> extends React.Component<P, S
 
   componentWillUnmount(): void {
     this._isMounted = false;
+    this._hasUnmounted = true;
   }
 
   /**
@@ -25,8 +27,23 @@ export abstract class BaseComponent<P = {}, S = {}> extends React.Component<P, S
       | (Pick<S, K> | S | null),
     callback?: () => void
   ): void {
-    if (this._isMounted) {
+    if (this._hasUnmounted) return;
+
+    const nextPartial =
+      typeof state === 'function' ? (state as any)(this.state, this.props) : state;
+    if (nextPartial) {
+      this.state = Object.assign({}, this.state, nextPartial);
+    }
+
+    const isFiberMounted =
+      typeof (this as any).updater?.isMounted === 'function'
+        ? (this as any).updater.isMounted(this)
+        : this._isMounted;
+
+    if (this._isMounted && isFiberMounted) {
       this.setState(state as any, callback);
+    } else if (callback) {
+      callback();
     }
   }
 

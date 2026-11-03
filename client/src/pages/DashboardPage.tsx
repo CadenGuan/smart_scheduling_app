@@ -20,7 +20,7 @@ interface DashboardState {
   isLoading: boolean;
 }
 
-class DashboardPageComponent extends BaseComponent<WithRouterProps, DashboardState> {
+export class DashboardPageComponent extends BaseComponent<WithRouterProps, DashboardState> {
   constructor(props: WithRouterProps) {
     super(props);
     this.state = {
@@ -82,6 +82,11 @@ class DashboardPageComponent extends BaseComponent<WithRouterProps, DashboardSta
       success: boolean;
       data: { term: string; totalCredits: number; events: CalendarEvent[] };
     }>('/api/calendar/preview');
+
+    const currentToken = useAuthStore.getState().token;
+    if (currentToken && updatedUser) {
+      useAuthStore.getState().setAuth(currentToken, updatedUser);
+    }
 
     this.safeSetState({
       user: updatedUser,

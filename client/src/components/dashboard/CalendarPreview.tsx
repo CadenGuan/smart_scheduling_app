@@ -52,11 +52,11 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
     return totalMinutes * pxPerMinute;
   }
 
-  calculateHeight(startTime: string, endTime: string): number {
+  calculateHeight(startTime: string, endTime: string, hasConflict = false): number {
     const [sh, sm] = startTime.split(':').map((v) => parseInt(v, 10));
     const [eh, em] = endTime.split(':').map((v) => parseInt(v, 10));
     const durationMinutes = (eh - sh) * 60 + (em - sm);
-    return Math.max(durationMinutes * 1, 35);
+    return Math.max(durationMinutes * 1, hasConflict ? 50 : 35);
   }
 
   render() {
@@ -133,7 +133,10 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
                   {/* Rendered Event Cards */}
                   {dayEvents.map((ev) => {
                     const top = this.calculateTopOffset(ev.startTime);
-                    const height = this.calculateHeight(ev.startTime, ev.endTime);
+                    const hasConflict = Boolean(
+                      ev.conflictBadge || (ev.conflictBadges && ev.conflictBadges.length > 0)
+                    );
+                    const height = this.calculateHeight(ev.startTime, ev.endTime, hasConflict);
 
                     return (
                       <CourseCard

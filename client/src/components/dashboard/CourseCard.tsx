@@ -65,10 +65,24 @@ export class CourseCard extends BaseCardComponent<CourseCardProps, BaseCardState
           </span>
           {event.location && <span className="truncate max-w-[80px]">{event.location}</span>}
         </div>
-        {event.conflictBadge && (
-          <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5 truncate">
-            <span>⚠️</span>
-            <span className="truncate">{event.conflictBadge}</span>
+        {(event.conflictBadge || (event.conflictBadges && event.conflictBadges.length > 0)) && (
+          <div className="mt-1 flex flex-col gap-0.5">
+            {event.conflictBadges && event.conflictBadges.length > 0 ? (
+              event.conflictBadges.map((badge, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5 truncate"
+                >
+                  <span>⚠️</span>
+                  <span className="truncate">{badge}</span>
+                </div>
+              ))
+            ) : (
+              <div className="flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5 truncate">
+                <span>⚠️</span>
+                <span className="truncate">{event.conflictBadge}</span>
+              </div>
+            )}
           </div>
         )}
       </div>

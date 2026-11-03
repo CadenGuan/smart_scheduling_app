@@ -64,11 +64,14 @@ export class CourseDetailsModal extends BaseComponent<CourseDetailsModalProps> {
                 {event.startTime} – {event.endTime}
               </span>
             </div>
-            {event.conflictBadge && (
+            {(event.conflictBadge || (event.conflictBadges && event.conflictBadges.length > 0)) && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 text-xs text-amber-800">
                 <span>⚠️</span>
                 <span>
-                  <strong>Scheduling Conflict Note:</strong> {event.conflictBadge}
+                  <strong>Scheduling Conflict Note:</strong>{' '}
+                  {event.conflictBadges && event.conflictBadges.length > 0
+                    ? event.conflictBadges.join(', ')
+                    : event.conflictBadge}
                 </span>
               </div>
             )}
