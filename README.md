@@ -1,6 +1,6 @@
 # 🐌 SlugSchedule — UCSC Smart Scheduling App
 
-[![CI / Automated Tests](https://img.shields.io/badge/tests-266%20passed-brightgreen.svg)](#testing--verification)
+[![CI / Automated Tests](https://img.shields.io/badge/tests-311%20passed-brightgreen.svg)](#testing--verification)
 [![TypeScript Monorepo](https://img.shields.io/badge/monorepo-npm%20workspaces-blue.svg)](#system-architecture)
 [![Python 3.11](https://img.shields.io/badge/agent-Python%203.11%20%2B%20NetworkX-yellow.svg)](#intelligent-agent-service-agent_service)
 [![Docker Compose](https://img.shields.io/badge/docker-multi--service%20compose-2496ED.svg)](#docker-containerization--orchestration)
@@ -140,7 +140,7 @@ The Docker Compose configuration provisions:
 
 ## 🧪 Testing & Verification
 
-The codebase maintains a **100% test pass rate** across all 4 packages with **266 automated tests**:
+The codebase maintains a **100% test pass rate** across all 4 packages with **311 automated tests**:
 
 ```bash
 # Run all TypeScript test suites (shared, server, client)
@@ -159,11 +159,11 @@ npm run typecheck
 ### Test Breakdown
 | Package | Test Framework | Passing Tests | Test Files |
 | :--- | :--- | :---: | :---: |
-| `shared` | Vitest | **33** | 4 |
-| `server` | Vitest + Supertest | **128** | 8 |
-| `client` | Vitest + React DOM | **91** | 9 |
-| `agent_service` | Pytest + Django Test | **14** | 1 |
-| **Total** | | **266 Passed** | **22 Files** |
+| `shared` | Vitest | **47** (100% coverage) | 6 |
+| `server` | Vitest + Supertest | **151** | 9 |
+| `client` | Vitest + React DOM | **94** | 9 |
+| `agent_service` | Pytest + Django Test | **19** | 1 |
+| **Total** | | **311 Passed** | **25 Files** |
 
 ---
 

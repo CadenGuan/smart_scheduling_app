@@ -50,7 +50,7 @@ The application produces conflict-free, timestamped quarterly schedules that exp
 - [x] **Academic & Research Conference Deadlines Hub (Item 2):** Consolidated deadlines view for undergraduate showcases (UCSC URS, ICSE SRC, SIGCSE) and top-tier venues (OSDI, NeurIPS) with 1-day advance reminder `.ics` export and agent tool integration.
 - [x] **OWASP Security Hardening (Item 3):** Content Security Policy, MIME-sniffing protection, clickjacking defense, HSTS, sliding-window rate limiting on auth endpoints, and payload size bounds.
 - [x] **High-Performance Database & Bundling (Item 4):** SQLite WAL mode with 64MB page cache (`PRAGMA cache_size = -64000;`) and Vite vendor runtime chunk splitting.
-- [x] **Comprehensive Test Suite (Item 5):** **266 automated tests** with a **100% pass rate** across all packages.
+- [x] **Comprehensive Test Suite (Item 5):** **311 automated tests** with a **100% pass rate** across all packages.
 
 ---
 
@@ -76,42 +76,45 @@ The application produces conflict-free, timestamped quarterly schedules that exp
 
 ```text
 ================================================================================
-TOTAL AUTOMATED TESTS: 266 PASSED | 0 FAILED | 22 TEST FILES
+TOTAL AUTOMATED TESTS: 311 PASSED | 0 FAILED | 25 TEST FILES
 ================================================================================
 
 1. shared package (Vitest):
    ✓ tests/auth.schema.test.ts        (5 tests)
    ✓ tests/user.schema.test.ts        (17 tests)
    ✓ tests/onboarding.schema.test.ts  (4 tests)
-   ✓ tests/calendar.schema.test.ts    (7 tests)
-   Result: 33 / 33 passed
+   ✓ tests/calendar.schema.test.ts    (8 tests)
+   ✓ tests/deadline.schema.test.ts    (4 tests)
+   ✓ tests/agent.schema.test.ts       (9 tests)
+   Result: 47 / 47 passed (100% code coverage)
 
 2. server package (Vitest + Supertest):
    ✓ tests/auth.test.ts               (7 tests)
    ✓ tests/preferences.test.ts        (38 tests)
    ✓ tests/progress.test.ts           (3 tests)
-   ✓ tests/calendar.service.test.ts   (25 tests)
+   ✓ tests/calendar.service.test.ts   (39 tests)
+   ✓ tests/calendarQueries.test.ts    (9 tests)
    ✓ tests/agent.test.ts              (11 tests)
    ✓ tests/ics.test.ts                (6 tests)
    ✓ tests/security.test.ts           (7 tests)
    ✓ tests/fullCoverage.test.ts       (31 tests)
-   Result: 128 / 128 passed
+   Result: 151 / 151 passed
 
 3. client package (Vitest + React DOM Server):
    ✓ tests/authStore.test.ts          (5 tests)
    ✓ tests/tourWalkthrough.test.ts    (8 tests)
    ✓ tests/deadlinesModal.test.ts     (7 tests)
-   ✓ tests/prereqTreeModal.test.ts    (7 tests)
-   ✓ tests/services.test.ts           (19 tests)
+   ✓ tests/prereqTreeModal.test.ts    (9 tests)
+   ✓ tests/services.test.ts           (20 tests)
    ✓ tests/agentWorkspace.test.ts     (7 tests)
    ✓ tests/conflictBadges.test.ts     (15 tests)
    ✓ tests/preferencesModal.test.ts   (15 tests)
    ✓ tests/dashboardIntegration.test.ts (8 tests)
-   Result: 91 / 91 passed
+   Result: 94 / 94 passed
 
 4. agent_service package (Pytest + Django):
-   ✓ tests/test_agent_api.py          (14 tests)
-   Result: 14 / 14 passed
+   ✓ tests/test_agent_api.py          (19 tests)
+   Result: 19 / 19 passed
 ```
 
 ---
