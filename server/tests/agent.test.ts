@@ -2,6 +2,8 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
 import { app } from '../src/app.js';
 import { conversationQueries } from '../src/db/queries/conversationQueries.js';
+import { userQueries } from '../src/db/queries/userQueries.js';
+import { ContextService } from '../src/services/context.service.js';
 
 describe('Interactive Agent & Conversation API Contract Tests', () => {
   let userTokenA = '';
@@ -106,6 +108,24 @@ describe('Interactive Agent & Conversation API Contract Tests', () => {
       expect(agentMsgInDb?.sender).toBe('AGENT');
     });
 
+    it('POST /api/agent/chat should answer "why" questions with rationale explanation and tool call', async () => {
+      const prompt = 'Why did you recommend CSE 101?';
+      const res = await request(app)
+        .post('/api/agent/chat')
+        .set('Authorization', `Bearer ${userTokenA}`)
+        .send({ prompt });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.agentMessage.content).toContain('CSE 101');
+      expect(res.body.data.agentMessage.content).toContain('Prerequisite Unblocking');
+      expect(res.body.data.agentMessage.toolCalls).toBeDefined();
+      const hasRationaleTool = res.body.data.agentMessage.toolCalls.some(
+        (tc: any) => tc.tool === 'explain_course_rationale'
+      );
+      expect(hasRationaleTool).toBe(true);
+    });
+
     it('GET /api/agent/messages should return recent messages in chronological order', async () => {
       const res = await request(app)
         .get('/api/agent/messages')
@@ -149,6 +169,33 @@ describe('Interactive Agent & Conversation API Contract Tests', () => {
         .get('/api/agent/messages')
         .set('Authorization', `Bearer ${userTokenB}`);
       expect(userBRes.body.data.messages.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  describe('ContextService Live Integration', () => {
+    it('assembleContext should parse user preferences and attach active calendar schedule', () => {
+      userQueries.updateUserProfile(userIdA, {
+        preferences: JSON.stringify({
+          targetCredits: 20,
+          preferredFreeDays: ['Friday'],
+          earliestStartTime: '09:00',
+          latestEndTime: '18:00',
+          maxBackToBackHours: 4,
+          breaks: [{ day: 'Monday', startTime: '12:00', endTime: '13:00', label: 'Lunch' }],
+        }),
+      });
+
+      const context = ContextService.assembleContext(userIdA);
+      expect(context.student.userId).toBe(userIdA);
+      expect(context.student.name).toBe(userA.name);
+      expect(context.preferences.targetCredits).toBe(20);
+      expect(context.preferences.preferredFreeDays).toEqual(['Friday']);
+      expect(context.preferences.earliestStartTime).toBe('09:00');
+      expect(context.preferences.latestEndTime).toBe('18:00');
+      expect(context.preferences.maxBackToBackHours).toBe(4);
+      expect(context.preferences.breaksPreference.length).toBe(1);
+      expect(context.currentSchedule).toBeDefined();
+      expect(context.currentSchedule.length).toBeGreaterThan(0);
     });
   });
 });

@@ -6,6 +6,7 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface AgentWorkspaceProps {
   user: UserProfile | null;
+  onScheduleUpdated?: () => void;
 }
 
 interface AgentWorkspaceState {
@@ -105,6 +106,10 @@ export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWork
           isProcessing: false,
         };
       });
+
+      if (result.agentMessage.toolCalls && result.agentMessage.toolCalls.length > 0) {
+        this.props.onScheduleUpdated?.();
+      }
     } catch (err: any) {
       this.safeSetState({
         isProcessing: false,
@@ -182,7 +187,7 @@ export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWork
               <div className="max-w-xs space-y-1">
                 <h4 className="font-bold text-slate-800 text-sm">How can Sammy help you today?</h4>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  I can review your remaining General Education requirements, recommend prerequisite-friendly CS courses, or balance your quarterly workload.
+                  I can review your remaining General Education requirements, recommend prerequisite-friendly CS courses, explain why specific classes fit your timeline, or balance your workload.
                 </p>
               </div>
 
@@ -195,6 +200,7 @@ export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWork
                   {[
                     'What GE requirements do I have left?',
                     'Recommend courses for a 15-credit quarter',
+                    'Why should I take CSE 101?',
                     'How does CSE 115A fit with my schedule?',
                   ].map((chip, idx) => (
                     <button

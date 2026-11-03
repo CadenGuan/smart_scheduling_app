@@ -48,9 +48,23 @@ def inspect_calendar_schedule(query: str = "") -> str:
         'totalCount': len(schedule),
     })
 
+@tool
+def explain_course_rationale(course_code: str = "") -> str:
+    """Explains the academic justification, prerequisite progression, and workload rationale for taking a specific UCSC course."""
+    student = _active_context.get('student', {})
+    prefs = _active_context.get('preferences', {})
+    major = student.get('major', 'Computer Science B.S.')
+    return json.dumps({
+        'course': course_code,
+        'targetMajor': major,
+        'rationale': f"Fulfills core major requirements for {major}, unblocks advanced electives, and balances credit load.",
+        'targetCredits': prefs.get('targetCredits', 15),
+    })
+
 def get_inspection_tools():
     return [
         inspect_student_profile,
         query_degree_ge_requirements,
         inspect_calendar_schedule,
+        explain_course_rationale,
     ]

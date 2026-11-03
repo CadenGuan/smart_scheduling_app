@@ -81,6 +81,7 @@ describe('AgentWorkspace Component Suite', () => {
       expect(html).toContain('How can Sammy help you today?');
       expect(html).toContain('What GE requirements do I have left?');
       expect(html).toContain('Recommend courses for a 15-credit quarter');
+      expect(html).toContain('Why should I take CSE 101?');
     });
 
     it('renders conversation messages when history exists', async () => {
@@ -128,6 +129,36 @@ describe('AgentWorkspace Component Suite', () => {
       expect(workspace.state.messages).toHaveLength(2);
       expect(workspace.state.messages[1].content).toBe('Hello student! How can I help?');
       expect(workspace.state.isProcessing).toBe(false);
+    });
+
+    it('triggers onScheduleUpdated when agent response includes tool calls', async () => {
+      vi.spyOn(AgentService, 'getMessages').mockResolvedValue([]);
+      const onScheduleUpdated = vi.fn();
+      vi.spyOn(AgentService, 'sendMessage').mockResolvedValue({
+        userMessage: {
+          messageId: 'u-msg',
+          userId: mockUser.userId,
+          sender: 'USER',
+          content: 'Why CSE 101?',
+          createdAt: new Date().toISOString(),
+        },
+        agentMessage: {
+          messageId: 'a-msg',
+          userId: mockUser.userId,
+          sender: 'AGENT',
+          content: 'Because it unblocks electives.',
+          toolCalls: [{ tool: 'explain_course_rationale', output: {} }],
+          createdAt: new Date().toISOString(),
+        },
+      });
+
+      const workspace = new AgentWorkspace({ user: mockUser, onScheduleUpdated });
+      await workspace.componentDidMount();
+
+      (workspace as any).handleInputChange({ target: { value: 'Why CSE 101?' } });
+      await (workspace as any).handleSendMessage();
+
+      expect(onScheduleUpdated).toHaveBeenCalledTimes(1);
     });
 
     it('handles clear chat confirmation toggle and clear execution', async () => {

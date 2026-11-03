@@ -17,6 +17,21 @@ def build_system_prompt(student: Dict[str, Any], preferences: Dict[str, Any], cu
     major_reqs_taken = preferences.get('majorRequirementsTaken', [])
     breaks = preferences.get('breaksPreference', [])
 
+    preferred_free_days = preferences.get('preferredFreeDays', [])
+    earliest_start = preferences.get('earliestStartTime')
+    latest_end = preferences.get('latestEndTime')
+    max_b2b = preferences.get('maxBackToBackHours')
+
+    time_constraints = []
+    if preferred_free_days:
+        time_constraints.append(f"Preferred Free Days: {', '.join(preferred_free_days)}")
+    if earliest_start:
+        time_constraints.append(f"Earliest Start Time: {earliest_start}")
+    if latest_end:
+        time_constraints.append(f"Latest End Time: {latest_end}")
+    if max_b2b:
+        time_constraints.append(f"Max Back-to-Back Hours: {max_b2b}h")
+
     courses_summary = []
     for event in current_schedule:
         title = event.get('title', 'Unknown Course')
@@ -43,6 +58,7 @@ You specialize in UCSC degree requirements, Baskin School of Engineering major p
 - **Remaining / Unmet GE Categories:** {', '.join(remaining_ges) if remaining_ges else 'All GEs satisfied or none specified'}
 - **Major Requirements Completed:** {', '.join(major_reqs_taken) if major_reqs_taken else 'None marked yet'}
 - **Scheduled Time Breaks / Work Commitments:** {len(breaks)} registered break window(s)
+{f"- **Schedule Preferences:** {'; '.join(time_constraints)}" if time_constraints else ""}
 
 ### Current Weekly Calendar Schedule:
 {courses_text}
@@ -54,6 +70,8 @@ You specialize in UCSC degree requirements, Baskin School of Engineering major p
 4. If the student has time conflicts or busy commitments (such as Google Calendar blocks or dining hall shifts), advise against overlapping courses.
 5. In this sprint, you provide conversational recommendations and explain trade-offs. (Direct automated calendar editing will be enabled in an upcoming release).
 6. Always format responses in clean GitHub-flavored Markdown using bold headings, bulleted lists, and clear paragraphs.
+7. When asked 'why' or asked to justify a recommendation, explain your reasoning transparently: cite prerequisite progression unblocked, workload balance across programming assignments, GE requirement fulfillment, or avoiding back-to-back schedule fatigue.
+8. Reference previous discussion turns in the conversation when appropriate so returning students do not have to repeat themselves.
 """
     return system_prompt.strip()
 

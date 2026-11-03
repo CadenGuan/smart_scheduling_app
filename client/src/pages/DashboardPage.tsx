@@ -74,6 +74,22 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
     this.safeSetState({ isPreferencesOpen: false });
   };
 
+  handleRefreshSchedule = async (): Promise<void> => {
+    try {
+      const res = await apiClient.get<{
+        success: boolean;
+        data: { term: string; totalCredits: number; events: CalendarEvent[] };
+      }>('/api/calendar/preview');
+      this.safeSetState({
+        events: res.data.events,
+        term: res.data.term,
+        totalCredits: res.data.totalCredits,
+      });
+    } catch {
+      // Graceful fallback
+    }
+  };
+
   handleSavePreferences = async (
     updates: Partial<UserProfile & { preferences: any }>
   ): Promise<void> => {
@@ -98,6 +114,7 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
       events: res.data.events,
       term: res.data.term,
       totalCredits: res.data.totalCredits,
+      isPreferencesOpen: false,
     });
   };
 
@@ -133,7 +150,7 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
         <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Panel: SlugAgent Workspace (38% ~ 5 columns on desktop) */}
           <div className="lg:col-span-5 h-[calc(100vh-112px)] min-h-[600px]">
-            <AgentWorkspace user={user} />
+            <AgentWorkspace user={user} onScheduleUpdated={this.handleRefreshSchedule} />
           </div>
 
           {/* Right Panel: Weekly Calendar Grid Preview (62% ~ 7 columns on desktop) */}

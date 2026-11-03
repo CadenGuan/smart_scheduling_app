@@ -1,6 +1,7 @@
 import { userQueries } from '../db/queries/userQueries.js';
 import { progressQueries } from '../db/queries/progressQueries.js';
 import { conversationQueries } from '../db/queries/conversationQueries.js';
+import { CalendarService } from './calendar.service.js';
 import { sampleCalendarEvents } from '../db/seed.js';
 
 export interface AssembledContext {
@@ -17,6 +18,10 @@ export interface AssembledContext {
     geStatus: any;
     majorRequirementsTaken: string[];
     breaksPreference: any[];
+    preferredFreeDays?: string[];
+    earliestStartTime?: string;
+    latestEndTime?: string;
+    maxBackToBackHours?: number;
   };
   currentSchedule: any[];
   history: Array<{
@@ -37,6 +42,15 @@ export class ContextService {
         draftAnswers = JSON.parse(progress.draft_answers);
       } catch {
         draftAnswers = {};
+      }
+    }
+
+    let userPreferences: any = {};
+    if (user?.preferences) {
+      try {
+        userPreferences = JSON.parse(user.preferences);
+      } catch {
+        userPreferences = {};
       }
     }
 
@@ -77,7 +91,11 @@ export class ContextService {
       breaks = draftAnswers.breaks;
     }
 
-    const targetCredits = draftAnswers.targetCredits || 15;
+    if (userPreferences.breaks && Array.isArray(userPreferences.breaks) && userPreferences.breaks.length > 0) {
+      breaks = userPreferences.breaks;
+    }
+
+    const targetCredits = userPreferences.targetCredits || draftAnswers.targetCredits || 15;
 
     // Fetch the sliding window of the last 10 messages for context continuity
     const rawHistory = conversationQueries.getSlidingWindowMessages(userId, 10);
@@ -86,6 +104,16 @@ export class ContextService {
       content: m.content,
       createdAt: m.created_at,
     }));
+
+    let currentSchedule = sampleCalendarEvents;
+    try {
+      const preview = CalendarService.getPreview(userId);
+      if (preview && preview.events && preview.events.length > 0) {
+        currentSchedule = preview.events;
+      }
+    } catch {
+      currentSchedule = sampleCalendarEvents;
+    }
 
     return {
       student: {
@@ -101,8 +129,12 @@ export class ContextService {
         geStatus,
         majorRequirementsTaken: majorReqs,
         breaksPreference: breaks,
+        preferredFreeDays: userPreferences.preferredFreeDays || [],
+        earliestStartTime: userPreferences.earliestStartTime,
+        latestEndTime: userPreferences.latestEndTime,
+        maxBackToBackHours: userPreferences.maxBackToBackHours,
       },
-      currentSchedule: sampleCalendarEvents,
+      currentSchedule,
       history,
     };
   }
