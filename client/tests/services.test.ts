@@ -25,6 +25,7 @@ import { apiClient, ApiError } from '../src/services/apiClient';
 import { UserService } from '../src/services/userService';
 import { AuthService } from '../src/services/authService';
 import { ProgressService } from '../src/services/progressService';
+import { AgentService } from '../src/services/agentService';
 
 describe('Client Services & ApiClient Test Suite', () => {
   beforeEach(() => {
@@ -187,6 +188,14 @@ describe('Client Services & ApiClient Test Suite', () => {
 
       const g = await AuthService.googleAuth({ idToken: 'id-token' });
       expect(g).toEqual(mockAuthRes);
+
+      vi.spyOn(apiClient, 'get').mockResolvedValue({ success: true, data: { configured: true, url: 'https://accounts.google.com' } } as any);
+      const urlRes = await AuthService.getGoogleAuthUrl();
+      expect(urlRes.configured).toBe(true);
+      expect(urlRes.url).toBe('https://accounts.google.com');
+
+      const codeRes = await AuthService.exchangeGoogleCode('code-123');
+      expect(codeRes).toEqual(mockAuthRes);
     });
 
     it('logout calls API and cleans up localStorage', async () => {
@@ -213,6 +222,31 @@ describe('Client Services & ApiClient Test Suite', () => {
 
       const saveRes = await ProgressService.saveProgress('u1', { completed: true, lastStep: 3 });
       expect(saveRes).toEqual(mockProgress);
+    });
+  });
+
+  describe('AgentService', () => {
+    it('sendMessage, getMessages, and clearMessages call corresponding endpoints', async () => {
+      const mockChatRes = {
+        userMessage: { messageId: 'u1', userId: 'u1', sender: 'USER' as const, content: 'Hi', createdAt: 'now' },
+        agentMessage: { messageId: 'a1', userId: 'u1', sender: 'AGENT' as const, content: 'Hey', createdAt: 'now' },
+      };
+      const mockMessages = [mockChatRes.userMessage, mockChatRes.agentMessage];
+
+      vi.spyOn(apiClient, 'post').mockResolvedValue({ success: true, data: mockChatRes } as any);
+      vi.spyOn(apiClient, 'get').mockResolvedValue({ success: true, data: { messages: mockMessages } } as any);
+      vi.spyOn(apiClient, 'delete').mockResolvedValue({ success: true, message: 'Cleared' } as any);
+
+      const chatData = await AgentService.sendMessage('Hi');
+      expect(chatData).toEqual(mockChatRes);
+      expect(apiClient.post).toHaveBeenCalledWith('/api/agent/chat', { prompt: 'Hi' });
+
+      const messages = await AgentService.getMessages();
+      expect(messages).toEqual(mockMessages);
+      expect(apiClient.get).toHaveBeenCalledWith('/api/agent/messages');
+
+      await AgentService.clearMessages();
+      expect(apiClient.delete).toHaveBeenCalledWith('/api/agent/messages');
     });
   });
 });
