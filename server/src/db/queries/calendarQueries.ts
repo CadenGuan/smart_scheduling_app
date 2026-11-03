@@ -81,7 +81,7 @@ export const calendarQueries = {
             event.startTime,
             event.endTime,
             event.credits ?? 5,
-            event.term || term,
+            term,
             event.pinned ? 1 : 0,
             conflictBadgesJson
           );
@@ -95,11 +95,7 @@ export const calendarQueries = {
     }
   },
 
-  getUserCalendarEvents: (
-    userId: string,
-    term?: string,
-    targetDb: any = db
-  ): CalendarEvent[] => {
+  getUserCalendarEvents: (userId: string, term?: string, targetDb: any = db): CalendarEvent[] => {
     let rows: UserCalendarEventRow[];
     if (term) {
       const stmt = targetDb.prepare(`
@@ -151,11 +147,7 @@ export const calendarQueries = {
     });
   },
 
-  deleteUserCalendarEvents: (
-    userId: string,
-    term?: string,
-    targetDb: any = db
-  ): void => {
+  deleteUserCalendarEvents: (userId: string, term?: string, targetDb: any = db): void => {
     if (term) {
       const stmt = targetDb.prepare(`
         DELETE FROM user_calendar_events

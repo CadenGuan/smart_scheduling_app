@@ -10,6 +10,7 @@ import {
 import { DeadlinesService } from '../src/services/deadlines.service.js';
 import { CalendarEvent } from 'shared';
 import { userQueries } from '../src/db/queries/userQueries.js';
+import { calendarQueries } from '../src/db/queries/calendarQueries.js';
 import { v4 as uuidv4 } from 'uuid';
 
 describe('CalendarService Domain Service Test Suite', () => {
@@ -557,6 +558,98 @@ describe('CalendarService Domain Service Test Suite', () => {
       expect(ics).toContain('TRIGGER:-P1D');
       expect(ics).toContain('END:VALARM');
       expect(ics).toContain('END:VCALENDAR');
+    });
+  });
+
+  describe('calendarQueries Database Persistence Test Suite', () => {
+    const testUserId = uuidv4();
+    const testEvents: CalendarEvent[] = [
+      {
+        id: 'cse-101',
+        title: 'CSE 101: Data Structures',
+        type: 'MAJOR',
+        days: ['Monday', 'Wednesday'],
+        startTime: '10:00',
+        endTime: '11:35',
+        color: '#00B4DB',
+        credits: 5,
+        term: 'Winter 2027',
+        pinned: true,
+        conflictBadge: 'Starts before preferred time',
+      },
+      {
+        id: 'art-10f',
+        title: 'ART 10F: 2D Design',
+        type: 'GE',
+        days: ['Tuesday', 'Thursday'],
+        startTime: '13:00',
+        endTime: '14:35',
+        color: '#FF6B6B',
+        credits: 5,
+        term: 'Winter 2027',
+        pinned: false,
+      },
+    ];
+
+    it('saves user calendar events and retrieves them with parsed fields', () => {
+      // First ensure user exists
+      userQueries.createUser({
+        user_id: testUserId,
+        email: `calendar-query-${Date.now()}@ucsc.edu`,
+        password_hash: 'hash',
+        name: 'Calendar Query Student',
+        standing: 'Junior',
+        major: 'Computer Science B.S.',
+      });
+
+      calendarQueries.saveUserCalendarEvents(testUserId, 'Winter 2027', testEvents);
+
+      const retrieved = calendarQueries.getUserCalendarEvents(testUserId, 'Winter 2027');
+      expect(retrieved).toHaveLength(2);
+
+      const cse101 = retrieved.find((e) => e.id === 'cse-101');
+      expect(cse101).toBeDefined();
+      expect(cse101?.title).toBe('CSE 101: Data Structures');
+      expect(cse101?.type).toBe('MAJOR');
+      expect(cse101?.days).toEqual(['Monday', 'Wednesday']);
+      expect(cse101?.pinned).toBe(true);
+      expect(cse101?.conflictBadge).toBe('Starts before preferred time');
+
+      const art10f = retrieved.find((e) => e.id === 'art-10f');
+      expect(art10f).toBeDefined();
+      expect(art10f?.type).toBe('GE');
+      expect(art10f?.pinned).toBe(false);
+    });
+
+    it('retrieves all events across terms when term filter is omitted', () => {
+      const springEvents: CalendarEvent[] = [
+        {
+          id: 'cse-130',
+          title: 'CSE 130: Computer Systems Design',
+          type: 'MAJOR',
+          days: ['Monday', 'Wednesday', 'Friday'],
+          startTime: '09:00',
+          endTime: '10:10',
+          credits: 5,
+          term: 'Spring 2027',
+        },
+      ];
+
+      calendarQueries.saveUserCalendarEvents(testUserId, 'Spring 2027', springEvents);
+
+      const allEvents = calendarQueries.getUserCalendarEvents(testUserId);
+      expect(allEvents).toHaveLength(3); // 2 from Winter + 1 from Spring
+    });
+
+    it('deletes user calendar events by term and completely for a user', () => {
+      calendarQueries.deleteUserCalendarEvents(testUserId, 'Winter 2027');
+      const afterWinterDelete = calendarQueries.getUserCalendarEvents(testUserId);
+      expect(afterWinterDelete).toHaveLength(1);
+      expect(afterWinterDelete[0].id).toBe('cse-130');
+
+      calendarQueries.deleteUserCalendarEvents(testUserId);
+      const afterFullDelete = calendarQueries.getUserCalendarEvents(testUserId);
+      expect(afterFullDelete).toHaveLength(0);
     });
   });
 });
