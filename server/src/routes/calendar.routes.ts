@@ -9,7 +9,16 @@ const router = Router();
 
 // GET /api/calendar/preview
 router.get('/preview', requireAuth, (req: AuthenticatedRequest, res: Response) => {
-  const preview = CalendarService.getPreview(req.user?.userId);
+  const userId = req.user?.userId;
+  const persistedEvents = userId ? calendarQueries.getUserCalendarEvents(userId) : [];
+
+  let preview;
+  if (persistedEvents.length > 0) {
+    preview = CalendarService.getPreview(userId, undefined, persistedEvents);
+  } else {
+    preview = CalendarService.getPreview(userId);
+  }
+
   res.status(200).json({
     success: true,
     data: preview,

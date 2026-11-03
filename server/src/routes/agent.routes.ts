@@ -6,8 +6,10 @@ import { validateBody } from '../middleware/validate.middleware.js';
 import { AgentChatRequestSchema } from 'shared';
 import { conversationQueries } from '../db/queries/conversationQueries.js';
 import { userQueries } from '../db/queries/userQueries.js';
+import { calendarQueries } from '../db/queries/calendarQueries.js';
 import { ContextService } from '../services/context.service.js';
 import { AgentService } from '../services/agent.service.js';
+import { CalendarService } from '../services/calendar.service.js';
 
 const router = Router();
 
@@ -78,7 +80,16 @@ router.post(
       metadata: agentResult.metadata ? JSON.stringify(agentResult.metadata) : null,
     });
 
-    // 5. Return both message envelopes
+    // 4.5 Compute calendar preview and persist if proposedCourses present
+    let preview;
+    if (agentResult.proposedCourses && agentResult.proposedCourses.length > 0) {
+      preview = CalendarService.getPreview(userId, undefined, agentResult.proposedCourses);
+      calendarQueries.saveUserCalendarEvents(userId, preview.term, preview.events);
+    } else {
+      preview = CalendarService.getPreview(userId);
+    }
+
+    // 5. Return both message envelopes and calendar preview
     res.status(200).json({
       success: true,
       data: {
@@ -98,6 +109,8 @@ router.post(
           metadata: agentResult.metadata || {},
           createdAt: agentCreatedAt,
         },
+        proposedCourses: agentResult.proposedCourses,
+        preview,
       },
     });
   })
@@ -135,6 +148,7 @@ router.delete(
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.userId;
     conversationQueries.deleteMessagesByUserId(userId);
+    calendarQueries.deleteUserCalendarEvents(userId);
 
     res.status(200).json({
       success: true,

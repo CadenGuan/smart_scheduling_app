@@ -151,7 +151,7 @@ export class CalendarService {
       preferences = { ...preferences, ...preferencesOverride };
     }
 
-    const term = preferences.targetTerm || 'Winter 2027';
+    const term = preferences.targetTerm || eventsPool?.find((e) => e.term)?.term || 'Winter 2027';
     const targetCredits = preferences.targetCredits ?? 15;
     const preferredFreeDays = preferences.preferredFreeDays || [];
     const earliestStartTime = preferences.earliestStartTime;

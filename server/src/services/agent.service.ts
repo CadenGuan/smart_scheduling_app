@@ -1,3 +1,4 @@
+import { CalendarEvent } from 'shared';
 import { config } from '../config.js';
 import { AssembledContext } from './context.service.js';
 
@@ -5,7 +6,10 @@ export interface AgentProcessResult {
   response: string;
   toolCalls?: any[];
   metadata?: any;
+  proposedCourses?: CalendarEvent[];
 }
+
+export type AgentQueryResponse = AgentProcessResult;
 
 export class AgentService {
   static async queryAgent(prompt: string, context: AssembledContext): Promise<AgentProcessResult> {
@@ -44,6 +48,9 @@ export class AgentService {
         response: result.data.response,
         toolCalls: result.data.toolCalls || [],
         metadata: { model: result.data.model || 'slug-advisor' },
+        proposedCourses: Array.isArray(result.data.proposedCourses)
+          ? result.data.proposedCourses
+          : [],
       };
     } catch (err: any) {
       clearTimeout(timeoutId);
@@ -67,6 +74,7 @@ export class AgentService {
           `*Please check that the agent service is running on port 8000 and try your question again!*`,
         toolCalls: [],
         metadata: { fallback: true, error: fallbackReason },
+        proposedCourses: [],
       };
     }
   }

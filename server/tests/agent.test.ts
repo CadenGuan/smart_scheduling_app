@@ -1,15 +1,17 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import request from 'supertest';
 import { app } from '../src/app.js';
 import { conversationQueries } from '../src/db/queries/conversationQueries.js';
 import { userQueries } from '../src/db/queries/userQueries.js';
+import { calendarQueries } from '../src/db/queries/calendarQueries.js';
 import { ContextService } from '../src/services/context.service.js';
+import { AgentService } from '../src/services/agent.service.js';
 
 describe('Interactive Agent & Conversation API Contract Tests', () => {
   let userTokenA = '';
   let userIdA = '';
   let userTokenB = '';
-  let _userIdB = '';
+  let userIdB = '';
 
   const userA = {
     email: `agent-test-a-${Date.now()}@ucsc.edu`,
@@ -36,7 +38,7 @@ describe('Interactive Agent & Conversation API Contract Tests', () => {
     // 2. Register User B
     const resB = await request(app).post('/api/auth/register').send(userB);
     userTokenB = resB.body.data.token;
-    _userIdB = resB.body.data.user.userId;
+    userIdB = resB.body.data.user.userId;
   });
 
   describe('Validation & Security (Misdemeanors)', () => {
@@ -246,6 +248,199 @@ describe('Interactive Agent & Conversation API Contract Tests', () => {
       expect(context.preferences.breaksPreference.length).toBe(1);
       expect(context.currentSchedule).toBeDefined();
       expect(context.currentSchedule.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Candidate Generation & Greedy Oracle Calendar Persistence (Ticket 04)', () => {
+    it('POST /api/agent/chat should return proposedCourses, preview, and persist user_calendar_events', async () => {
+      // Clear any prior calendar events for User A to test clean persistence
+      calendarQueries.deleteUserCalendarEvents(userIdA);
+
+      const res = await request(app)
+        .post('/api/agent/chat')
+        .set('Authorization', `Bearer ${userTokenA}`)
+        .send({ prompt: 'I want CSE 130 on my schedule for Winter 2027' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      const data = res.body.data;
+      expect(data.userMessage).toBeDefined();
+      expect(data.agentMessage).toBeDefined();
+      expect(data.preview).toBeDefined();
+      expect(data.preview.term).toBe('Winter 2027');
+      expect(data.preview.events.length).toBeGreaterThan(0);
+      expect(data.preview.totalCredits).toBeGreaterThanOrEqual(15);
+      expect(Array.isArray(data.proposedCourses)).toBe(true);
+      expect(data.proposedCourses.length).toBeGreaterThanOrEqual(3);
+
+      // Verify that greedy oracle eliminated time collisions in preview
+      const scheduledCourses = data.preview.events.filter(
+        (e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
+      for (let i = 0; i < scheduledCourses.length; i++) {
+        for (let j = i + 1; j < scheduledCourses.length; j++) {
+          const a = scheduledCourses[i];
+          const b = scheduledCourses[j];
+          const commonDays = a.days.filter((d: string) => b.days.includes(d));
+          if (commonDays.length > 0) {
+            const [aSh, aSm] = a.startTime.split(':').map(Number);
+            const [aEh, aEm] = a.endTime.split(':').map(Number);
+            const [bSh, bSm] = b.startTime.split(':').map(Number);
+            const [bEh, bEm] = b.endTime.split(':').map(Number);
+            const aStart = aSh * 60 + aSm;
+            const aEnd = aEh * 60 + aEm;
+            const bStart = bSh * 60 + bSm;
+            const bEnd = bEh * 60 + bEm;
+            const overlap = aStart < bEnd && bStart < aEnd;
+            expect(overlap).toBe(false);
+          }
+        }
+      }
+
+      // Verify persisted in SQLite user_calendar_events
+      const persisted = calendarQueries.getUserCalendarEvents(userIdA, 'Winter 2027');
+      expect(persisted.length).toBe(data.preview.events.length);
+      const persistedIds = persisted.map((e) => e.id);
+      for (const ev of data.preview.events) {
+        expect(persistedIds).toContain(ev.id);
+      }
+    });
+
+    it('GET /api/calendar/preview immediately returns the newly persisted schedule', async () => {
+      const res = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${userTokenA}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.term).toBe('Winter 2027');
+      expect(res.body.data.events.length).toBeGreaterThanOrEqual(3);
+
+      // Verify events match SQLite persisted schedule
+      const persisted = calendarQueries.getUserCalendarEvents(userIdA, 'Winter 2027');
+      expect(res.body.data.events.length).toBe(persisted.length);
+      const previewIds = res.body.data.events.map((e: any) => e.id);
+      for (const ev of persisted) {
+        expect(previewIds).toContain(ev.id);
+      }
+    });
+
+    it('POST /api/agent/chat pins user-requested course overrides and saves pinned=1 in SQLite', async () => {
+      const prompt = 'I really want CSE 130 instead of CSE 115A';
+      const res = await request(app)
+        .post('/api/agent/chat')
+        .set('Authorization', `Bearer ${userTokenA}`)
+        .send({ prompt });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      const preview = res.body.data.preview;
+      expect(preview).toBeDefined();
+
+      // Verify CSE 130 is in preview events and marked as pinned
+      const cse130 = preview.events.find(
+        (e: any) => e.id.toLowerCase().includes('cse-130') || e.title.includes('CSE 130')
+      );
+      expect(cse130).toBeDefined();
+      expect(cse130?.pinned).toBe(true);
+
+      // Verify SQLite persisted pinned status
+      const persisted = calendarQueries.getUserCalendarEvents(userIdA, 'Winter 2027');
+      const persistedCse130 = persisted.find(
+        (e) => e.id.toLowerCase().includes('cse-130') || e.title.includes('CSE 130')
+      );
+      expect(persistedCse130).toBeDefined();
+      expect(persistedCse130?.pinned).toBe(true);
+    });
+
+    it('DELETE /api/agent/messages should delete both messages and persisted calendar events', async () => {
+      // Verify User A has persisted events before delete
+      const beforeEvents = calendarQueries.getUserCalendarEvents(userIdA);
+      expect(beforeEvents.length).toBeGreaterThan(0);
+
+      const res = await request(app)
+        .delete('/api/agent/messages')
+        .set('Authorization', `Bearer ${userTokenA}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      // Verify conversation messages deleted
+      const msgRes = await request(app)
+        .get('/api/agent/messages')
+        .set('Authorization', `Bearer ${userTokenA}`);
+      expect(msgRes.body.data.messages.length).toBe(0);
+
+      // Verify SQLite user_calendar_events deleted
+      const persisted = calendarQueries.getUserCalendarEvents(userIdA, 'Winter 2027');
+      expect(persisted.length).toBe(0);
+
+      // Verify subsequent GET /api/calendar/preview falls back to default seed schedule
+      const previewRes = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${userTokenA}`);
+      expect(previewRes.status).toBe(200);
+      expect(previewRes.body.data.events.length).toBeGreaterThan(0);
+      // Fallback seed courses are not pinned
+      const hasPinned = previewRes.body.data.events.some((e: any) => e.pinned === true);
+      expect(hasPinned).toBe(false);
+    });
+
+    it('maintains strict multi-tenant isolation for calendar persistence and deletion', async () => {
+      // 1. User B requests courses
+      const bChatRes = await request(app)
+        .post('/api/agent/chat')
+        .set('Authorization', `Bearer ${userTokenB}`)
+        .send({ prompt: 'I really want CSE 130 instead of CSE 115A' });
+      expect(bChatRes.status).toBe(200);
+
+      const bEventsBefore = calendarQueries.getUserCalendarEvents(userIdB);
+      expect(bEventsBefore.length).toBeGreaterThan(0);
+
+      // 2. User A sets a custom schedule
+      await request(app)
+        .post('/api/agent/chat')
+        .set('Authorization', `Bearer ${userTokenA}`)
+        .send({ prompt: 'Recommend courses for Winter 2027' });
+
+      // 3. User A clears their messages
+      await request(app).delete('/api/agent/messages').set('Authorization', `Bearer ${userTokenA}`);
+
+      // User A's events should be cleared
+      expect(calendarQueries.getUserCalendarEvents(userIdA).length).toBe(0);
+
+      // User B's events must remain intact
+      const bEventsAfter = calendarQueries.getUserCalendarEvents(userIdB);
+      expect(bEventsAfter.length).toBe(bEventsBefore.length);
+      const bPreviewRes = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${userTokenB}`);
+      expect(bPreviewRes.body.data.events.some((e: any) => e.pinned === true)).toBe(true);
+    });
+
+    it('handles empty proposedCourses or offline fallback by returning standard preview without DB corruption', async () => {
+      // Mock AgentService.queryAgent temporarily to simulate an agent reply without proposed courses
+      const queryAgentSpy = vi.spyOn(AgentService, 'queryAgent').mockResolvedValueOnce({
+        response: 'Here is general study advice without any courses.',
+        toolCalls: [],
+        metadata: { model: 'mock' },
+        proposedCourses: [],
+      });
+
+      const res = await request(app)
+        .post('/api/agent/chat')
+        .set('Authorization', `Bearer ${userTokenA}`)
+        .send({ prompt: 'How do I study for midterms?' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.preview).toBeDefined();
+      expect(res.body.data.preview.events.length).toBeGreaterThan(0);
+      expect(res.body.data.proposedCourses).toEqual([]);
+
+      queryAgentSpy.mockRestore();
     });
   });
 });
