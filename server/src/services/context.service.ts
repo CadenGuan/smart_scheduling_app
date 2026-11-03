@@ -91,7 +91,11 @@ export class ContextService {
       breaks = draftAnswers.breaks;
     }
 
-    if (userPreferences.breaks && Array.isArray(userPreferences.breaks) && userPreferences.breaks.length > 0) {
+    if (
+      userPreferences.breaks &&
+      Array.isArray(userPreferences.breaks) &&
+      userPreferences.breaks.length > 0
+    ) {
       breaks = userPreferences.breaks;
     }
 

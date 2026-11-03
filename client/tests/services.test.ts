@@ -209,7 +209,9 @@ describe('Client Services & ApiClient Test Suite', () => {
       });
       vi.stubGlobal('document', {
         body: { appendChild: appendChildSpy, removeChild: removeChildSpy },
-        createElement: vi.fn().mockReturnValue({ click: clickSpy, set href(v: string) {}, set download(v: string) {} }),
+        createElement: vi
+          .fn()
+          .mockReturnValue({ click: clickSpy, set href(v: string) {}, set download(v: string) {} }),
       });
 
       UserService.downloadJson({ foo: 'bar' }, 'settings.json');
@@ -242,7 +244,10 @@ describe('Client Services & ApiClient Test Suite', () => {
       const g = await AuthService.googleAuth({ idToken: 'id-token' });
       expect(g).toEqual(mockAuthRes);
 
-      vi.spyOn(apiClient, 'get').mockResolvedValue({ success: true, data: { configured: true, url: 'https://accounts.google.com' } } as any);
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        success: true,
+        data: { configured: true, url: 'https://accounts.google.com' },
+      } as any);
       const urlRes = await AuthService.getGoogleAuthUrl();
       expect(urlRes.configured).toBe(true);
       expect(urlRes.url).toBe('https://accounts.google.com');
@@ -281,13 +286,28 @@ describe('Client Services & ApiClient Test Suite', () => {
   describe('AgentService', () => {
     it('sendMessage, getMessages, and clearMessages call corresponding endpoints', async () => {
       const mockChatRes = {
-        userMessage: { messageId: 'u1', userId: 'u1', sender: 'USER' as const, content: 'Hi', createdAt: 'now' },
-        agentMessage: { messageId: 'a1', userId: 'u1', sender: 'AGENT' as const, content: 'Hey', createdAt: 'now' },
+        userMessage: {
+          messageId: 'u1',
+          userId: 'u1',
+          sender: 'USER' as const,
+          content: 'Hi',
+          createdAt: 'now',
+        },
+        agentMessage: {
+          messageId: 'a1',
+          userId: 'u1',
+          sender: 'AGENT' as const,
+          content: 'Hey',
+          createdAt: 'now',
+        },
       };
       const mockMessages = [mockChatRes.userMessage, mockChatRes.agentMessage];
 
       vi.spyOn(apiClient, 'post').mockResolvedValue({ success: true, data: mockChatRes } as any);
-      vi.spyOn(apiClient, 'get').mockResolvedValue({ success: true, data: { messages: mockMessages } } as any);
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        success: true,
+        data: { messages: mockMessages },
+      } as any);
       vi.spyOn(apiClient, 'delete').mockResolvedValue({ success: true, message: 'Cleared' } as any);
 
       const chatData = await AgentService.sendMessage('Hi');
@@ -329,7 +349,9 @@ describe('Client Services & ApiClient Test Suite', () => {
       });
       vi.stubGlobal('document', {
         body: { appendChild: appendChildSpy, removeChild: removeChildSpy },
-        createElement: vi.fn().mockReturnValue({ click: clickSpy, set href(v: string) {}, set download(v: string) {} }),
+        createElement: vi
+          .fn()
+          .mockReturnValue({ click: clickSpy, set href(v: string) {}, set download(v: string) {} }),
       });
 
       CalendarService.downloadIcs('BEGIN:VCALENDAR\nEND:VCALENDAR', 'test.ics');

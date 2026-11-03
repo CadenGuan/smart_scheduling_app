@@ -96,7 +96,10 @@ export class PreferencesModal extends BaseComponent<PreferencesModalProps, Prefe
       UserService.downloadJson(data, `slug-preferences-${this.props.user.userId.slice(0, 8)}.json`);
       this.safeSetState({ isExportingSettings: false });
     } catch {
-      this.safeSetState({ isExportingSettings: false, validationError: 'Failed to export preferences.' });
+      this.safeSetState({
+        isExportingSettings: false,
+        validationError: 'Failed to export preferences.',
+      });
     }
   };
 
@@ -462,7 +465,11 @@ export class PreferencesModal extends BaseComponent<PreferencesModalProps, Prefe
                           stroke="currentColor"
                           strokeWidth="4"
                         />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8H4z"
+                        />
                       </svg>
                       <span>Saving Changes...</span>
                     </>

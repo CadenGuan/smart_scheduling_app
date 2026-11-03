@@ -128,14 +128,15 @@ export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWork
     try {
       await AgentService.clearMessages();
       this.safeSetState({ messages: [], isClearConfirming: false, error: null });
-    } catch (err: any) {
+    } catch {
       this.safeSetState({ error: 'Failed to clear chat history' });
     }
   };
 
   render() {
     const { user } = this.props;
-    const { messages, inputPrompt, isProcessing, error, isClearConfirming, isSendHovered } = this.state;
+    const { messages, inputPrompt, isProcessing, error, isClearConfirming, isSendHovered } =
+      this.state;
 
     return (
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
@@ -178,7 +179,10 @@ export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWork
         </div>
 
         {/* 2. Message History Container */}
-        <div ref={this.chatScrollRef} className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-slate-50/30">
+        <div
+          ref={this.chatScrollRef}
+          className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-slate-50/30"
+        >
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
               <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-3xl shadow-sm">
@@ -187,7 +191,9 @@ export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWork
               <div className="max-w-xs space-y-1">
                 <h4 className="font-bold text-slate-800 text-sm">How can Sammy help you today?</h4>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  I can review your remaining General Education requirements, recommend prerequisite-friendly CS courses, explain why specific classes fit your timeline, or balance your workload.
+                  I can review your remaining General Education requirements, recommend
+                  prerequisite-friendly CS courses, explain why specific classes fit your timeline,
+                  or balance your workload.
                 </p>
               </div>
 
@@ -219,7 +225,10 @@ export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWork
             messages.map((msg) => {
               const isUser = msg.sender === 'USER';
               return (
-                <div key={msg.messageId} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+                <div
+                  key={msg.messageId}
+                  className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
+                >
                   <div
                     className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs shadow-xs ${
                       isUser
@@ -277,7 +286,9 @@ export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWork
               onKeyDown={this.handleKeyDown}
               disabled={isProcessing}
               placeholder={
-                isProcessing ? 'Waiting for Sammy to respond...' : 'Ask Sammy about courses, GEs, prerequisites...'
+                isProcessing
+                  ? 'Waiting for Sammy to respond...'
+                  : 'Ask Sammy about courses, GEs, prerequisites...'
               }
               className={`flex-1 px-3.5 py-2.5 rounded-xl border text-xs transition-all duration-150 outline-none ${
                 isProcessing
@@ -295,8 +306,8 @@ export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWork
                 isProcessing || !inputPrompt.trim()
                   ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
                   : isSendHovered
-                  ? 'bg-[#e55959] text-white shadow-md scale-[1.02]'
-                  : 'bg-[#FF6B6B] text-white'
+                    ? 'bg-[#e55959] text-white shadow-md scale-[1.02]'
+                    : 'bg-[#FF6B6B] text-white'
               }`}
             >
               <span>Send</span>

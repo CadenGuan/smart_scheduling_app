@@ -140,7 +140,8 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
   };
 
   render() {
-    const { user, events, term, totalCredits, isPreferencesOpen, isTourOpen, isLoading } = this.state;
+    const { user, events, term, totalCredits, isPreferencesOpen, isTourOpen, isLoading } =
+      this.state;
 
     if (isLoading) {
       return (
@@ -165,12 +166,18 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
 
         <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Panel: SlugAgent Workspace (38% ~ 5 columns on desktop) */}
-          <div data-tour="agent-workspace" className="lg:col-span-5 h-[calc(100vh-112px)] min-h-[600px]">
+          <div
+            data-tour="agent-workspace"
+            className="lg:col-span-5 h-[calc(100vh-112px)] min-h-[600px]"
+          >
             <AgentWorkspace user={user} onScheduleUpdated={this.handleRefreshSchedule} />
           </div>
 
           {/* Right Panel: Weekly Calendar Grid Preview (62% ~ 7 columns on desktop) */}
-          <div data-tour="calendar-preview" className="lg:col-span-7 h-[calc(100vh-112px)] min-h-[600px]">
+          <div
+            data-tour="calendar-preview"
+            className="lg:col-span-7 h-[calc(100vh-112px)] min-h-[600px]"
+          >
             <CalendarPreview events={events} term={term} />
           </div>
         </main>
@@ -182,10 +189,7 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
           onSave={this.handleSavePreferences}
         />
 
-        <TourWalkthrough
-          isOpen={isTourOpen}
-          onClose={this.handleCloseTour}
-        />
+        <TourWalkthrough isOpen={isTourOpen} onClose={this.handleCloseTour} />
       </div>
     );
   }

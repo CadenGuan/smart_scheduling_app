@@ -29,7 +29,8 @@ const mockMessages: AgentMessage[] = [
     messageId: 'm2',
     userId: 'test-user-123',
     sender: 'AGENT',
-    content: '### Recommended GEs\n- **PHIL 9**: *Intro to Logic* with `MF` credit.\n- **ART 10F**: 2D Design.',
+    content:
+      '### Recommended GEs\n- **PHIL 9**: *Intro to Logic* with `MF` credit.\n- **ART 10F**: 2D Design.',
     createdAt: '2026-11-03T01:00:05.000Z',
   },
 ];
@@ -41,7 +42,7 @@ describe('AgentWorkspace Component Suite', () => {
 
   describe('MarkdownRenderer', () => {
     it('renders headings, bold, italics, inline code, and lists correctly', () => {
-      const markdown = 
+      const markdown =
         '### Course Advice\n' +
         'Here is **bold text** and *italic text* and `inline code`.\n' +
         '- First bullet item\n' +
@@ -49,7 +50,9 @@ describe('AgentWorkspace Component Suite', () => {
         '1. Step one\n' +
         '2. Step two';
 
-      const html = cleanHtml(renderToString(React.createElement(MarkdownRenderer, { content: markdown })));
+      const html = cleanHtml(
+        renderToString(React.createElement(MarkdownRenderer, { content: markdown }))
+      );
 
       expect(html).toContain('Course Advice');
       expect(html).toContain('bold text');
@@ -62,7 +65,9 @@ describe('AgentWorkspace Component Suite', () => {
     });
 
     it('renders empty content without throwing', () => {
-      const html = cleanHtml(renderToString(React.createElement(MarkdownRenderer, { content: '' })));
+      const html = cleanHtml(
+        renderToString(React.createElement(MarkdownRenderer, { content: '' }))
+      );
       expect(html).toBe('<div class="space-y-1"></div>');
     });
   });

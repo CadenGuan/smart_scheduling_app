@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import React from 'react';
+import _React from 'react';
 import { renderToString } from 'react-dom/server';
 import { DeadlinesModal } from '../src/components/dashboard/DeadlinesModal';
 import { CalendarService } from '../src/services/calendarService';

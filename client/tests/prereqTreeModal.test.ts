@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import React from 'react';
+import _React from 'react';
 import { renderToString } from 'react-dom/server';
 import { PrereqTreeModal } from '../src/components/dashboard/PrereqTreeModal';
 import { CalendarService } from '../src/services/calendarService';
@@ -46,7 +46,10 @@ const mockDagData = {
   completedCount: 1,
   progressPercentage: 6,
   nodes: mockNodes,
-  edges: [['CSE 13S', 'CSE 101'], ['CSE 16', 'CSE 101']] as Array<[string, string]>,
+  edges: [
+    ['CSE 13S', 'CSE 101'],
+    ['CSE 16', 'CSE 101'],
+  ] as Array<[string, string]>,
   readyToEnroll: ['CSE 20'],
 };
 
@@ -146,7 +149,9 @@ describe('PrereqTreeModal Component Test Suite', () => {
 
     const html = cleanHtml(renderToString(modal.render()));
     expect(html).toContain('Close Inspector');
-    expect(html).toContain('All prerequisites satisfied! You can add this course to your schedule for next quarter.');
+    expect(html).toContain(
+      'All prerequisites satisfied! You can add this course to your schedule for next quarter.'
+    );
     expect(html).toContain('Directly unlocks: `CSE 30`');
   });
 

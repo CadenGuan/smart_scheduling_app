@@ -9,7 +9,7 @@ describe('Interactive Agent & Conversation API Contract Tests', () => {
   let userTokenA = '';
   let userIdA = '';
   let userTokenB = '';
-  let userIdB = '';
+  let _userIdB = '';
 
   const userA = {
     email: `agent-test-a-${Date.now()}@ucsc.edu`,
@@ -36,14 +36,12 @@ describe('Interactive Agent & Conversation API Contract Tests', () => {
     // 2. Register User B
     const resB = await request(app).post('/api/auth/register').send(userB);
     userTokenB = resB.body.data.token;
-    userIdB = resB.body.data.user.userId;
+    _userIdB = resB.body.data.user.userId;
   });
 
   describe('Validation & Security (Misdemeanors)', () => {
     it('POST /api/agent/chat should reject unauthenticated requests with 401', async () => {
-      const res = await request(app)
-        .post('/api/agent/chat')
-        .send({ prompt: 'Hello agent' });
+      const res = await request(app).post('/api/agent/chat').send({ prompt: 'Hello agent' });
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
@@ -190,7 +188,9 @@ describe('Interactive Agent & Conversation API Contract Tests', () => {
       const second = res.body.data.messages[1];
       expect(first.sender).toBe('USER');
       expect(second.sender).toBe('AGENT');
-      expect(new Date(first.createdAt).getTime()).toBeLessThanOrEqual(new Date(second.createdAt).getTime());
+      expect(new Date(first.createdAt).getTime()).toBeLessThanOrEqual(
+        new Date(second.createdAt).getTime()
+      );
     });
 
     it('DELETE /api/agent/messages should clear history only for the authenticated user', async () => {

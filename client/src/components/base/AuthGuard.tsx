@@ -20,7 +20,10 @@ export class AuthGuard extends BaseComponent<AuthGuardProps> {
 
     if (!requireAuth && isAuthenticated) {
       // If returning with Google OAuth code or error, let LoginPage handle it
-      if (typeof window !== 'undefined' && (window.location.search.includes('code=') || window.location.search.includes('error='))) {
+      if (
+        typeof window !== 'undefined' &&
+        (window.location.search.includes('code=') || window.location.search.includes('error='))
+      ) {
         return <>{children}</>;
       }
       return <Navigate to="/dashboard" replace />;

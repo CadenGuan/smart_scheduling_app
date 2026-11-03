@@ -50,7 +50,9 @@ export class CalendarService {
     if (tier && tier !== 'ALL') params.set('tier', tier);
 
     const qs = params.toString() ? `?${params.toString()}` : '';
-    const res = await apiClient.get<{ success: boolean; data: any }>(`/api/calendar/deadlines${qs}`);
+    const res = await apiClient.get<{ success: boolean; data: any }>(
+      `/api/calendar/deadlines${qs}`
+    );
     return res.data;
   }
 

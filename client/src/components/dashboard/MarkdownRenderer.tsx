@@ -75,7 +75,10 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) =
     if (line.startsWith('### ')) {
       flushList(idx);
       renderedElements.push(
-        <h4 key={`h3-${idx}`} className="text-xs font-bold text-slate-800 uppercase tracking-wider mt-3 mb-1.5">
+        <h4
+          key={`h3-${idx}`}
+          className="text-xs font-bold text-slate-800 uppercase tracking-wider mt-3 mb-1.5"
+        >
           {renderInline(line.slice(4))}
         </h4>
       );

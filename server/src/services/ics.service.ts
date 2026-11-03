@@ -13,7 +13,7 @@ const DAY_CODES: Record<string, string> = {
 // Term reference dates (Academic quarter start and end dates)
 interface TermBoundary {
   startDate: string; // YYYY-MM-DD
-  endDate: string;   // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
   quarterMonday: string; // YYYYMMDD format for the first Monday
 }
 

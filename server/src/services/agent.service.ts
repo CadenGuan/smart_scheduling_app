@@ -58,7 +58,8 @@ export class AgentService {
       const credits = context.preferences.targetCredits || 15;
 
       return {
-        response: `Hey ${name}! 🐌 I'm having trouble reaching my high-level reasoning engine right now (${fallbackReason}), but based on your records as a **${standing}** in **\`${major}\`**, you're tracking toward a **${credits}-credit** quarter.\n\n` +
+        response:
+          `Hey ${name}! 🐌 I'm having trouble reaching my high-level reasoning engine right now (${fallbackReason}), but based on your records as a **${standing}** in **\`${major}\`**, you're tracking toward a **${credits}-credit** quarter.\n\n` +
           `### Quick Recommended Courses:\n` +
           `- **\`CSE 115A\` (Software Engineering)** – Essential team project experience.\n` +
           `- **\`CSE 101\` (Algorithms & Data Structures)** – Core upper-division gateway.\n` +

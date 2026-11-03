@@ -45,7 +45,9 @@ export class App extends BaseComponent {
           <Route
             path="/"
             element={
-              typeof window !== 'undefined' && (window.location.search.includes('code=') || window.location.search.includes('error=')) ? (
+              typeof window !== 'undefined' &&
+              (window.location.search.includes('code=') ||
+                window.location.search.includes('error=')) ? (
                 <Navigate to={`/login${window.location.search}`} replace />
               ) : (
                 <Navigate to="/dashboard" replace />

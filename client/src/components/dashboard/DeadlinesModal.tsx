@@ -88,15 +88,8 @@ export class DeadlinesModal extends BaseComponent<DeadlinesModalProps, Deadlines
 
   render() {
     const { isOpen, onClose } = this.props;
-    const {
-      deadlines,
-      topics,
-      selectedTopic,
-      selectedTier,
-      isLoading,
-      isExporting,
-      error,
-    } = this.state;
+    const { deadlines, topics, selectedTopic, selectedTier, isLoading, isExporting, error } =
+      this.state;
 
     if (!isOpen) return null;
 
@@ -112,7 +105,8 @@ export class DeadlinesModal extends BaseComponent<DeadlinesModalProps, Deadlines
                   CS Research &amp; Conference Deadlines
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Target undergraduate showcases, student research competitions &amp; top-tier symposiums
+                  Target undergraduate showcases, student research competitions &amp; top-tier
+                  symposiums
                 </p>
               </div>
             </div>
@@ -216,8 +210,8 @@ export class DeadlinesModal extends BaseComponent<DeadlinesModalProps, Deadlines
                               conf.tier === 'Undergraduate Showcase'
                                 ? 'bg-amber-100 text-amber-800 border border-amber-200'
                                 : conf.tier === 'Top Tier'
-                                ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                                : 'bg-blue-100 text-blue-800 border border-blue-200'
+                                  ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                                  : 'bg-blue-100 text-blue-800 border border-blue-200'
                             }`}
                           >
                             {conf.tier}
@@ -228,17 +222,17 @@ export class DeadlinesModal extends BaseComponent<DeadlinesModalProps, Deadlines
                               isUrgent
                                 ? 'bg-red-100 text-red-800 animate-pulse border border-red-200'
                                 : isUpcoming
-                                ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                                : isPassed
-                                ? 'bg-slate-100 text-slate-500'
-                                : 'bg-emerald-100 text-emerald-800'
+                                  ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                  : isPassed
+                                    ? 'bg-slate-100 text-slate-500'
+                                    : 'bg-emerald-100 text-emerald-800'
                             }`}
                           >
                             {isPassed
                               ? 'Deadline Passed'
                               : conf.daysUntilDeadline !== undefined
-                              ? `${conf.daysUntilDeadline} Days Left`
-                              : 'Open'}
+                                ? `${conf.daysUntilDeadline} Days Left`
+                                : 'Open'}
                           </span>
                         </div>
 

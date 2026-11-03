@@ -24,10 +24,22 @@ interface PrereqTreeModalState {
 
 const TIER_NAMES: Record<number, { title: string; subtitle: string }> = {
   1: { title: 'Tier 1: Foundations', subtitle: 'Calculus, Beginning Python & Computer Systems' },
-  2: { title: 'Tier 2: Lower Division Core', subtitle: 'Discrete Math, Linear Algebra & C Systems' },
-  3: { title: 'Tier 3: Core Gatekeeper', subtitle: 'CSE 101 Data Structures (Unlocks Upper Division)' },
-  4: { title: 'Tier 4: Upper Division Core & Electives', subtitle: 'Algorithms, Systems, Architecture & Software' },
-  5: { title: 'Tier 5: Capstone Experience', subtitle: 'CSE 115B Senior Software Engineering Project' },
+  2: {
+    title: 'Tier 2: Lower Division Core',
+    subtitle: 'Discrete Math, Linear Algebra & C Systems',
+  },
+  3: {
+    title: 'Tier 3: Core Gatekeeper',
+    subtitle: 'CSE 101 Data Structures (Unlocks Upper Division)',
+  },
+  4: {
+    title: 'Tier 4: Upper Division Core & Electives',
+    subtitle: 'Algorithms, Systems, Architecture & Software',
+  },
+  5: {
+    title: 'Tier 5: Capstone Experience',
+    subtitle: 'CSE 115B Senior Software Engineering Project',
+  },
 };
 
 export class PrereqTreeModal extends BaseComponent<PrereqTreeModalProps, PrereqTreeModalState> {
@@ -106,8 +118,7 @@ export class PrereqTreeModal extends BaseComponent<PrereqTreeModalProps, PrereqT
 
     if (!isOpen) return null;
 
-    const filteredNodes =
-      activeTier === 'ALL' ? nodes : nodes.filter((n) => n.tier === activeTier);
+    const filteredNodes = activeTier === 'ALL' ? nodes : nodes.filter((n) => n.tier === activeTier);
 
     const selectedNode = selectedCode ? nodes.find((n) => n.code === selectedCode) : null;
     const unlockedBySelected = selectedCode
@@ -240,10 +251,10 @@ export class PrereqTreeModal extends BaseComponent<PrereqTreeModalProps, PrereqT
                                   isSelected
                                     ? 'ring-2 ring-[#00B4DB] shadow-md bg-cyan-50/40 border-[#00B4DB]'
                                     : isCompleted
-                                    ? 'bg-emerald-50/30 border-emerald-200 hover:border-emerald-300'
-                                    : isReady
-                                    ? 'bg-white border-[#00B4DB]/60 hover:shadow-md hover:border-[#00B4DB]'
-                                    : 'bg-slate-50/50 border-slate-200 opacity-80 hover:opacity-100'
+                                      ? 'bg-emerald-50/30 border-emerald-200 hover:border-emerald-300'
+                                      : isReady
+                                        ? 'bg-white border-[#00B4DB]/60 hover:shadow-md hover:border-[#00B4DB]'
+                                        : 'bg-slate-50/50 border-slate-200 opacity-80 hover:opacity-100'
                                 }`}
                               >
                                 <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -307,8 +318,8 @@ export class PrereqTreeModal extends BaseComponent<PrereqTreeModalProps, PrereqT
                   {selectedNode.status === 'COMPLETED'
                     ? '🎉 You have completed this course! It is counted towards your CS major degree requirements.'
                     : selectedNode.status === 'READY_TO_ENROLL'
-                    ? '✨ All prerequisites satisfied! You can add this course to your schedule for next quarter.'
-                    : `⚠️ Locked: You must first pass ${selectedNode.unmetPrerequisites.join(', ')}.`}
+                      ? '✨ All prerequisites satisfied! You can add this course to your schedule for next quarter.'
+                      : `⚠️ Locked: You must first pass ${selectedNode.unmetPrerequisites.join(', ')}.`}
                 </p>
                 {unlockedBySelected.length > 0 && (
                   <p className="text-xs text-[#0098ba] font-medium">

@@ -13,7 +13,10 @@ export const ConferenceDeadlineSchema = z.object({
   abbreviation: z.string(),
   tier: ConferenceTierEnum,
   submissionDeadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD'),
-  notificationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD').optional(),
+  notificationDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD')
+    .optional(),
   conferenceDates: z.string(),
   location: z.string(),
   topics: z.array(z.string()),

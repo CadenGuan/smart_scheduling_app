@@ -13,9 +13,10 @@ export class AuthService {
   }
 
   static async getGoogleAuthUrl(): Promise<{ configured: boolean; url: string | null }> {
-    const res = await apiClient.get<{ success: boolean; data: { configured: boolean; url: string | null } }>(
-      '/api/auth/google/url'
-    );
+    const res = await apiClient.get<{
+      success: boolean;
+      data: { configured: boolean; url: string | null };
+    }>('/api/auth/google/url');
     return res.data;
   }
 

@@ -8,13 +8,15 @@ describe('RFC 5545 iCalendar (.ics) Service & Export Suite', () => {
   let userToken = '';
 
   beforeAll(async () => {
-    const res = await request(app).post('/api/auth/register').send({
-      email: `ics-test-${Date.now()}@ucsc.edu`,
-      password: 'Password123!',
-      name: 'ICS Tester',
-      standing: 'Junior',
-      major: 'Computer Science B.S.',
-    });
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({
+        email: `ics-test-${Date.now()}@ucsc.edu`,
+        password: 'Password123!',
+        name: 'ICS Tester',
+        standing: 'Junior',
+        major: 'Computer Science B.S.',
+      });
     userToken = res.body.data.token;
   });
 
@@ -67,7 +69,9 @@ describe('RFC 5545 iCalendar (.ics) Service & Export Suite', () => {
 
       expect(res.status).toBe(200);
       expect(res.headers['content-type']).toContain('text/calendar');
-      expect(res.headers['content-disposition']).toContain('attachment; filename="slug-schedule-winter-2027.ics"');
+      expect(res.headers['content-disposition']).toContain(
+        'attachment; filename="slug-schedule-winter-2027.ics"'
+      );
       expect(res.text).toContain('BEGIN:VCALENDAR');
       expect(res.text).toContain('BEGIN:VEVENT');
       expect(res.text).toContain('END:VCALENDAR');

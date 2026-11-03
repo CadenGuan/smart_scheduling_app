@@ -450,15 +450,7 @@ describe('CalendarService Domain Service Test Suite', () => {
 
     it('updates node statuses and computes progress percentage for student coursework', () => {
       // Completed: MATH 19A, MATH 19B, CSE 20, CSE 30, CSE 12, CSE 13S, CSE 16
-      const completed = [
-        'MATH 19A',
-        'MATH 19B',
-        'CSE 20',
-        'CSE 30',
-        'CSE 12',
-        'CSE 13S',
-        'CSE 16',
-      ];
+      const completed = ['MATH 19A', 'MATH 19B', 'CSE 20', 'CSE 30', 'CSE 12', 'CSE 13S', 'CSE 16'];
       const dag = CalendarService.getCurriculumDag(undefined, completed);
 
       expect(dag.completedCount).toBe(7);
@@ -539,7 +531,11 @@ describe('CalendarService Domain Service Test Suite', () => {
       }
 
       // Filter by both
-      const combined = DeadlinesService.getDeadlines('Software Engineering', 'Undergraduate Showcase', refDate);
+      const combined = DeadlinesService.getDeadlines(
+        'Software Engineering',
+        'Undergraduate Showcase',
+        refDate
+      );
       expect(combined.deadlines.length).toBeGreaterThan(0);
       for (const d of combined.deadlines) {
         expect(d.topics).toContain('Software Engineering');

@@ -43,9 +43,7 @@ export class UserService {
   }
 
   static async exportSettings(userId: string): Promise<any> {
-    const res = await apiClient.get<{ success: boolean; data: any }>(
-      `/api/users/${userId}/export`
-    );
+    const res = await apiClient.get<{ success: boolean; data: any }>(`/api/users/${userId}/export`);
     return res.data;
   }
 

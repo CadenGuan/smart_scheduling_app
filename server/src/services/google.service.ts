@@ -56,7 +56,9 @@ export class GoogleAuthService {
 
     if (!response.ok) {
       const errData: any = await response.json().catch(() => ({}));
-      const err: any = new Error(errData.error_description || 'Failed to exchange authorization code with Google');
+      const err: any = new Error(
+        errData.error_description || 'Failed to exchange authorization code with Google'
+      );
       err.statusCode = 400;
       err.code = 'GOOGLE_AUTH_FAILED';
       throw err;
@@ -68,7 +70,9 @@ export class GoogleAuthService {
 
     if (tokenData.id_token) {
       try {
-        const decoded: any = JSON.parse(Buffer.from(tokenData.id_token.split('.')[1], 'base64').toString('utf8'));
+        const decoded: any = JSON.parse(
+          Buffer.from(tokenData.id_token.split('.')[1], 'base64').toString('utf8')
+        );
         if (decoded?.email) {
           email = decoded.email.toLowerCase();
           name = decoded.name || name;

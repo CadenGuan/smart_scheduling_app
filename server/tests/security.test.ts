@@ -2,10 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import { app } from '../src/app.js';
-import {
-  createRateLimiter,
-  clearRateLimitStore,
-} from '../src/middleware/rateLimiter.js';
+import { createRateLimiter, clearRateLimitStore } from '../src/middleware/rateLimiter.js';
 import { securityHeadersMiddleware } from '../src/middleware/security.middleware.js';
 
 describe('Security Hardening Test Suite (Product Backlog Item 3)', () => {
@@ -138,7 +135,10 @@ describe('Security Hardening Test Suite (Product Backlog Item 3)', () => {
       clearRateLimitStore();
       await request(testApp).post('/api/auth/test-login').set('x-test-rate-limit', 'true').send({});
       await request(testApp).post('/api/auth/test-login').set('x-test-rate-limit', 'true').send({});
-      const enforcedRes = await request(testApp).post('/api/auth/test-login').set('x-test-rate-limit', 'true').send({});
+      const enforcedRes = await request(testApp)
+        .post('/api/auth/test-login')
+        .set('x-test-rate-limit', 'true')
+        .send({});
       expect(enforcedRes.status).toBe(429);
     });
   });

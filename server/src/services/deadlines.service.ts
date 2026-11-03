@@ -1,6 +1,9 @@
 import { ConferenceDeadline } from 'shared';
 
-export const SAMPLE_CONFERENCE_DEADLINES: Omit<ConferenceDeadline, 'daysUntilDeadline' | 'status'>[] = [
+export const SAMPLE_CONFERENCE_DEADLINES: Omit<
+  ConferenceDeadline,
+  'daysUntilDeadline' | 'status'
+>[] = [
   {
     id: 'ucsc-urs-2027',
     name: 'UCSC Baskin Engineering Undergraduate Research Symposium (URS 2027)',
