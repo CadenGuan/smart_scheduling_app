@@ -263,3 +263,18 @@ class AgentApiTests(TestCase):
         tool_names = [tc['tool'] for tc in data['data']['toolCalls']]
         self.assertIn('update_schedule_preferences', tool_names)
         self.assertEqual(data['data']['toolCalls'][0]['output']['updates']['targetCredits'], 12)
+
+    def test_export_calendar_query(self):
+        payload = {
+            'prompt': 'How do I export my schedule to Google Calendar?',
+            'student': {'name': 'Sammy Slug', 'major': 'Computer Science B.S.', 'standing': 'Junior'},
+            'preferences': {'targetCredits': 15},
+            'currentSchedule': [],
+            'history': []
+        }
+        res = self.client.post('/api/agent/process/', data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['success'])
+        self.assertIn('Export .ics', data['data']['response'])
+        self.assertIn('RFC 5545', data['data']['response'])

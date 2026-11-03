@@ -3,6 +3,7 @@ import { BaseComponent } from '../base/BaseComponent';
 import { CourseCard } from './CourseCard';
 import { CourseDetailsModal } from './CourseDetailsModal';
 import { CalendarEvent, Day } from 'shared';
+import { CalendarService } from '../../services/calendarService';
 
 interface CalendarPreviewProps {
   events: CalendarEvent[];
@@ -12,6 +13,7 @@ interface CalendarPreviewProps {
 interface CalendarPreviewState {
   hoveredCourseId: string | null;
   selectedEvent: CalendarEvent | null;
+  isExporting: boolean;
 }
 
 const DAYS: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -23,6 +25,7 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
     this.state = {
       hoveredCourseId: null,
       selectedEvent: null,
+      isExporting: false,
     };
   }
 
@@ -44,6 +47,18 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
     });
   };
 
+  handleExportICS = async (): Promise<void> => {
+    try {
+      this.safeSetState({ isExporting: true });
+      const ics = await CalendarService.exportCalendarIcs();
+      const filename = `slug-schedule-${this.props.term.replace(/\s+/g, '-').toLowerCase()}.ics`;
+      CalendarService.downloadIcs(ics, filename);
+      this.safeSetState({ isExporting: false });
+    } catch {
+      this.safeSetState({ isExporting: false });
+    }
+  };
+
   // Convert HH:MM to minute offset from 8:00 AM
   calculateTopOffset(timeStr: string): number {
     const [h, m] = timeStr.split(':').map((v) => parseInt(v, 10));
@@ -61,31 +76,50 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
 
   render() {
     const { events, term } = this.props;
-    const { hoveredCourseId, selectedEvent } = this.state;
+    const { hoveredCourseId, selectedEvent, isExporting } = this.state;
 
     return (
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
         {/* Calendar Header */}
-        <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <div className="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-slate-50/50">
           <div className="flex items-center gap-3">
             <h2 className="font-bold text-slate-800 text-base">Weekly Schedule Preview</h2>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#00B4DB]/10 text-[#00B4DB] border border-[#00B4DB]/20">
               {term}
             </span>
           </div>
-          <div className="flex items-center gap-4 text-xs font-medium text-slate-500">
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#00B4DB] inline-block"></span>
-              <span>Major Required</span>
+
+          <div className="flex items-center gap-3">
+            {/* Legend */}
+            <div className="hidden sm:flex items-center gap-3 text-xs font-medium text-slate-500">
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-[#00B4DB] inline-block"></span>
+                <span>Major</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-[#FF6B6B] inline-block"></span>
+                <span>GE</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-[#F9CA24] inline-block"></span>
+                <span>Busy</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#FF6B6B] inline-block"></span>
-              <span>General Ed</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#F9CA24] inline-block"></span>
-              <span>Google Cal Busy</span>
-            </div>
+
+            {/* Export .ics Button */}
+            <button
+              type="button"
+              onClick={this.handleExportICS}
+              disabled={isExporting}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 border shadow-xs ${
+                isExporting
+                  ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                  : 'bg-white text-slate-700 border-slate-200 hover:border-[#00B4DB] hover:text-[#00B4DB] hover:bg-slate-50'
+              }`}
+              title="Export schedule to standard .ics format for Google Calendar / Apple Calendar"
+            >
+              <span>{isExporting ? 'Exporting...' : '📥 Export .ics'}</span>
+            </button>
           </div>
         </div>
 

@@ -26,6 +26,7 @@ import { UserService } from '../src/services/userService';
 import { AuthService } from '../src/services/authService';
 import { ProgressService } from '../src/services/progressService';
 import { AgentService } from '../src/services/agentService';
+import { CalendarService } from '../src/services/calendarService';
 
 describe('Client Services & ApiClient Test Suite', () => {
   beforeEach(() => {
@@ -126,6 +127,18 @@ describe('Client Services & ApiClient Test Suite', () => {
       vi.stubGlobal('fetch', fetchMock);
 
       await expect(apiClient.get('/api/crash')).rejects.toThrow('Request failed');
+    });
+
+    it('getText retrieves plain text / ics responses', async () => {
+      const mockIcs = 'BEGIN:VCALENDAR\nEND:VCALENDAR';
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        text: async () => mockIcs,
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const res = await apiClient.getText('/api/calendar/export');
+      expect(res).toBe(mockIcs);
     });
   });
 
@@ -247,6 +260,45 @@ describe('Client Services & ApiClient Test Suite', () => {
 
       await AgentService.clearMessages();
       expect(apiClient.delete).toHaveBeenCalledWith('/api/agent/messages');
+    });
+  });
+
+  describe('CalendarService', () => {
+    it('exportCalendarIcs calls /api/calendar/export and returns ICS text', async () => {
+      const mockIcs = 'BEGIN:VCALENDAR\nVERSION:2.0\nEND:VCALENDAR';
+      vi.spyOn(apiClient, 'getText').mockResolvedValue(mockIcs);
+
+      const ics = await CalendarService.exportCalendarIcs();
+      expect(ics).toBe(mockIcs);
+      expect(apiClient.getText).toHaveBeenCalledWith('/api/calendar/export');
+    });
+
+    it('downloadIcs returns safely when window or document is undefined', () => {
+      expect(() => CalendarService.downloadIcs('test')).not.toThrow();
+    });
+
+    it('downloadIcs creates and triggers download anchor when window/document are defined', () => {
+      const clickSpy = vi.fn();
+      const appendChildSpy = vi.fn();
+      const removeChildSpy = vi.fn();
+      const createObjectURL = vi.fn().mockReturnValue('blob:test');
+      const revokeObjectURL = vi.fn();
+
+      vi.stubGlobal('window', {
+        URL: { createObjectURL, revokeObjectURL },
+      });
+      vi.stubGlobal('document', {
+        body: { appendChild: appendChildSpy, removeChild: removeChildSpy },
+        createElement: vi.fn().mockReturnValue({ click: clickSpy, set href(v: string) {}, set download(v: string) {} }),
+      });
+
+      CalendarService.downloadIcs('BEGIN:VCALENDAR\nEND:VCALENDAR', 'test.ics');
+      expect(clickSpy).toHaveBeenCalled();
+      expect(appendChildSpy).toHaveBeenCalled();
+      expect(removeChildSpy).toHaveBeenCalled();
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:test');
+
+      vi.unstubAllGlobals();
     });
   });
 });

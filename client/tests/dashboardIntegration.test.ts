@@ -332,6 +332,7 @@ describe('Dashboard Integration Test Suite (Ticket 05)', () => {
       expect(html).toContain('CSE 101 - Algorithms');
       expect(html).toContain('CSE 115A - Software Engineering');
       expect(html).toContain('Spans preferred free day');
+      expect(html).toContain('Export .ics');
     });
   });
 });

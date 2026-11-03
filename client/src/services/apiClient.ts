@@ -42,6 +42,21 @@ class ApiClient {
     return this.request<T>(endpoint, { method: 'GET' });
   }
 
+  async getText(endpoint: string): Promise<string> {
+    const headers = {
+      Accept: 'text/calendar, text/plain, */*',
+      ...this.getAuthHeader(),
+    };
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers,
+    });
+    if (!response.ok) {
+      throw new ApiError('Failed to fetch text resource', response.status);
+    }
+    return response.text();
+  }
+
   post<T>(endpoint: string, body?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
