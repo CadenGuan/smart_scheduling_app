@@ -10,7 +10,7 @@
 1. Demonstrate how SlugSchedule solves the multi-constraint quarterly scheduling puzzle for UCSC students.
 2. Showcase the **SlugAdvisor** conversational AI agent powered by a NetworkX prerequisite DAG solver.
 3. Highlight visual schedule conflict detection, degree roadmap inspection, and academic conference tracking.
-4. Review the software engineering rigor: 311 automated tests, Docker containerization, OWASP security hardening, and SQLite WAL performance.
+4. Review the software engineering rigor: 314 automated tests, Docker containerization, OWASP security hardening, and SQLite WAL performance.
 
 ---
 
@@ -136,7 +136,7 @@ Direct attention to the right-hand **SlugAgent Workspace**.
 ### Act 5: Engineering Highlights & Architecture Q&A (1 min)
 
 Highlight our engineering rigor to the audience:
-- **Test Suite:** **311 automated tests** with 100% pass rate across TypeScript (Vitest) and Python (Pytest).
+- **Test Suite:** **314 automated tests** with 100% pass rate across TypeScript (Vitest) and Python (Pytest).
 - **Architecture:** Monorepo using npm workspaces (`client`, `server`, `shared`, `agent_service`).
 - **Security:** OWASP headers, CSP, brute-force rate limiters on auth routes, and Argon2/BCrypt hashing.
 - **Performance:** SQLite WAL mode with 64MB page cache and Vite manual vendor chunk splitting.

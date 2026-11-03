@@ -89,6 +89,18 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
     this.safeSetState({ isTourOpen: false });
   };
 
+  handleCalendarUpdate = (preview: {
+    term: string;
+    totalCredits: number;
+    events: CalendarEvent[];
+  }): void => {
+    this.safeSetState({
+      events: preview.events,
+      term: preview.term,
+      totalCredits: preview.totalCredits,
+    });
+  };
+
   handleRefreshSchedule = async (): Promise<void> => {
     try {
       const res = await apiClient.get<{
@@ -170,7 +182,11 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
             data-tour="agent-workspace"
             className="lg:col-span-5 h-[calc(100vh-112px)] min-h-[600px]"
           >
-            <AgentWorkspace user={user} onScheduleUpdated={this.handleRefreshSchedule} />
+            <AgentWorkspace
+              user={user}
+              onScheduleUpdated={this.handleRefreshSchedule}
+              onCalendarUpdate={this.handleCalendarUpdate}
+            />
           </div>
 
           {/* Right Panel: Weekly Calendar Grid Preview (62% ~ 7 columns on desktop) */}

@@ -334,5 +334,54 @@ describe('Dashboard Integration Test Suite (Ticket 05)', () => {
       expect(html).toContain('Spans preferred free day');
       expect(html).toContain('Export .ics');
     });
+
+    it('handleCalendarUpdate synchronizes calendar events, term, and credits immediately without page reload', () => {
+      const dashboard = new DashboardPageComponent({
+        navigate: navigateMock,
+        location: { pathname: '/dashboard' } as any,
+        params: {},
+      });
+      dashboard.state = {
+        ...dashboard.state,
+        isLoading: false,
+        user: mockUser,
+        term: 'Winter 2027',
+        totalCredits: 15,
+        events: mockEvents,
+      };
+
+      const newEvents: CalendarEvent[] = [
+        {
+          id: 'cse130',
+          title: 'CSE 130 - Computer Systems',
+          type: 'MAJOR',
+          days: ['Tuesday', 'Thursday'],
+          startTime: '10:00',
+          endTime: '11:45',
+          color: '#00B4DB',
+          credits: 5,
+          pinned: true,
+          conflictBadge: 'Time conflict with another course',
+        },
+      ];
+
+      dashboard.handleCalendarUpdate({
+        term: 'Spring 2027',
+        totalCredits: 10,
+        events: newEvents,
+      });
+
+      expect(dashboard.state.term).toBe('Spring 2027');
+      expect(dashboard.state.totalCredits).toBe(10);
+      expect(dashboard.state.events).toHaveLength(1);
+      expect(dashboard.state.events[0].id).toBe('cse130');
+      expect(dashboard.state.events[0].pinned).toBe(true);
+
+      const html = cleanHtml(renderToString(dashboard.render()));
+      expect(html).toContain('CSE 130 - Computer Systems');
+      expect(html).toContain('Time conflict with another course');
+      expect(html).toContain('Target: Spring 2027');
+      expect(html).toContain('10 Credits');
+    });
   });
 });

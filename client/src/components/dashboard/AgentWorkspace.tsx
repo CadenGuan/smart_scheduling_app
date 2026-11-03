@@ -1,12 +1,17 @@
 import React from 'react';
 import { BaseComponent } from '../base/BaseComponent';
-import { UserProfile, AgentMessage } from 'shared';
+import { UserProfile, AgentMessage, CalendarEvent } from 'shared';
 import { AgentService } from '../../services/agentService';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface AgentWorkspaceProps {
   user: UserProfile | null;
   onScheduleUpdated?: () => void;
+  onCalendarUpdate?: (preview: {
+    term: string;
+    totalCredits: number;
+    events: CalendarEvent[];
+  }) => void;
 }
 
 interface AgentWorkspaceState {
@@ -107,7 +112,13 @@ export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWork
         };
       });
 
-      if (result.agentMessage.toolCalls && result.agentMessage.toolCalls.length > 0) {
+      if (result.preview) {
+        this.props.onCalendarUpdate?.(result.preview);
+      }
+      if (
+        (result.agentMessage.toolCalls && result.agentMessage.toolCalls.length > 0) ||
+        result.preview
+      ) {
         this.props.onScheduleUpdated?.();
       }
     } catch (err: any) {
