@@ -24,6 +24,8 @@ export const db = new DatabaseSync(config.DB_PATH);
 db.exec('PRAGMA busy_timeout = 5000;');
 db.exec('PRAGMA journal_mode = WAL;');
 db.exec('PRAGMA foreign_keys = ON;');
+db.exec('PRAGMA synchronous = NORMAL;');
+db.exec('PRAGMA cache_size = -64000;');
 
 // Initialize schema
 const schemaPath = path.resolve(__dirname, 'schema.sql');
