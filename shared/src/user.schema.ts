@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const StandingEnum = z.enum(['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate']);
 export type Standing = z.infer<typeof StandingEnum>;
+export const StandingSchema = StandingEnum;
 
 export const TargetTermEnum = z.enum(['Fall 2026', 'Winter 2027', 'Spring 2027', 'Summer 2027']);
 export type TargetTerm = z.infer<typeof TargetTermEnum>;
@@ -52,3 +53,13 @@ export const UserProfileSchema = z.object({
   updatedAt: z.string().optional(),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
+
+export const UpdateUserProfileSchema = z.object({
+  name: z.string().min(1).optional(),
+  standing: StandingSchema.optional(),
+  major: z.string().min(1).optional(),
+  minor: z.string().nullable().optional(),
+  intendedMajor: z.string().nullable().optional(),
+  preferences: UserPreferencesSchema.optional(),
+});
+export type UpdateUserProfile = z.infer<typeof UpdateUserProfileSchema>;

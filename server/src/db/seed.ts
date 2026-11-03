@@ -12,6 +12,7 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     endTime: '10:10',
     color: '#00B4DB', // Triadic Teal
     credits: 5,
+    term: 'Winter 2027',
   },
   {
     id: 'math-21-lec',
@@ -24,6 +25,7 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     endTime: '14:50',
     color: '#00B4DB', // Triadic Teal
     credits: 5,
+    term: 'Winter 2027',
   },
   {
     id: 'art-10f-lec',
@@ -36,6 +38,7 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     endTime: '16:55',
     color: '#FF6B6B', // Triadic Magenta
     credits: 5,
+    term: 'Winter 2027',
   },
   {
     id: 'cse-130-lec',
@@ -48,6 +51,7 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     endTime: '12:45',
     color: '#00B4DB',
     credits: 5,
+    term: 'Winter 2027',
   },
   {
     id: 'phil-11-lec',
@@ -60,6 +64,7 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     endTime: '18:55',
     color: '#FF6B6B',
     credits: 5,
+    term: 'Winter 2027',
   },
   {
     id: 'gcal-work-shift',
@@ -71,5 +76,6 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     endTime: '12:00',
     color: '#F9CA24', // Triadic Yellow
     credits: 0,
+    term: 'Winter 2027',
   },
 ];

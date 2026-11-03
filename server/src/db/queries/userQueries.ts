@@ -59,6 +59,7 @@ export const userQueries = {
   updateUserProfile: (
     userId: string,
     updates: {
+      name?: string;
       standing?: string;
       major?: string;
       minor?: string | null;
@@ -71,6 +72,11 @@ export const userQueries = {
   ): void => {
     const fields: string[] = ['updated_at = CURRENT_TIMESTAMP'];
     const values: any[] = [];
+
+    if (updates.name !== undefined) {
+      fields.push('name = ?');
+      values.push(updates.name);
+    }
 
     if (updates.standing !== undefined) {
       fields.push('standing = ?');

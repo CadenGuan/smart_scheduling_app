@@ -88,6 +88,7 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
     it('PUT /api/users/:id composite update persists academic standing and preferences atomically', async () => {
       // Arrange
       const compositePayload = {
+        name: 'User A Senior',
         standing: 'Senior',
         major: 'Robotics Engineering B.S.',
         minor: 'Applied Math',
@@ -107,6 +108,7 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
       // Assert
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
+      expect(res.body.data.name).toBe('User A Senior');
       expect(res.body.data.standing).toBe('Senior');
       expect(res.body.data.major).toBe('Robotics Engineering B.S.');
       expect(res.body.data.minor).toBe('Applied Math');
@@ -250,6 +252,38 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
       expect(res.body.success).toBe(false);
       expect(res.body.error).toBe('VALIDATION_ERROR');
       expect(res.body.details[0].path).toContain('targetCredits');
+    });
+
+    it('rejects invalid profile standing like "SuperSenior" in PUT /api/users/:id (400)', async () => {
+      // Act
+      const res = await request(app)
+        .put(`/api/users/${userAId}`)
+        .set('Authorization', `Bearer ${userAToken}`)
+        .send({
+          standing: 'SuperSenior',
+        });
+
+      // Assert
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error).toBe('VALIDATION_ERROR');
+      expect(res.body.details.some((d: any) => d.path === 'standing')).toBe(true);
+    });
+
+    it('rejects empty string major in PUT /api/users/:id (400)', async () => {
+      // Act
+      const res = await request(app)
+        .put(`/api/users/${userAId}`)
+        .set('Authorization', `Bearer ${userAToken}`)
+        .send({
+          major: '',
+        });
+
+      // Assert
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error).toBe('VALIDATION_ERROR');
+      expect(res.body.details.some((d: any) => d.path === 'major')).toBe(true);
     });
   });
 
@@ -415,8 +449,9 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
       expect(academicEvents.length).toBe(2);
     });
 
-    it('GET /api/calendar/preview attaches conflict badge when course meets on preferred free day', async () => {
-      // Arrange: User A wants Friday off, but CSE 115A meets Mon/Wed/Fri
+    it('prioritizes conflict-free courses first when available in candidate pool', async () => {
+      // Arrange: User A wants 15 credits (3 courses) with Friday free
+      // The pool has 4 courses with no Friday meetings and 1 course (CSE 115A) meeting Friday
       await request(app)
         .put(`/api/users/${userAId}/preferences`)
         .set('Authorization', `Bearer ${userAToken}`)
@@ -424,62 +459,6 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
           targetTerm: 'Winter 2027',
           targetCredits: 15,
           preferredFreeDays: ['Friday'],
-        });
-
-      // Act
-      const res = await request(app)
-        .get('/api/calendar/preview')
-        .set('Authorization', `Bearer ${userAToken}`);
-
-      // Assert
-      expect(res.status).toBe(200);
-      const cse115a = res.body.data.events.find((e: any) => e.id === 'cse-115a-lec');
-      expect(cse115a).toBeDefined();
-      expect(cse115a.conflictBadge).toBe('Spans preferred free day');
-
-      // Math 21 meets Tue/Thu, should NOT have a conflict badge
-      const math21 = res.body.data.events.find((e: any) => e.id === 'math-21-lec');
-      expect(math21.conflictBadge).toBeUndefined();
-    });
-
-    it('GET /api/calendar/preview attaches conflict badge when course starts before earliestStartTime', async () => {
-      // Arrange: User A wants classes no earlier than 10:00, but CSE 115A starts at 09:00
-      await request(app)
-        .put(`/api/users/${userAId}/preferences`)
-        .set('Authorization', `Bearer ${userAToken}`)
-        .send({
-          targetTerm: 'Winter 2027',
-          targetCredits: 15,
-          earliestStartTime: '10:00',
-          preferredFreeDays: [],
-        });
-
-      // Act
-      const res = await request(app)
-        .get('/api/calendar/preview')
-        .set('Authorization', `Bearer ${userAToken}`);
-
-      // Assert
-      expect(res.status).toBe(200);
-      const cse115a = res.body.data.events.find((e: any) => e.id === 'cse-115a-lec');
-      expect(cse115a).toBeDefined();
-      expect(cse115a.conflictBadge).toBe('Starts before preferred time');
-    });
-  });
-
-  // =========================================================================
-  // 7. DYNAMIC SCHEDULE RECALCULATION & CONFLICT BADGING (Ticket 03)
-  // =========================================================================
-  describe('7. Dynamic Schedule Recalculation & Conflict Badges', () => {
-    it('GET /api/calendar/preview recalculates based on user targetTerm and targetCredits', async () => {
-      // Arrange: update User A preferences to 10 credits in Fall 2026
-      await request(app)
-        .put(`/api/users/${userAId}/preferences`)
-        .set('Authorization', `Bearer ${userAToken}`)
-        .send({
-          targetTerm: 'Fall 2026',
-          targetCredits: 10,
-          preferredFreeDays: [],
         });
 
       // Act
@@ -490,23 +469,28 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
       // Assert
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.term).toBe('Fall 2026');
-      expect(res.body.data.totalCredits).toBe(10);
-      // 2 academic courses (5 credits each) + 1 google busy event
       const academicEvents = res.body.data.events.filter(
         (e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY'
       );
-      expect(academicEvents.length).toBe(2);
+      expect(academicEvents).toHaveLength(3);
+      // None of the selected courses meet on Friday
+      academicEvents.forEach((c: any) => {
+        expect(c.days).not.toContain('Friday');
+        expect(c.conflictBadge).toBeUndefined();
+      });
+      // Conflicted CSE 115A was avoided because sufficient conflict-free alternatives existed
+      expect(academicEvents.some((c: any) => c.id === 'cse-115a-lec')).toBe(false);
     });
 
     it('GET /api/calendar/preview attaches conflict badge when course meets on preferred free day', async () => {
       // Arrange: User A wants Friday off, but CSE 115A meets Mon/Wed/Fri
+      // When 25 credits (all 5 courses) are requested, CSE 115A must be included and badged
       await request(app)
         .put(`/api/users/${userAId}/preferences`)
         .set('Authorization', `Bearer ${userAToken}`)
         .send({
           targetTerm: 'Winter 2027',
-          targetCredits: 15,
+          targetCredits: 25,
           preferredFreeDays: ['Friday'],
         });
 
@@ -520,6 +504,7 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
       const cse115a = res.body.data.events.find((e: any) => e.id === 'cse-115a-lec');
       expect(cse115a).toBeDefined();
       expect(cse115a.conflictBadge).toBe('Spans preferred free day');
+      expect(cse115a.conflictBadges).toContain('Spans preferred free day');
 
       // Math 21 meets Tue/Thu, should NOT have a conflict badge
       const math21 = res.body.data.events.find((e: any) => e.id === 'math-21-lec');
@@ -528,12 +513,13 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
 
     it('GET /api/calendar/preview attaches conflict badge when course starts before earliestStartTime', async () => {
       // Arrange: User A wants classes no earlier than 10:00, but CSE 115A starts at 09:00
+      // Requesting 25 credits ensures CSE 115A is selected in best-effort schedule
       await request(app)
         .put(`/api/users/${userAId}/preferences`)
         .set('Authorization', `Bearer ${userAToken}`)
         .send({
           targetTerm: 'Winter 2027',
-          targetCredits: 15,
+          targetCredits: 25,
           earliestStartTime: '10:00',
           preferredFreeDays: [],
         });
@@ -548,6 +534,33 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
       const cse115a = res.body.data.events.find((e: any) => e.id === 'cse-115a-lec');
       expect(cse115a).toBeDefined();
       expect(cse115a.conflictBadge).toBe('Starts before preferred time');
+      expect(cse115a.conflictBadges).toContain('Starts before preferred time');
+    });
+
+    it('captures multiple simultaneous conflicts into typed array and combined string', async () => {
+      // Arrange: CSE 115A meets Friday AND starts at 09:00 (< 10:00)
+      await request(app)
+        .put(`/api/users/${userAId}/preferences`)
+        .set('Authorization', `Bearer ${userAToken}`)
+        .send({
+          targetTerm: 'Winter 2027',
+          targetCredits: 25,
+          preferredFreeDays: ['Friday'],
+          earliestStartTime: '10:00',
+        });
+
+      // Act
+      const res = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${userAToken}`);
+
+      // Assert
+      expect(res.status).toBe(200);
+      const cse115a = res.body.data.events.find((e: any) => e.id === 'cse-115a-lec');
+      expect(cse115a).toBeDefined();
+      expect(cse115a.conflictBadges).toContain('Spans preferred free day');
+      expect(cse115a.conflictBadges).toContain('Starts before preferred time');
+      expect(cse115a.conflictBadge).toBe('Spans preferred free day, Starts before preferred time');
     });
   });
 });
