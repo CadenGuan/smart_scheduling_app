@@ -36,3 +36,4 @@ agent_service/.venv/
 agent_service/db.sqlite3
 
 .vscode/
+.scratch/
