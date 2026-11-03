@@ -266,4 +266,42 @@ describe('CourseDetailsModal Conflict Notes Test Suite', () => {
     expect(html).toContain('Spans preferred free day, Ends after preferred time');
     expect(html).toContain('⚠️');
   });
+
+  describe('getBadgesList DRY Helper', () => {
+    it('returns empty array when event is null or undefined', async () => {
+      const { getBadgesList } = await import('../src/utils/conflictUtils');
+      expect(getBadgesList(null)).toEqual([]);
+      expect(getBadgesList(undefined)).toEqual([]);
+    });
+
+    it('returns conflictBadges array when populated', async () => {
+      const { getBadgesList } = await import('../src/utils/conflictUtils');
+      const event: CalendarEvent = {
+        ...baseEvent,
+        conflictBadges: ['Exceeds max back-to-back hours', 'Time conflict with another course'],
+      };
+      expect(getBadgesList(event)).toEqual([
+        'Exceeds max back-to-back hours',
+        'Time conflict with another course',
+      ]);
+    });
+
+    it('parses comma-separated conflictBadge string when conflictBadges is empty', async () => {
+      const { getBadgesList } = await import('../src/utils/conflictUtils');
+      const event: CalendarEvent = {
+        ...baseEvent,
+        conflictBadge: 'Spans preferred free day, Starts before preferred time',
+      };
+      expect(getBadgesList(event)).toEqual([
+        'Spans preferred free day',
+        'Starts before preferred time',
+      ]);
+    });
+
+    it('returns empty array when no conflict badges or empty string is provided', async () => {
+      const { getBadgesList } = await import('../src/utils/conflictUtils');
+      expect(getBadgesList(baseEvent)).toEqual([]);
+      expect(getBadgesList({ ...baseEvent, conflictBadge: '   ' })).toEqual([]);
+    });
+  });
 });

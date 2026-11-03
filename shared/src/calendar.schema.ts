@@ -8,6 +8,8 @@ export const ConflictBadgeSchema = z.enum([
   'Spans preferred free day',
   'Starts before preferred time',
   'Ends after preferred time',
+  'Exceeds max back-to-back hours',
+  'Time conflict with another course',
 ]);
 export type ConflictBadgeType = z.infer<typeof ConflictBadgeSchema>;
 

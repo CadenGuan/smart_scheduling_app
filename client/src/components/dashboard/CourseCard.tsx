@@ -1,6 +1,7 @@
 import React from 'react';
 import { BaseCardComponent, BaseCardState } from '../base/BaseCardComponent';
 import { CalendarEvent } from 'shared';
+import { getBadgesList } from '../../utils/conflictUtils';
 
 export interface CourseCardProps {
   event: CalendarEvent;
@@ -46,6 +47,8 @@ export class CourseCard extends BaseCardComponent<CourseCardProps, BaseCardState
       cardBg = 'bg-[#FFFDE7] border-[#F9CA24] text-[#7A6100]';
     }
 
+    const badges = getBadgesList(event);
+
     return (
       <div
         style={style}
@@ -65,24 +68,17 @@ export class CourseCard extends BaseCardComponent<CourseCardProps, BaseCardState
           </span>
           {event.location && <span className="truncate max-w-[80px]">{event.location}</span>}
         </div>
-        {(event.conflictBadge || (event.conflictBadges && event.conflictBadges.length > 0)) && (
+        {badges.length > 0 && (
           <div className="mt-1 flex flex-col gap-0.5">
-            {event.conflictBadges && event.conflictBadges.length > 0 ? (
-              event.conflictBadges.map((badge, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5 truncate"
-                >
-                  <span>⚠️</span>
-                  <span className="truncate">{badge}</span>
-                </div>
-              ))
-            ) : (
-              <div className="flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5 truncate">
+            {badges.map((badge, idx) => (
+              <div
+                key={idx}
+                className="flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 rounded px-1.5 py-0.5 truncate"
+              >
                 <span>⚠️</span>
-                <span className="truncate">{event.conflictBadge}</span>
+                <span className="truncate">{badge}</span>
               </div>
-            )}
+            ))}
           </div>
         )}
       </div>

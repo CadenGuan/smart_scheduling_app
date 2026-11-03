@@ -10,18 +10,20 @@ export type TargetTerm = z.infer<typeof TargetTermEnum>;
 export const DayEnum = z.enum(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
 export type Day = z.infer<typeof DayEnum>;
 
+export const TimeStringSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Time must be in 24-hour HH:MM format')
+  .or(z.literal(''))
+  .or(z.null())
+  .transform((val) => (val === '' || val === null ? undefined : val))
+  .optional();
+
 export const UserPreferencesSchema = z
   .object({
     targetTerm: TargetTermEnum.default('Winter 2027'),
     targetCredits: z.number().int().min(5).max(25).default(15),
-    earliestStartTime: z
-      .string()
-      .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'HH:MM format required')
-      .optional(),
-    latestEndTime: z
-      .string()
-      .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'HH:MM format required')
-      .optional(),
+    earliestStartTime: TimeStringSchema,
+    latestEndTime: TimeStringSchema,
     preferredFreeDays: z.array(DayEnum).default([]),
     maxBackToBackHours: z.number().min(1).max(8).optional(),
   })

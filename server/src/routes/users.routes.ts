@@ -12,17 +12,12 @@ const router = Router();
  * and that the user exists in SQLite. Returns the UserRow if authorized,
  * otherwise responds with 403 or 404 and returns null.
  */
-function getAuthorizedUser(
-  req: AuthenticatedRequest,
-  res: Response,
-  actionDesc: string
-): UserRow | null {
+function getAuthorizedUser(req: AuthenticatedRequest, res: Response): UserRow | null {
   const userId = req.params.id;
   if (req.user?.userId !== userId) {
     res.status(403).json({
       success: false,
       error: 'FORBIDDEN',
-      message: `Cannot ${actionDesc}.`,
     });
     return null;
   }
@@ -32,7 +27,6 @@ function getAuthorizedUser(
     res.status(404).json({
       success: false,
       error: 'USER_NOT_FOUND',
-      message: 'User not found.',
     });
     return null;
   }
@@ -45,7 +39,7 @@ router.get(
   '/:id',
   requireAuth,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const user = getAuthorizedUser(req, res, 'access another user profile');
+    const user = getAuthorizedUser(req, res);
     if (!user) return;
 
     res.status(200).json({
@@ -74,7 +68,7 @@ router.get(
   '/:id/preferences',
   requireAuth,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const user = getAuthorizedUser(req, res, 'access another user preferences');
+    const user = getAuthorizedUser(req, res);
     if (!user) return;
 
     const preferences = user.preferences ? JSON.parse(user.preferences) : {};
@@ -91,7 +85,7 @@ router.put(
   requireAuth,
   validateBody(UserPreferencesSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const user = getAuthorizedUser(req, res, 'update another user preferences');
+    const user = getAuthorizedUser(req, res);
     if (!user) return;
 
     const userId = req.params.id;
@@ -102,7 +96,6 @@ router.put(
     const updatedUser = userQueries.findUserById(userId);
     res.status(200).json({
       success: true,
-      message: 'Preferences updated successfully.',
       data: JSON.parse(updatedUser!.preferences || '{}'),
     });
   })
@@ -114,7 +107,7 @@ router.put(
   requireAuth,
   validateBody(UpdateUserProfileSchema),
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const user = getAuthorizedUser(req, res, 'update another user profile');
+    const user = getAuthorizedUser(req, res);
     if (!user) return;
 
     const userId = req.params.id;
@@ -136,7 +129,6 @@ router.put(
     const updated = userQueries.findUserById(userId);
     res.status(200).json({
       success: true,
-      message: 'Profile updated successfully.',
       data: {
         userId: updated!.user_id,
         email: updated!.email,

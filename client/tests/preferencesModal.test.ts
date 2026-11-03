@@ -247,6 +247,53 @@ describe('PreferencesModal Component Test Suite', () => {
       );
     });
 
+    it('sanitizes empty time strings to undefined before saving', async () => {
+      const onSave = vi.fn().mockResolvedValue(undefined);
+      const modal = new PreferencesModal({
+        isOpen: true,
+        user: mockUser,
+        onClose: vi.fn(),
+        onSave,
+      });
+
+      modal.state = {
+        ...modal.state,
+        earliestStartTime: '   ',
+        latestEndTime: '',
+      };
+
+      await modal.handleSave({ preventDefault: vi.fn() } as any);
+
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          preferences: expect.objectContaining({
+            earliestStartTime: undefined,
+            latestEndTime: undefined,
+          }),
+        })
+      );
+    });
+
+    it('flags validation error via shared Zod schema when targetCredits is out of range', async () => {
+      const onSave = vi.fn();
+      const modal = new PreferencesModal({
+        isOpen: true,
+        user: mockUser,
+        onClose: vi.fn(),
+        onSave,
+      });
+
+      modal.state = {
+        ...modal.state,
+        targetCredits: 30, // max is 25
+      };
+
+      await modal.handleSave({ preventDefault: vi.fn() } as any);
+
+      expect(modal.state.validationError).toBeDefined();
+      expect(onSave).not.toHaveBeenCalled();
+    });
+
     it('displays error and halts spinner if onSave rejects', async () => {
       const onSave = vi.fn().mockRejectedValue(new Error('Network failure'));
       const onClose = vi.fn();

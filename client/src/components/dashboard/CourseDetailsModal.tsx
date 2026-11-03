@@ -1,6 +1,7 @@
 import React from 'react';
 import { BaseComponent } from '../base/BaseComponent';
 import { CalendarEvent } from 'shared';
+import { getBadgesList } from '../../utils/conflictUtils';
 
 interface CourseDetailsModalProps {
   event: CalendarEvent | null;
@@ -19,6 +20,8 @@ export class CourseDetailsModal extends BaseComponent<CourseDetailsModalProps> {
       : isGE
         ? 'bg-[#FFEBEB] text-[#FF6B6B]'
         : 'bg-[#FFFDE7] text-[#e5b613]';
+
+    const badges = getBadgesList(event);
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
@@ -64,14 +67,11 @@ export class CourseDetailsModal extends BaseComponent<CourseDetailsModalProps> {
                 {event.startTime} – {event.endTime}
               </span>
             </div>
-            {(event.conflictBadge || (event.conflictBadges && event.conflictBadges.length > 0)) && (
+            {badges.length > 0 && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 text-xs text-amber-800">
                 <span>⚠️</span>
                 <span>
-                  <strong>Scheduling Conflict Note:</strong>{' '}
-                  {event.conflictBadges && event.conflictBadges.length > 0
-                    ? event.conflictBadges.join(', ')
-                    : event.conflictBadge}
+                  <strong>Scheduling Conflict Note:</strong> {badges.join(', ')}
                 </span>
               </div>
             )}

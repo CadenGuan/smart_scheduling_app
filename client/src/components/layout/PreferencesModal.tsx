@@ -1,6 +1,13 @@
 import React from 'react';
 import { BaseComponent } from '../base/BaseComponent';
-import { UserProfile, UserPreferences, Standing, Day, TargetTerm } from 'shared';
+import {
+  UserProfile,
+  UserPreferences,
+  UserPreferencesSchema,
+  Standing,
+  Day,
+  TargetTerm,
+} from 'shared';
 
 const WEEKDAYS: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const AVAILABLE_TERMS: TargetTerm[] = ['Fall 2026', 'Winter 2027', 'Spring 2027', 'Summer 2027'];
@@ -78,12 +85,36 @@ export class PreferencesModal extends BaseComponent<PreferencesModalProps, Prefe
 
   handleSave = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    const { earliestStartTime, latestEndTime } = this.state;
 
-    // Time window sanity check
-    if (earliestStartTime && latestEndTime && earliestStartTime > latestEndTime) {
+    // Sanitize empty strings to undefined
+    const sanitizedEarliest =
+      this.state.earliestStartTime && this.state.earliestStartTime.trim() !== ''
+        ? this.state.earliestStartTime
+        : undefined;
+    const sanitizedLatest =
+      this.state.latestEndTime && this.state.latestEndTime.trim() !== ''
+        ? this.state.latestEndTime
+        : undefined;
+
+    const preferencesPayload = {
+      targetTerm: this.state.targetTerm,
+      targetCredits: this.state.targetCredits,
+      earliestStartTime: sanitizedEarliest,
+      latestEndTime: sanitizedLatest,
+      preferredFreeDays: this.state.preferredFreeDays,
+      maxBackToBackHours: this.state.maxBackToBackHours,
+    };
+
+    // Shared Zod validation
+    const parsed = UserPreferencesSchema.safeParse(preferencesPayload);
+    if (!parsed.success) {
+      const firstIssue = parsed.error.issues[0];
+      const errorMsg =
+        firstIssue?.message === 'earliestStartTime must not be later than latestEndTime'
+          ? 'Earliest start time must not be later than latest end time.'
+          : firstIssue?.message || 'Invalid preferences.';
       this.safeSetState({
-        validationError: 'Earliest start time must not be later than latest end time.',
+        validationError: errorMsg,
       });
       return;
     }
@@ -94,14 +125,7 @@ export class PreferencesModal extends BaseComponent<PreferencesModalProps, Prefe
         standing: this.state.standing,
         major: this.state.major,
         minor: this.state.minor || null,
-        preferences: {
-          targetTerm: this.state.targetTerm,
-          targetCredits: this.state.targetCredits,
-          earliestStartTime: this.state.earliestStartTime,
-          latestEndTime: this.state.latestEndTime,
-          preferredFreeDays: this.state.preferredFreeDays,
-          maxBackToBackHours: this.state.maxBackToBackHours,
-        },
+        preferences: parsed.data,
       });
       this.props.onClose();
     } catch (err: any) {
