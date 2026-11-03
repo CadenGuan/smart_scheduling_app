@@ -144,4 +144,80 @@ router.put(
   })
 );
 
+// 5. Export Profile & Preferences to JSON (Sprint 4 Priority 3 User Story)
+router.get(
+  '/:id/export',
+  requireAuth,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = getAuthorizedUser(req, res);
+    if (!user) return;
+
+    const payload = {
+      version: '1.0',
+      exportedAt: new Date().toISOString(),
+      profile: {
+        name: user.name,
+        standing: user.standing,
+        major: user.major,
+        minor: user.minor,
+        intendedMajor: user.intended_major,
+      },
+      geStatus: user.ge_status ? JSON.parse(user.ge_status) : null,
+      majorRequirementsTaken: JSON.parse(user.major_requirements_taken || '[]'),
+      breaksPreference: JSON.parse(user.breaks_preference || '[]'),
+      preferences: user.preferences ? JSON.parse(user.preferences) : {},
+    };
+
+    res.status(200).json({
+      success: true,
+      data: payload,
+    });
+  })
+);
+
+// 6. Import Profile & Preferences from JSON (Sprint 4 Priority 3 User Story)
+router.post(
+  '/:id/import',
+  requireAuth,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = getAuthorizedUser(req, res);
+    if (!user) return;
+
+    const userId = req.params.id;
+    const body = req.body || {};
+    const profile = body.profile || {};
+    const preferences = body.preferences || {};
+
+    userQueries.updateUserProfile(userId, {
+      name: profile.name ?? user.name,
+      standing: profile.standing ?? user.standing,
+      major: profile.major ?? user.major,
+      minor: profile.minor ?? user.minor,
+      intended_major: profile.intendedMajor ?? user.intended_major,
+      preferences: JSON.stringify(preferences),
+      ge_status: body.geStatus ? JSON.stringify(body.geStatus) : (user.ge_status ?? undefined),
+      major_requirements_taken: body.majorRequirementsTaken
+        ? JSON.stringify(body.majorRequirementsTaken)
+        : (user.major_requirements_taken ?? undefined),
+      breaks_preference: body.breaksPreference
+        ? JSON.stringify(body.breaksPreference)
+        : (user.breaks_preference ?? undefined),
+    });
+
+    const updated = userQueries.findUserById(userId);
+    res.status(200).json({
+      success: true,
+      message: 'Profile and preferences imported successfully.',
+      data: {
+        userId: updated!.user_id,
+        name: updated!.name,
+        standing: updated!.standing,
+        major: updated!.major,
+        minor: updated!.minor,
+        preferences: JSON.parse(updated!.preferences || '{}'),
+      },
+    });
+  })
+);
+
 export default router;

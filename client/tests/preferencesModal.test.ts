@@ -384,6 +384,8 @@ describe('PreferencesModal Component Test Suite', () => {
       // Buttons
       expect(html).toContain('Cancel');
       expect(html).toContain('Save Changes');
+      expect(html).toContain('Export JSON');
+      expect(html).toContain('Import JSON');
     });
 
     it('renders validation error banner when validationError is present in state', () => {

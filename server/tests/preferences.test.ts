@@ -563,4 +563,71 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
       expect(cse115a.conflictBadge).toBe('Spans preferred free day, Starts before preferred time');
     });
   });
+
+  describe('Profile & Preferences Import / Export (Sprint 4 Priority 3)', () => {
+    it('exports profile and preferences as standard JSON', async () => {
+      // Act
+      const res = await request(app)
+        .get(`/api/users/${userAId}/export`)
+        .set('Authorization', `Bearer ${userAToken}`);
+
+      // Assert
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.version).toBe('1.0');
+      expect(res.body.data.profile.name).toBe('User A Senior');
+      expect(res.body.data.profile.major).toBe('Robotics Engineering B.S.');
+      expect(res.body.data.preferences).toBeDefined();
+    });
+
+    it('imports profile and preferences from JSON and mutates user record', async () => {
+      // Arrange
+      const importPayload = {
+        profile: {
+          name: 'Imported Sammy Slug',
+          standing: 'Senior',
+          major: 'Computer Science B.S.',
+        },
+        preferences: {
+          targetCredits: 12,
+          targetTerm: 'Spring 2027',
+          preferredFreeDays: ['Friday'],
+        },
+        majorRequirementsTaken: ['CSE 101', 'CSE 115A'],
+      };
+
+      // Act
+      const res = await request(app)
+        .post(`/api/users/${userAId}/import`)
+        .set('Authorization', `Bearer ${userAToken}`)
+        .send(importPayload);
+
+      // Assert
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.name).toBe('Imported Sammy Slug');
+      expect(res.body.data.standing).toBe('Senior');
+      expect(res.body.data.preferences.targetCredits).toBe(12);
+
+      // Verify persistence via GET /api/users/:id
+      const getRes = await request(app)
+        .get(`/api/users/${userAId}`)
+        .set('Authorization', `Bearer ${userAToken}`);
+      expect(getRes.status).toBe(200);
+      expect(getRes.body.data.name).toBe('Imported Sammy Slug');
+    });
+
+    it('rejects unauthorized export or import attempts', async () => {
+      const exportRes = await request(app)
+        .get(`/api/users/${userAId}/export`)
+        .set('Authorization', `Bearer ${userBToken}`);
+      expect(exportRes.status).toBe(403);
+
+      const importRes = await request(app)
+        .post(`/api/users/${userAId}/import`)
+        .set('Authorization', `Bearer ${userBToken}`)
+        .send({});
+      expect(importRes.status).toBe(403);
+    });
+  });
 });

@@ -180,6 +180,46 @@ describe('Client Services & ApiClient Test Suite', () => {
         targetCredits: 18,
       });
     });
+
+    it('calls exportSettings and importSettings', async () => {
+      const mockExportData = { version: '1.0', profile: { name: 'Slug' } };
+      vi.spyOn(apiClient, 'get').mockResolvedValue({ success: true, data: mockExportData } as any);
+      vi.spyOn(apiClient, 'post').mockResolvedValue({ success: true, data: mockExportData } as any);
+
+      const exported = await UserService.exportSettings('u1');
+      expect(exported).toEqual(mockExportData);
+      expect(apiClient.get).toHaveBeenCalledWith('/api/users/u1/export');
+
+      const imported = await UserService.importSettings('u1', mockExportData);
+      expect(imported).toEqual(mockExportData);
+      expect(apiClient.post).toHaveBeenCalledWith('/api/users/u1/import', mockExportData);
+    });
+
+    it('downloadJson handles safe execution when globals are undefined or defined', () => {
+      expect(() => UserService.downloadJson({ test: true }, 'test.json')).not.toThrow();
+
+      const clickSpy = vi.fn();
+      const appendChildSpy = vi.fn();
+      const removeChildSpy = vi.fn();
+      const createObjectURL = vi.fn().mockReturnValue('blob:test');
+      const revokeObjectURL = vi.fn();
+
+      vi.stubGlobal('window', {
+        URL: { createObjectURL, revokeObjectURL },
+      });
+      vi.stubGlobal('document', {
+        body: { appendChild: appendChildSpy, removeChild: removeChildSpy },
+        createElement: vi.fn().mockReturnValue({ click: clickSpy, set href(v: string) {}, set download(v: string) {} }),
+      });
+
+      UserService.downloadJson({ foo: 'bar' }, 'settings.json');
+      expect(clickSpy).toHaveBeenCalled();
+      expect(appendChildSpy).toHaveBeenCalled();
+      expect(removeChildSpy).toHaveBeenCalled();
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:test');
+
+      vi.unstubAllGlobals();
+    });
   });
 
   describe('AuthService', () => {

@@ -41,4 +41,32 @@ export class UserService {
     );
     return res.data;
   }
+
+  static async exportSettings(userId: string): Promise<any> {
+    const res = await apiClient.get<{ success: boolean; data: any }>(
+      `/api/users/${userId}/export`
+    );
+    return res.data;
+  }
+
+  static async importSettings(userId: string, payload: any): Promise<any> {
+    const res = await apiClient.post<{ success: boolean; data: any }>(
+      `/api/users/${userId}/import`,
+      payload
+    );
+    return res.data;
+  }
+
+  static downloadJson(data: any, filename: string): void {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
 }

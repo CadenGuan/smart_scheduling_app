@@ -1,5 +1,6 @@
 import React from 'react';
 import { BaseComponent } from '../base/BaseComponent';
+import { UserService } from '../../services/userService';
 import {
   UserProfile,
   UserPreferences,
@@ -33,6 +34,8 @@ interface PreferencesModalState {
   maxBackToBackHours: number;
   validationError: string | null;
   isSaving: boolean;
+  isExportingSettings: boolean;
+  isImportingSettings: boolean;
 }
 
 export class PreferencesModal extends BaseComponent<PreferencesModalProps, PreferencesModalState> {
@@ -51,6 +54,8 @@ export class PreferencesModal extends BaseComponent<PreferencesModalProps, Prefe
       maxBackToBackHours: pref.maxBackToBackHours ?? 3,
       validationError: null,
       isSaving: false,
+      isExportingSettings: false,
+      isImportingSettings: false,
     };
   }
 
@@ -81,6 +86,37 @@ export class PreferencesModal extends BaseComponent<PreferencesModalProps, Prefe
       current.push(day);
     }
     this.safeSetState({ preferredFreeDays: current });
+  };
+
+  handleExportSettings = async (): Promise<void> => {
+    if (!this.props.user?.userId) return;
+    try {
+      this.safeSetState({ isExportingSettings: true, validationError: null });
+      const data = await UserService.exportSettings(this.props.user.userId);
+      UserService.downloadJson(data, `slug-preferences-${this.props.user.userId.slice(0, 8)}.json`);
+      this.safeSetState({ isExportingSettings: false });
+    } catch {
+      this.safeSetState({ isExportingSettings: false, validationError: 'Failed to export preferences.' });
+    }
+  };
+
+  handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = e.target.files?.[0];
+    if (!file || !this.props.user?.userId) return;
+    try {
+      this.safeSetState({ isImportingSettings: true, validationError: null });
+      const text = await file.text();
+      const payload = JSON.parse(text);
+      await UserService.importSettings(this.props.user.userId, payload);
+      this.safeSetState({ isImportingSettings: false });
+      await this.props.onSave({});
+      this.props.onClose();
+    } catch (err: any) {
+      this.safeSetState({
+        isImportingSettings: false,
+        validationError: 'Failed to import JSON file: ' + (err?.message || 'Invalid format'),
+      });
+    }
   };
 
   handleSave = async (e: React.FormEvent): Promise<void> => {
@@ -151,6 +187,8 @@ export class PreferencesModal extends BaseComponent<PreferencesModalProps, Prefe
       maxBackToBackHours,
       validationError,
       isSaving,
+      isExportingSettings,
+      isImportingSettings,
     } = this.state;
 
     if (!isOpen) return null;
@@ -373,43 +411,66 @@ export class PreferencesModal extends BaseComponent<PreferencesModalProps, Prefe
             </div>
 
             {/* Modal Actions */}
-            <div className="pt-4 border-t border-slate-100 flex justify-end gap-3 sticky bottom-0 bg-white py-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="flex items-center gap-2 px-6 py-2.5 bg-[#00B4DB] hover:bg-[#0098ba] text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-50"
-              >
-                {isSaving ? (
-                  <>
-                    <svg
-                      className="animate-spin h-4 w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                    </svg>
-                    <span>Saving Changes...</span>
-                  </>
-                ) : (
-                  <span>Save Changes</span>
-                )}
-              </button>
+            <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 sticky bottom-0 bg-white py-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={this.handleExportSettings}
+                  disabled={isExportingSettings}
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isExportingSettings ? 'Exporting...' : '📥 Export JSON'}
+                </button>
+                <label className="cursor-pointer px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+                  {isImportingSettings ? 'Importing...' : '📤 Import JSON'}
+                  <input
+                    type="file"
+                    accept=".json"
+                    className="hidden"
+                    onChange={this.handleImportFile}
+                    disabled={isImportingSettings}
+                  />
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-[#00B4DB] hover:bg-[#0098ba] text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-50"
+                >
+                  {isSaving ? (
+                    <>
+                      <svg
+                        className="animate-spin h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                      <span>Saving Changes...</span>
+                    </>
+                  ) : (
+                    <span>Save Changes</span>
+                  )}
+                </button>
+              </div>
             </div>
           </form>
         </div>
