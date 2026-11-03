@@ -4,6 +4,7 @@ import { Navbar } from '../components/layout/Navbar';
 import { PreferencesModal } from '../components/layout/PreferencesModal';
 import { AgentWorkspace } from '../components/dashboard/AgentWorkspace';
 import { CalendarPreview } from '../components/dashboard/CalendarPreview';
+import { TourWalkthrough } from '../components/dashboard/TourWalkthrough';
 import { apiClient } from '../services/apiClient';
 import { UserService } from '../services/userService';
 import { AuthService } from '../services/authService';
@@ -17,6 +18,7 @@ interface DashboardState {
   term: string;
   totalCredits: number;
   isPreferencesOpen: boolean;
+  isTourOpen: boolean;
   isLoading: boolean;
 }
 
@@ -29,6 +31,7 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
       term: 'Winter 2027',
       totalCredits: 15,
       isPreferencesOpen: false,
+      isTourOpen: false,
       isLoading: true,
     };
   }
@@ -36,6 +39,10 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
   async componentDidMount(): Promise<void> {
     super.componentDidMount();
     const currentUser = useAuthStore.getState().user;
+
+    if (typeof localStorage !== 'undefined' && !localStorage.getItem('hasSeenDashboardTour')) {
+      this.safeSetState({ isTourOpen: true });
+    }
 
     try {
       // 1. Fetch user profile
@@ -72,6 +79,14 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
 
   handleClosePreferences = (): void => {
     this.safeSetState({ isPreferencesOpen: false });
+  };
+
+  handleStartTour = (): void => {
+    this.safeSetState({ isTourOpen: true });
+  };
+
+  handleCloseTour = (): void => {
+    this.safeSetState({ isTourOpen: false });
   };
 
   handleRefreshSchedule = async (): Promise<void> => {
@@ -125,7 +140,7 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
   };
 
   render() {
-    const { user, events, term, totalCredits, isPreferencesOpen, isLoading } = this.state;
+    const { user, events, term, totalCredits, isPreferencesOpen, isTourOpen, isLoading } = this.state;
 
     if (isLoading) {
       return (
@@ -145,16 +160,17 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
           totalCredits={totalCredits}
           onOpenPreferences={this.handleOpenPreferences}
           onLogout={this.handleLogout}
+          onStartTour={this.handleStartTour}
         />
 
         <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Panel: SlugAgent Workspace (38% ~ 5 columns on desktop) */}
-          <div className="lg:col-span-5 h-[calc(100vh-112px)] min-h-[600px]">
+          <div data-tour="agent-workspace" className="lg:col-span-5 h-[calc(100vh-112px)] min-h-[600px]">
             <AgentWorkspace user={user} onScheduleUpdated={this.handleRefreshSchedule} />
           </div>
 
           {/* Right Panel: Weekly Calendar Grid Preview (62% ~ 7 columns on desktop) */}
-          <div className="lg:col-span-7 h-[calc(100vh-112px)] min-h-[600px]">
+          <div data-tour="calendar-preview" className="lg:col-span-7 h-[calc(100vh-112px)] min-h-[600px]">
             <CalendarPreview events={events} term={term} />
           </div>
         </main>
@@ -164,6 +180,11 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
           user={user}
           onClose={this.handleClosePreferences}
           onSave={this.handleSavePreferences}
+        />
+
+        <TourWalkthrough
+          isOpen={isTourOpen}
+          onClose={this.handleCloseTour}
         />
       </div>
     );

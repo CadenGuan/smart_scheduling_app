@@ -112,6 +112,7 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
             {/* Action Buttons */}
             <button
               type="button"
+              data-tour="prereq-roadmap"
               onClick={() => this.safeSetState({ isRoadmapOpen: true })}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 border shadow-xs bg-white text-slate-700 border-slate-200 hover:border-[#00B4DB] hover:text-[#00B4DB] hover:bg-slate-50"
               title="View UCSC Computer Science prerequisite DAG and degree progress"
@@ -122,6 +123,7 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
             {/* Export .ics Button */}
             <button
               type="button"
+              data-tour="export-ics"
               onClick={this.handleExportICS}
               disabled={isExporting}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 border shadow-xs ${

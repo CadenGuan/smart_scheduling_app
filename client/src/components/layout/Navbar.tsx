@@ -8,6 +8,7 @@ interface NavbarProps {
   totalCredits?: number;
   onOpenPreferences: () => void;
   onLogout: () => void;
+  onStartTour?: () => void;
 }
 
 interface NavbarState {
@@ -21,7 +22,7 @@ export class Navbar extends BaseComponent<NavbarProps, NavbarState> {
   }
 
   render() {
-    const { user, activeTerm, totalCredits, onOpenPreferences, onLogout } = this.props;
+    const { user, activeTerm, totalCredits, onOpenPreferences, onLogout, onStartTour } = this.props;
     const { isPrefHovered } = this.state;
 
     return (
@@ -60,9 +61,23 @@ export class Navbar extends BaseComponent<NavbarProps, NavbarState> {
 
         {/* Right: Preferences Trigger & User Actions */}
         <div className="flex items-center gap-3">
+          {/* Quick Walkthrough Tour Trigger */}
+          {onStartTour && (
+            <button
+              type="button"
+              onClick={onStartTour}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all flex items-center gap-1.5"
+              title="Take a quick tour of your dashboard features"
+            >
+              <span>❓</span>
+              <span className="hidden sm:inline">Tour</span>
+            </button>
+          )}
+
           {/* Edit Preferences Button */}
           <button
             type="button"
+            data-tour="navbar-preferences"
             onClick={onOpenPreferences}
             onMouseEnter={() => this.safeSetState({ isPrefHovered: true })}
             onMouseLeave={() => this.safeSetState({ isPrefHovered: false })}
