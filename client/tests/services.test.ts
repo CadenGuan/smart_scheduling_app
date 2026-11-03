@@ -362,5 +362,36 @@ describe('Client Services & ApiClient Test Suite', () => {
 
       vi.unstubAllGlobals();
     });
+
+    it('saveCustomSchedule, getCustomSchedule, and clearCustomSchedule call API endpoints', async () => {
+      const mockEvents = [
+        {
+          id: 'cse-101',
+          title: 'CSE 101',
+          type: 'MAJOR' as const,
+          days: ['Monday' as const],
+          startTime: '10:00',
+          endTime: '11:35',
+          credits: 5,
+        },
+      ];
+
+      vi.spyOn(apiClient, 'post').mockResolvedValue({ success: true } as any);
+      vi.spyOn(apiClient, 'get').mockResolvedValue({ success: true, data: mockEvents } as any);
+      vi.spyOn(apiClient, 'delete').mockResolvedValue({ success: true } as any);
+
+      await CalendarService.saveCustomSchedule(mockEvents, 'Winter 2027');
+      expect(apiClient.post).toHaveBeenCalledWith('/api/calendar/events', {
+        events: mockEvents,
+        term: 'Winter 2027',
+      });
+
+      const retrieved = await CalendarService.getCustomSchedule('Winter 2027');
+      expect(retrieved).toEqual(mockEvents);
+      expect(apiClient.get).toHaveBeenCalledWith('/api/calendar/events?term=Winter%202027');
+
+      await CalendarService.clearCustomSchedule('Winter 2027');
+      expect(apiClient.delete).toHaveBeenCalledWith('/api/calendar/events?term=Winter%202027');
+    });
   });
 });

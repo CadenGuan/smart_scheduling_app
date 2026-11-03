@@ -90,4 +90,33 @@ export class CalendarService {
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
   }
+
+  /**
+   * Saves custom or agent-proposed schedule courses to persistent database storage.
+   */
+  static async saveCustomSchedule(
+    events: CalendarEvent[],
+    term: string = 'Winter 2027'
+  ): Promise<void> {
+    await apiClient.post('/api/calendar/events', { events, term });
+  }
+
+  /**
+   * Fetches saved custom schedule courses for the user.
+   */
+  static async getCustomSchedule(term?: string): Promise<CalendarEvent[]> {
+    const qs = term ? `?term=${encodeURIComponent(term)}` : '';
+    const res = await apiClient.get<{ success: boolean; data: CalendarEvent[] }>(
+      `/api/calendar/events${qs}`
+    );
+    return res.data;
+  }
+
+  /**
+   * Clears saved custom schedule courses for the user.
+   */
+  static async clearCustomSchedule(term?: string): Promise<void> {
+    const qs = term ? `?term=${encodeURIComponent(term)}` : '';
+    await apiClient.delete(`/api/calendar/events${qs}`);
+  }
 }

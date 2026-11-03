@@ -1,6 +1,7 @@
 import { CalendarEvent, ConflictBadgeType, UserPreferences } from 'shared';
 import { sampleCalendarEvents } from '../db/seed.js';
 import { userQueries } from '../db/queries/userQueries.js';
+import { calendarQueries } from '../db/queries/calendarQueries.js';
 
 function toMinutes(timeStr: string): number {
   const [hours, mins] = timeStr.split(':').map(Number);
@@ -157,7 +158,16 @@ export class CalendarService {
     const latestEndTime = preferences.latestEndTime;
     const maxBackToBackHours = preferences.maxBackToBackHours;
 
-    const pool = eventsPool || sampleCalendarEvents;
+    let pool = eventsPool;
+    if (!pool && userId) {
+      const savedUserEvents = calendarQueries.getUserCalendarEvents(userId, term);
+      if (savedUserEvents.length > 0) {
+        pool = savedUserEvents;
+      }
+    }
+    if (!pool) {
+      pool = sampleCalendarEvents;
+    }
 
     const termMatchedPool = pool.filter(
       (e) => e.type !== 'GOOGLE_CALENDAR_BUSY' && (!e.term || e.term === term)
