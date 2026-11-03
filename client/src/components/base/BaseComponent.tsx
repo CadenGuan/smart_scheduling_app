@@ -10,6 +10,7 @@ export abstract class BaseComponent<P = {}, S = {}> extends React.Component<P, S
 
   componentDidMount(): void {
     this._isMounted = true;
+    this._hasUnmounted = false;
   }
 
   componentWillUnmount(): void {

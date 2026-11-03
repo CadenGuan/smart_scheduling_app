@@ -51,12 +51,17 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
       }>('/api/calendar/preview');
 
       this.safeSetState({
-        events: res.data.events,
-        term: res.data.term,
-        totalCredits: res.data.totalCredits,
+        events: res?.data?.events || [],
+        term: res?.data?.term || 'Winter 2027',
+        totalCredits: res?.data?.totalCredits ?? 15,
         isLoading: false,
       });
-    } catch {
+    } catch (error: any) {
+      if (error?.statusCode === 401) {
+        useAuthStore.getState().clearAuth();
+        this.props.navigate('/login');
+        return;
+      }
       this.safeSetState({ isLoading: false });
     }
   }
