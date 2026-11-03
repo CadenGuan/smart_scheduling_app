@@ -23,6 +23,9 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"{client,server,shared}/{src,tests}/**/*.{ts,tsx,json}\"",
     "format:check": "prettier --check \"{client,server,shared}/{src,tests}/**/*.{ts,tsx,json}\"",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up",
+    "docker:down": "docker compose down",
     "clean": "rm -rf node_modules shared/node_modules server/node_modules client/node_modules shared/dist server/dist client/dist"
   },
   "devDependencies": {
