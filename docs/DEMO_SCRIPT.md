@@ -10,7 +10,7 @@
 1. Demonstrate how SlugSchedule solves the multi-constraint quarterly scheduling puzzle for UCSC students.
 2. Showcase the **SlugAdvisor** conversational AI agent powered by a NetworkX prerequisite DAG solver.
 3. Highlight visual schedule conflict detection, degree roadmap inspection, and academic conference tracking.
-4. Review the software engineering rigor: 266 automated tests, Docker containerization, OWASP security hardening, and SQLite WAL performance.
+4. Review the software engineering rigor: 311 automated tests, Docker containerization, OWASP security hardening, and SQLite WAL performance.
 
 ---
 
@@ -115,6 +115,7 @@ Direct attention to the right-hand **SlugAgent Workspace**.
    - Showcase the 5-tier UCSC CS degree DAG:
      - Live progress bar (`39% Completed`).
      - Status badges: `✓ Completed`, `⚡ Ready to Enroll`, `🔒 Locked`.
+     - **Live Course Search:** Type `CSE 101` in the search box to demonstrate instant real-time course filtering and empty-state handling.
      - Click `CSE 101` to view its prerequisites (`CSE 13S`, `CSE 16`) and all downstream courses it unlocks.
 
 2. **Consolidated Research & Conference Deadlines (Backlog 2):**
@@ -135,7 +136,7 @@ Direct attention to the right-hand **SlugAgent Workspace**.
 ### Act 5: Engineering Highlights & Architecture Q&A (1 min)
 
 Highlight our engineering rigor to the audience:
-- **Test Suite:** **266 automated tests** with 100% pass rate across TypeScript (Vitest) and Python (Pytest).
+- **Test Suite:** **311 automated tests** with 100% pass rate across TypeScript (Vitest) and Python (Pytest).
 - **Architecture:** Monorepo using npm workspaces (`client`, `server`, `shared`, `agent_service`).
 - **Security:** OWASP headers, CSP, brute-force rate limiters on auth routes, and Argon2/BCrypt hashing.
 - **Performance:** SQLite WAL mode with 64MB page cache and Vite manual vendor chunk splitting.
