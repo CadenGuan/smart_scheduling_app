@@ -1,5 +1,6 @@
 import { Router, Response } from 'express';
 import { userQueries, UserRow } from '../db/queries/userQueries.js';
+import { calendarQueries } from '../db/queries/calendarQueries.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validate.middleware.js';
@@ -92,6 +93,7 @@ router.put(
     userQueries.updateUserProfile(userId, {
       preferences: JSON.stringify(req.body),
     });
+    calendarQueries.deleteUserCalendarEvents(userId);
 
     const updatedUser = userQueries.findUserById(userId);
     res.status(200).json({
@@ -125,6 +127,9 @@ router.put(
       intended_major: intendedMajor,
       preferences: validatedPreferences,
     });
+    if (preferences !== undefined) {
+      calendarQueries.deleteUserCalendarEvents(userId);
+    }
 
     const updated = userQueries.findUserById(userId);
     res.status(200).json({

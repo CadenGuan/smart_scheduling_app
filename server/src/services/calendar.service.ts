@@ -359,7 +359,11 @@ export class CalendarService {
     );
 
     // Continue selecting courses while currentCredits < targetCredits and valid distinct base-code candidates remain
-    while (currentCredits < targetCredits && remainingCandidates.length > 0) {
+    while (
+      currentCredits < targetCredits &&
+      selectedCandidates.length < targetCourseCount &&
+      remainingCandidates.length > 0
+    ) {
       const scored = remainingCandidates.map((candidate) => {
         const indBadges = getIndividualConflicts(
           candidate,
