@@ -108,10 +108,24 @@ def is_course_requested_or_pinned(prompt: str, course: Dict[str, Any]) -> bool:
     cid = (course.get('id') or "").lower()
     code_no_space = code.replace(" ", "")
 
+    code_parts = code.split()
+    number = code_parts[-1] if len(code_parts) > 1 else ""
+
+    # Check if number appears as a course identifier rather than a credit/unit amount
+    has_letter = bool(re.search(r'[a-zA-Z]', number))
+    number_in_prompt = False
+    is_credit_context = bool(re.search(r'(?:credits?|units?)\s+(?:to\s+)?' + re.escape(number) + r'\b|\b' + re.escape(number) + r'\s*(?:credits?|units?)\b', prompt_lower))
+    if number and not is_credit_context:
+        if has_letter:
+            number_in_prompt = bool(re.search(r'\b' + re.escape(number) + r'\b', prompt_lower))
+        else:
+            number_in_prompt = bool(re.search(r'\b(?:course|class|cse|math|am|ece|phys|art|phil|(?:replace|swap|switch)\b.+?\b(?:with|to|for))\s+' + re.escape(number) + r'\b', prompt_lower))
+
     course_in_prompt = (
         (code and re.search(r'\b' + re.escape(code) + r'\b', prompt_lower)) or
         (code_no_space and re.search(r'\b' + re.escape(code_no_space) + r'\b', prompt_lower)) or
-        (cid and cid in prompt_lower)
+        (cid and cid in prompt_lower) or
+        number_in_prompt
     )
 
     if not course_in_prompt:
@@ -120,9 +134,17 @@ def is_course_requested_or_pinned(prompt: str, course: Dict[str, Any]) -> bool:
     # Negative checks: if course is specifically being dropped, asked about for prereqs/why, or replaced
     if re.search(r'\b(drop|withdraw|remove|drop\s+out\s+of)\b[^.?!;,]*\b' + re.escape(code) + r'\b', prompt_lower):
         return False
+    if re.search(r'\b(replace|swap|switch|substitute)\s+(?:my\s+)?\b' + re.escape(code) + r'\b', prompt_lower):
+        return False
+    if re.search(r'\b(replace|swap|switch|substitute)\s+(?:my\s+)?\b' + re.escape(code_no_space) + r'\b', prompt_lower):
+        return False
+    if number and re.search(r'\b(replace|swap|switch|substitute)\s+(?:my\s+)?\b' + re.escape(number) + r'\b', prompt_lower):
+        return False
     if re.search(r'\b(why\s+(?:do\s+you\s+)?recommend|prereq|prerequisite|path\s+to\s+take)\b[^.?!;,]*\b' + re.escape(code) + r'\b', prompt_lower):
         return False
     if re.search(r'\binstead\s+of\b[^.?!;,]*\b' + re.escape(code) + r'\b', prompt_lower):
+        return False
+    if number and re.search(r'\binstead\s+of\b[^.?!;,]*\b' + re.escape(number) + r'\b', prompt_lower):
         return False
 
     # Explicit pin keywords
@@ -135,7 +157,20 @@ def is_course_requested_or_pinned(prompt: str, course: Dict[str, Any]) -> bool:
         rf'\b(want|need|add|take|include|enroll|demand|must\s+have|require|put|sign\s+up\s+for)\b[^.?!;,]*\b{re.escape(code_no_space)}\b',
         rf'\b{re.escape(code)}\b[^.?!;,]*\b(instead|please|is\s+required|must\s+be)\b',
         rf'\b{re.escape(code_no_space)}\b[^.?!;,]*\b(instead|please|is\s+required|must\s+be)\b',
+        rf'\b(replace|swap|switch|substitute)\b[^.?!;,]*\b(with|for|to)\s+\b{re.escape(code)}\b',
+        rf'\b(replace|swap|switch|substitute)\b[^.?!;,]*\b(with|for|to)\s+\b{re.escape(code_no_space)}\b',
+        rf'\b(with|for|to)\s+\b{re.escape(code)}\b',
+        rf'\b(with|for|to)\s+\b{re.escape(code_no_space)}\b',
     ]
+    if number and number_in_prompt:
+        intent_patterns.extend([
+            rf'\b(replace|swap|switch|substitute)\b[^.?!;,]*\b(with|for|to)\s+\b{re.escape(number)}\b',
+            rf'\b(with|for|to)\s+\b{re.escape(number)}\b',
+        ])
+        if has_letter:
+            intent_patterns.append(
+                rf'\b(want|need|add|take|include|enroll)\b[^.?!;,]*\b{re.escape(number)}\b'
+            )
     for pat in intent_patterns:
         if re.search(pat, prompt_lower):
             return True

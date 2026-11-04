@@ -466,3 +466,73 @@ class AgentApiTests(TestCase):
         proposed_codes = [c.get('code') for c in proposed]
         self.assertIn('PHIL 11', proposed_codes)
         self.assertIn('HIS 10A', proposed_codes)
+
+    def test_replace_course_query(self):
+        payload = {
+            'prompt': 'replace math 21 with Math 19b',
+            'student': {
+                'name': 'Sammy Slug',
+                'major': 'Computer Science B.S.',
+                'standing': 'Junior'
+            },
+            'preferences': {
+                'targetCredits': 15
+            },
+            'currentSchedule': [],
+            'history': []
+        }
+        res = self.client.post('/api/agent/process/', data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['success'])
+        self.assertIn('replaced `MATH 21` with `MATH 19B`', data['data']['response'])
+        proposed = data['data']['proposedCourses']
+        math19b = next((c for c in proposed if c.get('code') == 'MATH 19B'), None)
+        self.assertIsNotNone(math19b)
+        self.assertTrue(math19b.get('pinned'))
+        self.assertFalse(any(c.get('code') == 'MATH 21' for c in proposed))
+
+    def test_replace_bare_numbers_query(self):
+        payload = {
+            'prompt': 'replace 19b with 23A',
+            'student': {
+                'name': 'Sammy Slug',
+                'major': 'Computer Science B.S.',
+                'standing': 'Junior'
+            },
+            'preferences': {
+                'targetCredits': 15
+            },
+            'currentSchedule': [],
+            'history': []
+        }
+        res = self.client.post('/api/agent/process/', data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['success'])
+        self.assertIn('replaced `MATH 19B` with `MATH 23A`', data['data']['response'])
+        proposed = data['data']['proposedCourses']
+        math23a = next((c for c in proposed if c.get('code') == 'MATH 23A'), None)
+        self.assertIsNotNone(math23a)
+        self.assertTrue(math23a.get('pinned'))
+
+    def test_greeting_query(self):
+        payload = {
+            'prompt': 'hello',
+            'student': {
+                'name': 'Sammy Slug',
+                'major': 'Computer Science B.S.',
+                'standing': 'Junior'
+            },
+            'preferences': {
+                'targetCredits': 15
+            },
+            'currentSchedule': [],
+            'history': []
+        }
+        res = self.client.post('/api/agent/process/', data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['success'])
+        self.assertIn('SlugAgent Scheduling Advisor', data['data']['response'])
+        self.assertIn('replace MATH 21 with MATH 19B', data['data']['response'])

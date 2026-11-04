@@ -42,13 +42,25 @@ def run_mock_agent(
             c_copy['pinned'] = True
             pinned_courses.append(c_copy)
 
-    # Scenario 0: Explicit Course Addition / Pinning Request
+    # Scenario 0: Explicit Course Addition / Pinning / Replacement Request
     if pinned_courses:
         pinned_codes = [f"`{c.get('code')}`" for c in pinned_courses]
 
+        # Check if any course is specifically being replaced / swapped out
+        replaced_codes = []
+        for c in catalog:
+            c_code = (c.get('code') or '').lower()
+            c_num = c_code.split()[-1] if c_code else ''
+            if c_code and re.search(r'\b(replace|swap|switch|substitute)\s+(?:my\s+)?\b' + re.escape(c_code) + r'\b', prompt_lower):
+                if c.get('code') not in replaced_codes:
+                    replaced_codes.append(c.get('code'))
+            elif c_num and re.search(r'\b(replace|swap|switch|substitute)\s+(?:my\s+)?\b' + re.escape(c_num) + r'\b', prompt_lower):
+                if c.get('code') not in replaced_codes:
+                    replaced_codes.append(c.get('code'))
+
         complementary = []
         for default_code in ['CSE 115A', 'CSE 101', 'CSE 130', 'ART 10F', 'PHIL 11']:
-            if not any(pc.get('code') == default_code for pc in pinned_courses):
+            if not any(pc.get('code') == default_code for pc in pinned_courses) and default_code not in replaced_codes:
                 matches = find_courses(query=default_code, term=term)
                 if matches:
                     comp = dict(matches[0])
@@ -71,8 +83,14 @@ def run_mock_agent(
             )
         details_text = "\n".join(details_list)
 
+        if replaced_codes:
+            rep_str = ", ".join([f"`{rc}`" for rc in replaced_codes])
+            action_lead = f"I have replaced {rep_str} with {', '.join(pinned_codes)} in your proposed schedule and pinned {'them' if len(pinned_courses) > 1 else 'it'} as requested! 🔄📌"
+        else:
+            action_lead = f"I have added {', '.join(pinned_codes)} to your proposed schedule and pinned {'them' if len(pinned_courses) > 1 else 'it'} as requested! 📌"
+
         response = (
-            f"I have added {', '.join(pinned_codes)} to your proposed schedule and pinned {'them' if len(pinned_courses) > 1 else 'it'} as requested! 📌\n\n"
+            f"{action_lead}\n\n"
             f"### Pinned Course Details:\n"
             f"{details_text}\n\n"
             f"I also queried the {term} catalog for complementary major requirements and GEs to balance your workload towards your **{target_credits}-credit** goal. "
@@ -275,13 +293,25 @@ def run_mock_agent(
             f"Would you like me to look for alternative lecture times, explore secondary electives, or verify that your graduation timeline stays on track?"
         )
 
-    # Scenario 8: Returning User Greeting (Sprint 2 Priority 5 User Story)
-    elif ('hello' in prompt_lower or 'hi' in prompt_lower or 'hey' in prompt_lower) and len(history) > 0:
-        response = (
-            f"Welcome back, {name}! 🐌 Great to see you again.\n\n"
-            f"I still have your record on file (**{standing}** in `{major}` aiming for **{target_credits} credits**). "
-            f"What would you like to check or adjust in your schedule today?"
-        )
+    # Scenario 8: Greetings & Conversation Starter
+    elif any(re.search(r'\b' + re.escape(g) + r'\b', prompt_lower) for g in ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'howdy', 'yo']):
+        if len(history) > 1:
+            response = (
+                f"Welcome back, {name}! 🐌 Great to see you again.\n\n"
+                f"I still have your record on file (**{standing}** in `{major}` aiming for **{target_credits} credits**). "
+                f"What would you like to check or adjust in your schedule today?"
+            )
+        else:
+            response = (
+                f"Hello {name}! 🐌 I am your **SlugAgent Scheduling Advisor**.\n\n"
+                f"I'm here to help you plan your upcoming quarter for `{major}`. You can ask me to:\n"
+                f"- **Add or replace courses** (e.g. `replace MATH 21 with MATH 19B` or `I want CSE 130`)\n"
+                f"- **Check GE requirements** (e.g. `What GEs do I have left?`)\n"
+                f"- **Find prerequisite paths** (e.g. `Path to CSE 130`)\n"
+                f"- **Assess drop impacts** (e.g. `What happens if I drop CSE 101?`)\n"
+                f"- **Tune target credits** (e.g. `Target 12 credits`)\n\n"
+                f"What would you like to explore for your upcoming quarter schedule?"
+            )
 
     # Scenario 9: Inquiring about GE requirements
     elif 'ge' in prompt_lower or 'general ed' in prompt_lower or 'requirement' in prompt_lower:
@@ -411,14 +441,9 @@ def run_mock_agent(
     # Default friendly conversational guidance
     else:
         response = (
-            f"Hello {name}! 🐌 I am your **SlugAgent Scheduling Advisor**.\n\n"
-            f"I can help you:\n"
-            f"- Check your remaining **General Education (GE)** categories (`CC`, `ER`, `PR`, etc.)\n"
-            f"- Plan your prerequisite pathways for `{major}` using our degree DAG solver\n"
-            f"- Assess the downstream graduation impact if you drop a course\n"
-            f"- Adjust your quarterly credit targets and preferred break windows\n"
-            f"- Export your planned calendar to Google Calendar or Apple Calendar (.ics)\n\n"
-            f"What would you like to explore for your upcoming quarter schedule?"
+            f"I hear you, {name}! 🐌 As your SlugAgent advisor for `{major}`, I can help you plan your courses, audit remaining GEs, resolve time conflicts, or adjust credit pacing.\n\n"
+            f"To get the best recommendation, you can ask me to add or swap specific courses (like `replace MATH 21 with MATH 19B`), check prerequisites (like `path to CSE 130`), or tell me your target credits.\n\n"
+            f"What specific classes or preferences would you like to look at?"
         )
 
     return {
