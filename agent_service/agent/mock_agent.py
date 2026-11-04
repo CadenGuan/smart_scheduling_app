@@ -30,7 +30,7 @@ def run_mock_agent(
     proposed_courses = []
 
     term_match = re.search(r'\b(Winter|Spring|Summer|Fall)\s+\d{4}\b', prompt, re.IGNORECASE)
-    term = term_match.group(0).title() if term_match else "Winter 2027"
+    term = term_match.group(0).title() if term_match else preferences.get('targetTerm', 'Winter 2027')
 
     catalog = get_course_catalog()
 

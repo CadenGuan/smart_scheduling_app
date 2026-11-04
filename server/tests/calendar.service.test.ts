@@ -1160,5 +1160,23 @@ describe('CalendarService Domain Service Test Suite', () => {
       const afterFullDelete = calendarQueries.getUserCalendarEvents(testUserId);
       expect(afterFullDelete).toHaveLength(0);
     });
+
+    it('generates conflict-free previews across all four academic quarters', () => {
+      const quarters = ['Fall 2026', 'Winter 2027', 'Spring 2027', 'Summer 2027'];
+      for (const quarter of quarters) {
+        const preview = CalendarService.getPreview(undefined, {
+          targetTerm: quarter as any,
+          targetCredits: 15,
+        });
+
+        expect(preview.term).toBe(quarter);
+        expect(preview.totalCredits).toBe(15);
+        const academicEvents = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+        expect(academicEvents).toHaveLength(3);
+        for (const event of academicEvents) {
+          expect(event.term).toBe(quarter);
+        }
+      }
+    });
   });
 });

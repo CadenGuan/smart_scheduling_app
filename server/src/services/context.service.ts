@@ -14,6 +14,7 @@ export interface AssembledContext {
     minor?: string | null;
   };
   preferences: {
+    targetTerm?: string;
     targetCredits: number;
     geStatus: any;
     majorRequirementsTaken: string[];
@@ -129,6 +130,7 @@ export class ContextService {
         minor: user?.minor || null,
       },
       preferences: {
+        targetTerm: userPreferences.targetTerm || draftAnswers.targetTerm || 'Winter 2027',
         targetCredits,
         geStatus,
         majorRequirementsTaken: majorReqs,

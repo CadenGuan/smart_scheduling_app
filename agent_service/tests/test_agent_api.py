@@ -536,3 +536,68 @@ class AgentApiTests(TestCase):
         self.assertTrue(data['success'])
         self.assertIn('SlugAgent Scheduling Advisor', data['data']['response'])
         self.assertIn('replace MATH 21 with MATH 19B', data['data']['response'])
+
+    def test_multi_quarter_catalog_availability(self):
+        terms = ['Fall 2026', 'Winter 2027', 'Spring 2027', 'Summer 2027']
+        for t in terms:
+            courses = find_courses(term=t)
+            self.assertGreaterEqual(len(courses), 10, f"Expected at least 10 courses for {t}")
+            for c in courses:
+                self.assertEqual(c['term'], t)
+
+    def test_agent_respects_target_term_preference(self):
+        payload = {
+            'prompt': 'Recommend core classes for next quarter',
+            'student': {
+                'name': 'Sammy Slug',
+                'major': 'Computer Science B.S.',
+                'standing': 'Junior'
+            },
+            'preferences': {
+                'targetTerm': 'Spring 2027',
+                'targetCredits': 15
+            },
+            'currentSchedule': [],
+            'history': []
+        }
+        res = self.client.post('/api/agent/process/', data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['success'])
+        proposed = data['data']['proposedCourses']
+        self.assertGreaterEqual(len(proposed), 1)
+        for c in proposed:
+            self.assertEqual(c['term'], 'Spring 2027')
+
+    def test_dev_mode_honest_unavailable_message_without_api_key(self):
+        import os
+        from agent.agent import run_agent
+        old_mock = os.environ.get('USE_MOCK_AGENT')
+        old_gemini = os.environ.get('GEMINI_API_KEY')
+        old_google = os.environ.get('GOOGLE_API_KEY')
+        try:
+            os.environ['USE_MOCK_AGENT'] = 'false'
+            if 'GEMINI_API_KEY' in os.environ:
+                del os.environ['GEMINI_API_KEY']
+            if 'GOOGLE_API_KEY' in os.environ:
+                del os.environ['GOOGLE_API_KEY']
+
+            result = run_agent(
+                prompt="hello",
+                student={'name': 'Sammy'},
+                preferences={'targetCredits': 15},
+                schedule=[],
+                history=[]
+            )
+            self.assertEqual(result['response'], "Sorry, SlugAgent is currently unavailable right now. It will be back shortly!")
+            self.assertEqual(result['model'], "unavailable")
+            self.assertEqual(result['proposedCourses'], [])
+        finally:
+            if old_mock is not None:
+                os.environ['USE_MOCK_AGENT'] = old_mock
+            else:
+                os.environ['USE_MOCK_AGENT'] = 'true'
+            if old_gemini is not None:
+                os.environ['GEMINI_API_KEY'] = old_gemini
+            if old_google is not None:
+                os.environ['GOOGLE_API_KEY'] = old_google

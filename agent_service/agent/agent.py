@@ -11,7 +11,8 @@ def run_agent(
     student: Dict[str, Any],
     preferences: Dict[str, Any],
     schedule: List[Dict[str, Any]],
-    history: List[Dict[str, Any]]
+    history: List[Dict[str, Any]],
+    use_mock_override: Any = None
 ) -> Dict[str, Any]:
     """
     Main entrypoint for the LangChain agent.
@@ -19,10 +20,22 @@ def run_agent(
     Otherwise, gracefully delegates to the internal mock agent for offline execution.
     """
     api_key = os.environ.get('GEMINI_API_KEY') or os.environ.get('GOOGLE_API_KEY')
+    use_mock = use_mock_override if use_mock_override is not None else (
+        os.environ.get('USE_MOCK_AGENT', 'false').lower() in ('true', '1', 't')
+    )
 
-    # If no API key configured, use deterministic mock agent
-    if not api_key:
+    # If mock explicitly enabled (e.g. during automated test execution), use deterministic mock agent
+    if use_mock:
         return run_mock_agent(prompt, student, preferences, schedule, history)
+
+    # In dev/prod, if no API key is configured, return the honest unavailable message
+    if not api_key:
+        return {
+            'response': "Sorry, SlugAgent is currently unavailable right now. It will be back shortly!",
+            'proposedCourses': [],
+            'toolCalls': [],
+            'model': 'unavailable',
+        }
 
     try:
         from langchain_google_genai import ChatGoogleGenerativeAI
@@ -31,8 +44,9 @@ def run_agent(
         set_tool_context(student, preferences, schedule)
         tools = get_inspection_tools()
 
+        model_name = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')
         llm = ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash",
+            model=model_name,
             google_api_key=api_key,
             temperature=0.4,
         )
@@ -136,13 +150,20 @@ def run_agent(
             'response': str(content_text),
             'proposedCourses': proposed_courses,
             'toolCalls': tool_calls_executed,
-            'model': 'gemini-1.5-flash',
+            'model': model_name,
         }
 
     except Exception as e:
-        # Fallback to mock agent on API error or connection failure
-        mock_result = run_mock_agent(prompt, student, preferences, schedule, history)
-        if 'proposedCourses' not in mock_result:
-            mock_result['proposedCourses'] = []
-        mock_result['metadata'] = {'fallbackReason': str(e)}
-        return mock_result
+        if use_mock:
+            mock_result = run_mock_agent(prompt, student, preferences, schedule, history)
+            if 'proposedCourses' not in mock_result:
+                mock_result['proposedCourses'] = []
+            mock_result['metadata'] = {'fallbackReason': str(e)}
+            return mock_result
+        return {
+            'response': "Sorry, SlugAgent is currently unavailable right now. It will be back shortly!",
+            'proposedCourses': [],
+            'toolCalls': [],
+            'model': 'unavailable',
+            'metadata': {'error': str(e)},
+        }

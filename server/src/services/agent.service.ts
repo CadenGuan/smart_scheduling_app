@@ -16,11 +16,17 @@ export class AgentService {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15-second timeout
 
+    const useMock =
+      process.env.USE_MOCK_AGENT === 'true' ||
+      process.env.NODE_ENV === 'test' ||
+      Boolean(process.env.VITEST);
+
     try {
       const response = await fetch(`${config.DJANGO_AGENT_URL}/api/agent/process/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(useMock ? { 'X-Mock-Agent': 'true' } : {}),
         },
         body: JSON.stringify({
           prompt,
@@ -28,6 +34,7 @@ export class AgentService {
           preferences: context.preferences,
           currentSchedule: context.currentSchedule,
           history: context.history,
+          useMock,
         }),
         signal: controller.signal,
       });
