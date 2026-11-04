@@ -3,6 +3,7 @@ import request from 'supertest';
 import { app } from '../src/app.js';
 import { db } from '../src/db/database.js';
 import { userQueries } from '../src/db/queries/userQueries.js';
+import { calendarQueries } from '../src/db/queries/calendarQueries.js';
 import { UserPreferencesSchema } from 'shared';
 
 describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]', () => {
@@ -561,6 +562,63 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
       expect(multiConflict.conflictBadges).toContain('Spans preferred free day');
       expect(multiConflict.conflictBadges).toContain('Starts before preferred time');
       expect(multiConflict.conflictBadge).toBe('Spans preferred free day, Starts before preferred time');
+    });
+
+    it('GET /api/calendar/preview dynamically updates across terms without static persistence overrides', async () => {
+      // Arrange: Persist custom Winter 2027 courses for User A
+      calendarQueries.saveUserCalendarEvents(userAId, 'Winter 2027', [
+        {
+          id: 'cse-130-01',
+          title: 'CSE 130: Principles of Computer Systems Design',
+          type: 'MAJOR',
+          days: ['Tuesday', 'Thursday'],
+          startTime: '13:15',
+          endTime: '14:50',
+          credits: 5,
+          term: 'Winter 2027',
+        },
+      ]);
+
+      // Act 1: User switches preferences to Spring 2027 with 20 credits
+      await request(app)
+        .put(`/api/users/${userAId}/preferences`)
+        .set('Authorization', `Bearer ${userAToken}`)
+        .send({
+          targetTerm: 'Spring 2027',
+          targetCredits: 20,
+          preferredFreeDays: [],
+        });
+
+      const springRes = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${userAToken}`);
+
+      // Assert 1: Preview returns Spring 2027 courses, exactly 4 courses (20 units), without Winter persistence override
+      expect(springRes.status).toBe(200);
+      expect(springRes.body.data.term).toBe('Spring 2027');
+      expect(springRes.body.data.totalCredits).toBe(20);
+      const springAcademic = springRes.body.data.events.filter((e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(springAcademic).toHaveLength(4);
+      springAcademic.forEach((c: any) => {
+        expect(c.term).toBe('Spring 2027');
+        expect(c.id).not.toBe('cse-130-01');
+      });
+
+      // Act 2: Explicit query parameter ?term=Summer 2027
+      const summerRes = await request(app)
+        .get('/api/calendar/preview?term=Summer 2027')
+        .set('Authorization', `Bearer ${userAToken}`);
+
+      // Assert 2: Preview returns Summer 2027 courses
+      expect(summerRes.status).toBe(200);
+      expect(summerRes.body.data.term).toBe('Summer 2027');
+      const summerAcademic = summerRes.body.data.events.filter((e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      summerAcademic.forEach((c: any) => {
+        expect(c.term).toBe('Summer 2027');
+      });
+
+      // Cleanup
+      calendarQueries.deleteUserCalendarEvents(userAId);
     });
   });
 
