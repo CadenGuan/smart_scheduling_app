@@ -85,8 +85,6 @@ router.post(
         message: 'Schedule saved successfully',
         count: events.length,
       },
-      message: 'Schedule saved successfully',
-      count: events.length,
     });
   }
 );
@@ -117,7 +115,6 @@ router.delete('/events', requireAuth, (req: AuthenticatedRequest, res: Response)
     data: {
       message: 'Schedule cleared successfully',
     },
-    message: 'Schedule cleared successfully',
   });
 });
 

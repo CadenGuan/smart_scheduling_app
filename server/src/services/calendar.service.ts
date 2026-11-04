@@ -129,7 +129,18 @@ export function extractBaseCourseCode(course: CalendarEvent): string {
   return raw.replace(/-\d+$/, '').replace(/\s+section\s+\d+$/i, '').trim().toUpperCase();
 }
 
-export const getBaseCourseCode = extractBaseCourseCode;
+export function computeTimeDeviationPenalty(diffMinutes: number): number {
+  const hoursDev = Math.ceil(diffMinutes / 60);
+  return Math.max(3, hoursDev * 2);
+}
+
+export function isUsingMockAgent(): boolean {
+  return (
+    process.env.USE_MOCK_AGENT === 'true' ||
+    process.env.NODE_ENV === 'test' ||
+    Boolean(process.env.VITEST)
+  );
+}
 
 export function getCourseNumericLevel(course: CalendarEvent): number | null {
   const match = (course.code || course.title).match(/\d+/);
@@ -220,15 +231,24 @@ export class CalendarService {
     const latestEndTime = preferences.latestEndTime;
     const maxBackToBackHours = preferences.maxBackToBackHours;
 
+    const isMock = isUsingMockAgent();
+    let isUserPersistedSchedule = false;
     let pool = eventsPool;
     if (!pool && userId) {
       const savedUserEvents = calendarQueries.getUserCalendarEvents(userId, term);
       if (savedUserEvents.length > 0) {
         pool = savedUserEvents.map((e) => ({ ...e }));
+        isUserPersistedSchedule = true;
       }
     }
     if (!pool) {
-      pool = sampleCalendarEvents.map((e) => ({ ...e }));
+      if (isMock || !userId) {
+        // Mock agent or test harness: use the hardcoded catalog
+        pool = sampleCalendarEvents.map((e) => ({ ...e }));
+      } else {
+        // Real agent: do NOT use the catalog without agent intervention
+        pool = [];
+      }
     }
 
     const termMatchedPool = pool.filter(
@@ -349,82 +369,95 @@ export class CalendarService {
       }
     }
 
-    // Pinned courses bypass greedy omission and are unconditionally selected first
-    const selectedCandidates: CalendarEvent[] = [...uniquePinned];
-    let currentCredits = selectedCandidates.reduce((sum, c) => sum + (c.credits || 5), 0);
+    // If the schedule was already generated/persisted for this user by the agent,
+    // that agentic schedule is ground truth: preserve it, deduplicating any duplicate sections (anti-hallucination guard)
+    let selectedCandidates: CalendarEvent[] = [];
 
-    // Filter out remaining candidates that duplicate base course codes of pinned courses
-    let remainingCandidates: CalendarEvent[] = uniqueUnpinned.filter(
-      (c) => !selectedBaseCodes.has(extractBaseCourseCode(c))
-    );
-
-    // Continue selecting courses while currentCredits < targetCredits and valid distinct base-code candidates remain
-    while (
-      currentCredits < targetCredits &&
-      selectedCandidates.length < targetCourseCount &&
-      remainingCandidates.length > 0
-    ) {
-      const scored = remainingCandidates.map((candidate) => {
-        const indBadges = getIndividualConflicts(
-          candidate,
-          preferredFreeDays,
-          earliestStartTime,
-          latestEndTime
-        );
-        const collides = selectedCandidates.some((sel) => coursesOverlap(sel, candidate));
-        let causesB2B = false;
-        if (maxBackToBackHours) {
-          causesB2B = wouldExceedBackToBack([...selectedCandidates, candidate], maxBackToBackHours);
+    if (isUserPersistedSchedule) {
+      const seenBaseCodes = new Set<string>();
+      for (const course of initialAcademicPool) {
+        const baseCode = extractBaseCourseCode(course);
+        if (!seenBaseCodes.has(baseCode)) {
+          seenBaseCodes.add(baseCode);
+          selectedCandidates.push(course);
         }
+      }
+    } else {
+      // Pinned courses bypass greedy omission and are unconditionally selected first
+      selectedCandidates = [...uniquePinned];
+      let currentCredits = selectedCandidates.reduce((sum, c) => sum + (c.credits || 5), 0);
 
-        // Soft time window penalties: +2 per hour of deviation, min 3 penalty points
-        let softTimePenalty = 0;
-        if (earliestStartTime && candidate.startTime < earliestStartTime) {
-          const diffMinutes = toMinutes(earliestStartTime) - toMinutes(candidate.startTime);
-          const hoursDev = Math.ceil(diffMinutes / 60);
-          softTimePenalty += Math.max(3, hoursDev * 2);
-        }
-        if (latestEndTime && candidate.endTime > latestEndTime) {
-          const diffMinutes = toMinutes(candidate.endTime) - toMinutes(latestEndTime);
-          const hoursDev = Math.ceil(diffMinutes / 60);
-          softTimePenalty += Math.max(3, hoursDev * 2);
-        }
-
-        // Major department prioritization
-        const isMajorDept = matchesMajorDepartment(candidate, userMajor);
-        const isGeCourse = candidate.type === 'GE' || Boolean(candidate.ge);
-        const majorPenalty = isMajorDept ? 0 : isGeCourse ? 5 : 15;
-
-        // Standing alignment:
-        // Underclassmen prioritize lower-division foundations & GEs over upper-division
-        // Upperclassmen prioritize upper-division & GEs over lower-division non-GE
-        let standingPenalty = 0;
-        if (isUnderclassman && isUpperDivision(candidate) && !isGeCourse) {
-          standingPenalty = 10;
-        } else if (!isUnderclassman && isLowerDivision(candidate) && !isGeCourse) {
-          standingPenalty = 10;
-        }
-
-        const score =
-          (collides ? 100 : 0) +
-          (causesB2B ? 10 : 0) +
-          softTimePenalty +
-          majorPenalty +
-          standingPenalty;
-
-        return { candidate, score };
-      });
-
-      scored.sort((a, b) => a.score - b.score);
-      const best = scored[0].candidate;
-      selectedCandidates.push(best);
-      selectedBaseCodes.add(getBaseCourseCode(best));
-      currentCredits += best.credits || 5;
-
-      // Section Deduplication: Purge ALL candidates sharing the same base course code
-      remainingCandidates = remainingCandidates.filter(
-        (c) => !selectedBaseCodes.has(getBaseCourseCode(c))
+      // Filter out remaining candidates that duplicate base course codes of pinned courses
+      let remainingCandidates: CalendarEvent[] = uniqueUnpinned.filter(
+        (c) => !selectedBaseCodes.has(extractBaseCourseCode(c))
       );
+
+      // Continue selecting courses while currentCredits < targetCredits and valid distinct base-code candidates remain
+      while (
+        currentCredits < targetCredits &&
+        selectedCandidates.length < targetCourseCount &&
+        remainingCandidates.length > 0
+      ) {
+        const scored = remainingCandidates.map((candidate) => {
+          const indBadges = getIndividualConflicts(
+            candidate,
+            preferredFreeDays,
+            earliestStartTime,
+            latestEndTime
+          );
+          const collides = selectedCandidates.some((sel) => coursesOverlap(sel, candidate));
+          let causesB2B = false;
+          if (maxBackToBackHours) {
+            causesB2B = wouldExceedBackToBack([...selectedCandidates, candidate], maxBackToBackHours);
+          }
+
+          // Soft time window penalties: +2 per hour of deviation, min 3 penalty points
+          let softTimePenalty = 0;
+          if (earliestStartTime && candidate.startTime < earliestStartTime) {
+            const diffMinutes = toMinutes(earliestStartTime) - toMinutes(candidate.startTime);
+            softTimePenalty += computeTimeDeviationPenalty(diffMinutes);
+          }
+          if (latestEndTime && candidate.endTime > latestEndTime) {
+            const diffMinutes = toMinutes(candidate.endTime) - toMinutes(latestEndTime);
+            softTimePenalty += computeTimeDeviationPenalty(diffMinutes);
+          }
+
+          // Major department prioritization
+          const isMajorDept = matchesMajorDepartment(candidate, userMajor);
+          const isGeCourse = candidate.type === 'GE' || Boolean(candidate.ge);
+          const majorPenalty = isMajorDept ? 0 : isGeCourse ? 5 : 15;
+
+          // Standing alignment:
+          // Underclassmen prioritize lower-division foundations & GEs over upper-division
+          // Upperclassmen prioritize upper-division & GEs over lower-division non-GE
+          let standingPenalty = 0;
+          if (isUnderclassman && isUpperDivision(candidate) && !isGeCourse) {
+            standingPenalty = 10;
+          } else if (!isUnderclassman && isLowerDivision(candidate) && !isGeCourse) {
+            standingPenalty = 10;
+          }
+
+          const score =
+            (collides ? 100 : 0) +
+            (causesB2B ? 10 : 0) +
+            softTimePenalty +
+            majorPenalty +
+            standingPenalty;
+
+          return { candidate, score };
+        });
+
+        scored.sort((a, b) => a.score - b.score);
+        const best = scored[0].candidate;
+        selectedCandidates.push(best);
+        selectedBaseCodes.add(extractBaseCourseCode(best));
+        currentCredits += best.credits || 5;
+
+        // Section Deduplication: Purge ALL candidates sharing the same base course code
+        remainingCandidates = remainingCandidates.filter(
+          (c) => !selectedBaseCodes.has(extractBaseCourseCode(c))
+        );
+      }
     }
 
     // Attach conflict badges

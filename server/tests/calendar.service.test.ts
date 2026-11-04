@@ -1161,21 +1161,63 @@ describe('CalendarService Domain Service Test Suite', () => {
       expect(afterFullDelete).toHaveLength(0);
     });
 
-    it('generates conflict-free previews across all four academic quarters', () => {
-      const quarters = ['Fall 2026', 'Winter 2027', 'Spring 2027', 'Summer 2027'];
-      for (const quarter of quarters) {
-        const preview = CalendarService.getPreview(undefined, {
-          targetTerm: quarter as any,
-          targetCredits: 15,
-        });
+    it('generates conflict-free 15-credit preview for Fall 2026', () => {
+      const preview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Fall 2026',
+        targetCredits: 15,
+      });
 
-        expect(preview.term).toBe(quarter);
-        expect(preview.totalCredits).toBe(15);
-        const academicEvents = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
-        expect(academicEvents).toHaveLength(3);
-        for (const event of academicEvents) {
-          expect(event.term).toBe(quarter);
-        }
+      expect(preview.term).toBe('Fall 2026');
+      expect(preview.totalCredits).toBe(15);
+      const academicEvents = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academicEvents).toHaveLength(3);
+      for (const event of academicEvents) {
+        expect(event.term).toBe('Fall 2026');
+      }
+    });
+
+    it('generates conflict-free 15-credit preview for Winter 2027', () => {
+      const preview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        targetCredits: 15,
+      });
+
+      expect(preview.term).toBe('Winter 2027');
+      expect(preview.totalCredits).toBe(15);
+      const academicEvents = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academicEvents).toHaveLength(3);
+      for (const event of academicEvents) {
+        expect(event.term).toBe('Winter 2027');
+      }
+    });
+
+    it('generates conflict-free 15-credit preview for Spring 2027', () => {
+      const preview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Spring 2027',
+        targetCredits: 15,
+      });
+
+      expect(preview.term).toBe('Spring 2027');
+      expect(preview.totalCredits).toBe(15);
+      const academicEvents = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academicEvents).toHaveLength(3);
+      for (const event of academicEvents) {
+        expect(event.term).toBe('Spring 2027');
+      }
+    });
+
+    it('generates conflict-free 15-credit preview for Summer 2027', () => {
+      const preview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Summer 2027',
+        targetCredits: 15,
+      });
+
+      expect(preview.term).toBe('Summer 2027');
+      expect(preview.totalCredits).toBe(15);
+      const academicEvents = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academicEvents).toHaveLength(3);
+      for (const event of academicEvents) {
+        expect(event.term).toBe('Summer 2027');
       }
     });
   });

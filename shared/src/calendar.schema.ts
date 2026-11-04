@@ -125,8 +125,6 @@ export const SaveCalendarEventsResponseSchema = z.object({
     message: z.string(),
     count: z.number(),
   }),
-  message: z.string().optional(),
-  count: z.number().optional(),
 });
 export type SaveCalendarEventsResponse = z.infer<typeof SaveCalendarEventsResponseSchema>;
 
@@ -135,6 +133,5 @@ export const ClearCalendarEventsResponseSchema = z.object({
   data: z.object({
     message: z.string(),
   }),
-  message: z.string().optional(),
 });
 export type ClearCalendarEventsResponse = z.infer<typeof ClearCalendarEventsResponseSchema>;
