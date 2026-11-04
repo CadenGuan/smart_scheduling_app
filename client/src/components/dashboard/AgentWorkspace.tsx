@@ -114,11 +114,7 @@ export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWork
 
       if (result.preview) {
         this.props.onCalendarUpdate?.(result.preview);
-      }
-      if (
-        (result.agentMessage.toolCalls && result.agentMessage.toolCalls.length > 0) ||
-        result.preview
-      ) {
+      } else if (result.agentMessage.toolCalls && result.agentMessage.toolCalls.length > 0) {
         this.props.onScheduleUpdated?.();
       }
     } catch (err: any) {

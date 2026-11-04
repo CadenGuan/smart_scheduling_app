@@ -4,6 +4,10 @@ import {
   ConflictBadgeSchema,
   CalendarEventSchema,
   CalendarPreviewResponseSchema,
+  SaveCalendarEventsRequestSchema,
+  SaveCalendarEventsResponseSchema,
+  ClearCalendarEventsResponseSchema,
+  getCourseTypeColor,
 } from '../src/calendar.schema.js';
 
 describe('Calendar Schema Architectural Contract Tests [TESTING_GOLDEN_RULES.md Layer: Shared]', () => {
@@ -133,6 +137,68 @@ describe('Calendar Schema Architectural Contract Tests [TESTING_GOLDEN_RULES.md 
           },
         }).success
       ).toBe(false);
+    });
+  });
+
+  describe('getCourseTypeColor', () => {
+    it('returns consistent design tokens across course types', () => {
+      expect(getCourseTypeColor('GE')).toBe('#FF6B6B');
+      expect(getCourseTypeColor('ELECTIVE')).toBe('#9B51E0');
+      expect(getCourseTypeColor('GOOGLE_CALENDAR_BUSY')).toBe('#A0AEC0');
+      expect(getCourseTypeColor('MAJOR')).toBe('#00B4DB');
+      expect(getCourseTypeColor('OTHER')).toBe('#00B4DB');
+    });
+  });
+
+  describe('SaveCalendarEventsRequestSchema', () => {
+    it('validates custom schedule save request payload', () => {
+      const valid = {
+        term: 'Winter 2027',
+        events: [
+          {
+            id: 'cse-130',
+            title: 'CSE 130',
+            type: 'MAJOR',
+            days: ['Monday', 'Wednesday', 'Friday'],
+            startTime: '13:20',
+            endTime: '14:25',
+            color: '#00B4DB',
+          },
+        ],
+      };
+      expect(SaveCalendarEventsRequestSchema.safeParse(valid).success).toBe(true);
+    });
+
+    it('rejects request with malformed event list', () => {
+      expect(
+        SaveCalendarEventsRequestSchema.safeParse({
+          term: 'Winter 2027',
+          events: [{ id: 'missing-required-fields' }],
+        }).success
+      ).toBe(false);
+    });
+  });
+
+  describe('SaveCalendarEventsResponseSchema & ClearCalendarEventsResponseSchema', () => {
+    it('validates save calendar response envelope with data payload', () => {
+      const resp = {
+        success: true,
+        data: {
+          message: 'Schedule saved successfully',
+          count: 3,
+        },
+      };
+      expect(SaveCalendarEventsResponseSchema.safeParse(resp).success).toBe(true);
+    });
+
+    it('validates clear calendar response envelope with data payload', () => {
+      const resp = {
+        success: true,
+        data: {
+          message: 'Schedule cleared successfully',
+        },
+      };
+      expect(ClearCalendarEventsResponseSchema.safeParse(resp).success).toBe(true);
     });
   });
 });

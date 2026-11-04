@@ -177,11 +177,26 @@ export class CalendarService {
         ? termMatchedPool
         : pool.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
 
-    const termBusy = pool.filter(
+    let busyEvents = pool.filter(
       (e) => e.type === 'GOOGLE_CALENDAR_BUSY' && (!e.term || e.term === term)
     );
-    const busyEvents =
-      termBusy.length > 0 ? termBusy : pool.filter((e) => e.type === 'GOOGLE_CALENDAR_BUSY');
+    // If pool has academic courses (e.g. from agent proposedCourses) but no busy events,
+    // retain external commitments from saved user schedule or sample calendar
+    if (busyEvents.length === 0 && pool.length > 0) {
+      if (userId) {
+        const savedUserBusy = calendarQueries
+          .getUserCalendarEvents(userId, term)
+          .filter((e) => e.type === 'GOOGLE_CALENDAR_BUSY');
+        if (savedUserBusy.length > 0) {
+          busyEvents = savedUserBusy;
+        }
+      }
+      if (busyEvents.length === 0) {
+        busyEvents = sampleCalendarEvents.filter(
+          (e) => e.type === 'GOOGLE_CALENDAR_BUSY' && (!e.term || e.term === term)
+        );
+      }
+    }
 
     const courseCount = Math.max(1, Math.min(academicPool.length, Math.round(targetCredits / 5)));
 

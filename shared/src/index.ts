@@ -33,12 +33,16 @@ export {
 
 export {
   CourseTypeEnum,
+  getCourseTypeColor,
   ConflictBadgeSchema,
   CalendarEventSchema,
   CalendarPreviewResponseSchema,
   CurriculumNodeStatusEnum,
   CurriculumNodeSchema,
   CurriculumDagResponseSchema,
+  SaveCalendarEventsRequestSchema,
+  SaveCalendarEventsResponseSchema,
+  ClearCalendarEventsResponseSchema,
 } from './calendar.schema.js';
 
 export {

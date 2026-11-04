@@ -157,7 +157,19 @@ describe('Agent Zod Schema Contract Test Suite', () => {
       expect(parsed.data.messages).toHaveLength(1);
     });
 
-    it('validates clear chat response', () => {
+    it('validates clear chat response with data envelope', () => {
+      const res = {
+        success: true,
+        data: { message: 'Chat history cleared successfully' },
+        message: 'Chat history cleared successfully',
+      };
+      const parsed = ClearChatResponseSchema.parse(res);
+      expect(parsed.success).toBe(true);
+      expect(parsed.data?.message).toContain('cleared');
+      expect(parsed.message).toContain('cleared');
+    });
+
+    it('validates clear chat response with direct message', () => {
       const res = {
         success: true,
         message: 'Chat history cleared successfully',

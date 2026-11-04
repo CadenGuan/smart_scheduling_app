@@ -45,6 +45,11 @@ export type AgentMessagesResponse = z.infer<typeof AgentMessagesResponseSchema>;
 
 export const ClearChatResponseSchema = z.object({
   success: z.boolean(),
+  data: z
+    .object({
+      message: z.string(),
+    })
+    .optional(),
   message: z.string(),
 });
 export type ClearChatResponse = z.infer<typeof ClearChatResponseSchema>;

@@ -152,6 +152,9 @@ router.delete(
 
     res.status(200).json({
       success: true,
+      data: {
+        message: 'Conversation history cleared successfully.',
+      },
       message: 'Conversation history cleared successfully.',
     });
   })
