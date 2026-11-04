@@ -34,8 +34,11 @@ export {
 export {
   CourseTypeEnum,
   getCourseTypeColor,
+  CourseLevelEnum,
   ConflictBadgeSchema,
   CalendarEventSchema,
+  CourseSchema,
+  CourseCatalogItemSchema,
   CalendarPreviewResponseSchema,
   CurriculumNodeStatusEnum,
   CurriculumNodeSchema,
@@ -43,6 +46,12 @@ export {
   SaveCalendarEventsRequestSchema,
   SaveCalendarEventsResponseSchema,
   ClearCalendarEventsResponseSchema,
+} from './calendar.schema.js';
+
+export type {
+  CourseLevel,
+  Course,
+  CourseCatalogItem,
 } from './calendar.schema.js';
 
 export {

@@ -17,6 +17,9 @@ export function getCourseTypeColor(type: string): string {
   }
 }
 
+export const CourseLevelEnum = z.enum(['LOWER', 'UPPER', 'CAPSTONE']);
+export type CourseLevel = z.infer<typeof CourseLevelEnum>;
+
 export const ConflictBadgeSchema = z.enum([
   'Spans preferred free day',
   'Starts before preferred time',
@@ -28,7 +31,10 @@ export type ConflictBadgeType = z.infer<typeof ConflictBadgeSchema>;
 
 export const CalendarEventSchema = z.object({
   id: z.string(),
+  code: z.string().optional(),
   title: z.string(),
+  department: z.string().optional(),
+  level: CourseLevelEnum.optional(),
   type: CourseTypeEnum,
   instructor: z.string().optional(),
   location: z.string().optional(),
@@ -38,11 +44,35 @@ export const CalendarEventSchema = z.object({
   color: z.string(),
   credits: z.number().optional(),
   term: z.string().optional(),
+  ge: z.array(z.string()).nullable().optional(),
+  description: z.string().optional(),
   conflictBadge: z.string().optional(),
   conflictBadges: z.array(ConflictBadgeSchema).optional(),
   pinned: z.boolean().optional(),
 });
 export type CalendarEvent = z.infer<typeof CalendarEventSchema>;
+
+export const CourseSchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  title: z.string(),
+  department: z.string(),
+  level: CourseLevelEnum,
+  type: CourseTypeEnum.optional().default('MAJOR'),
+  instructor: z.string().optional(),
+  location: z.string().optional(),
+  days: z.array(DayEnum),
+  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
+  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
+  color: z.string().optional().default('#00B4DB'),
+  credits: z.number().default(5),
+  term: z.string(),
+  ge: z.array(z.string()).nullable().optional(),
+  description: z.string().optional(),
+});
+export type Course = z.infer<typeof CourseSchema>;
+export const CourseCatalogItemSchema = CourseSchema;
+export type CourseCatalogItem = Course;
 
 export const CalendarPreviewResponseSchema = z.object({
   success: z.boolean(),
@@ -61,7 +91,7 @@ export const CurriculumNodeSchema = z.object({
   code: z.string(),
   title: z.string(),
   credits: z.number(),
-  level: z.enum(['LOWER', 'UPPER', 'CAPSTONE']),
+  level: CourseLevelEnum,
   status: CurriculumNodeStatusEnum,
   prerequisites: z.array(z.string()),
   unmetPrerequisites: z.array(z.string()),

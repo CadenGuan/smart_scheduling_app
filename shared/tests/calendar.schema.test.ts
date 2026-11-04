@@ -1,14 +1,24 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   CourseTypeEnum,
+  CourseLevelEnum,
   ConflictBadgeSchema,
   CalendarEventSchema,
+  CourseSchema,
+  CourseCatalogItemSchema,
   CalendarPreviewResponseSchema,
   SaveCalendarEventsRequestSchema,
   SaveCalendarEventsResponseSchema,
   ClearCalendarEventsResponseSchema,
   getCourseTypeColor,
 } from '../src/calendar.schema.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const coursesJsonPath = path.resolve(__dirname, '../../data/courses.json');
 
 describe('Calendar Schema Architectural Contract Tests [TESTING_GOLDEN_RULES.md Layer: Shared]', () => {
   describe('CourseTypeEnum', () => {
@@ -20,6 +30,20 @@ describe('Calendar Schema Architectural Contract Tests [TESTING_GOLDEN_RULES.md 
 
       expect(CourseTypeEnum.safeParse('MINOR').success).toBe(false);
       expect(CourseTypeEnum.safeParse('PERSONAL').success).toBe(false);
+    });
+  });
+
+  describe('CourseLevelEnum', () => {
+    it('accepts LOWER, UPPER, and CAPSTONE levels', () => {
+      expect(CourseLevelEnum.safeParse('LOWER').success).toBe(true);
+      expect(CourseLevelEnum.safeParse('UPPER').success).toBe(true);
+      expect(CourseLevelEnum.safeParse('CAPSTONE').success).toBe(true);
+    });
+
+    it('rejects unrecognized course level classifications', () => {
+      expect(CourseLevelEnum.safeParse('GRADUATE').success).toBe(false);
+      expect(CourseLevelEnum.safeParse('INTRO').success).toBe(false);
+      expect(CourseLevelEnum.safeParse('').success).toBe(false);
     });
   });
 
@@ -72,6 +96,19 @@ describe('Calendar Schema Architectural Contract Tests [TESTING_GOLDEN_RULES.md 
       expect(CalendarEventSchema.parse(pinnedEvent).pinned).toBe(true);
     });
 
+    it('validates calendar event with extended fields (code, department, level, ge)', () => {
+      const extendedEvent = {
+        ...validEvent,
+        code: 'CSE 115A',
+        department: 'CSE',
+        level: 'UPPER',
+        ge: null,
+        description: 'Software Engineering core course.',
+      };
+      const parsed = CalendarEventSchema.safeParse(extendedEvent);
+      expect(parsed.success).toBe(true);
+    });
+
     it('validates minimal calendar event without optional fields', () => {
       const minimalEvent = {
         id: 'gcal-shift',
@@ -100,6 +137,141 @@ describe('Calendar Schema Architectural Contract Tests [TESTING_GOLDEN_RULES.md 
           endTime: '25:00',
         }).success
       ).toBe(false);
+    });
+  });
+
+  describe('CourseSchema & CourseCatalogItemSchema', () => {
+    const validCourse = {
+      id: 'cse-101-01',
+      code: 'CSE 101',
+      title: 'CSE 101: Introduction to Data Structures and Algorithms',
+      department: 'CSE',
+      level: 'UPPER',
+      type: 'MAJOR',
+      instructor: 'Patrick Tantalo',
+      location: 'Baskin Engr 101',
+      days: ['Monday', 'Wednesday', 'Friday'],
+      startTime: '09:00',
+      endTime: '10:15',
+      color: '#00B4DB',
+      credits: 5,
+      term: 'Winter 2027',
+      ge: null,
+      description: 'Data structures and algorithm design.',
+    };
+
+    it('validates a complete course catalog item schema', () => {
+      const parsed = CourseSchema.safeParse(validCourse);
+      expect(parsed.success).toBe(true);
+      expect(CourseCatalogItemSchema.safeParse(validCourse).success).toBe(true);
+    });
+
+    it('applies defaults for type, color, and credits when omitted', () => {
+      const minimal = {
+        id: 'cse-101-min',
+        code: 'CSE 101',
+        title: 'CSE 101 Minimal',
+        department: 'CSE',
+        level: 'UPPER' as const,
+        term: 'Winter 2027',
+        days: ['Monday', 'Wednesday'] as const,
+        startTime: '10:00',
+        endTime: '11:35',
+      };
+      const parsed = CourseSchema.parse(minimal);
+      expect(parsed.type).toBe('MAJOR');
+      expect(parsed.color).toBe('#00B4DB');
+      expect(parsed.credits).toBe(5);
+    });
+
+    it('rejects course item missing mandatory catalog attributes', () => {
+      expect(CourseSchema.safeParse({ id: 'cse-101' }).success).toBe(false);
+      expect(CourseSchema.safeParse({ ...validCourse, code: undefined }).success).toBe(false);
+      expect(CourseSchema.safeParse({ ...validCourse, department: undefined }).success).toBe(false);
+      expect(CourseSchema.safeParse({ ...validCourse, level: 'INVALID' }).success).toBe(false);
+    });
+  });
+
+  describe('Curated 18-Course Dataset Schema Validation Contract', () => {
+    it('verifies that data/courses.json exists and contains exactly 18 curated courses', () => {
+      expect(fs.existsSync(coursesJsonPath)).toBe(true);
+      const rawData = fs.readFileSync(coursesJsonPath, 'utf8');
+      const courses = JSON.parse(rawData);
+
+      expect(Array.isArray(courses)).toBe(true);
+      expect(courses).toHaveLength(18);
+    });
+
+    it('validates that all 18 courses strictly conform to CourseSchema and CalendarEventSchema', () => {
+      const rawData = fs.readFileSync(coursesJsonPath, 'utf8');
+      const courses = JSON.parse(rawData);
+
+      for (const course of courses) {
+        const courseValidation = CourseSchema.safeParse(course);
+        expect(
+          courseValidation.success,
+          `Course ${course.id} failed CourseSchema validation: ${JSON.stringify(
+            courseValidation.error?.errors
+          )}`
+        ).toBe(true);
+
+        const eventValidation = CalendarEventSchema.safeParse(course);
+        expect(
+          eventValidation.success,
+          `Course ${course.id} failed CalendarEventSchema validation: ${JSON.stringify(
+            eventValidation.error?.errors
+          )}`
+        ).toBe(true);
+
+        expect(course.credits).toBe(5);
+        expect(course.startTime < course.endTime).toBe(true);
+      }
+    });
+
+    it('contains exactly the required quarterly distributions with deterministic criteria test vectors', () => {
+      const rawData = fs.readFileSync(coursesJsonPath, 'utf8');
+      const courses: any[] = JSON.parse(rawData);
+
+      const winter = courses.filter((c) => c.term === 'Winter 2027');
+      const fall = courses.filter((c) => c.term === 'Fall 2026');
+      const spring = courses.filter((c) => c.term === 'Spring 2027');
+      const summer = courses.filter((c) => c.term === 'Summer 2027');
+
+      expect(winter).toHaveLength(6);
+      expect(fall).toHaveLength(4);
+      expect(spring).toHaveLength(4);
+      expect(summer).toHaveLength(4);
+
+      // Verify Winter 2027 duplicate section test vector
+      const cse101Sections = winter.filter((c) => c.code === 'CSE 101');
+      expect(cse101Sections).toHaveLength(2);
+      const sec01 = cse101Sections.find((c) => c.id === 'cse-101-01');
+      const sec02 = cse101Sections.find((c) => c.id === 'cse-101-02');
+      expect(sec01).toBeDefined();
+      expect(sec02).toBeDefined();
+      expect(sec01?.days).toEqual(['Monday', 'Wednesday', 'Friday']);
+      expect(sec01?.startTime).toBe('09:00');
+      expect(sec02?.days).toEqual(['Tuesday', 'Thursday']);
+      expect(sec02?.startTime).toBe('10:00');
+
+      // Verify Winter 2027 back-to-back cluster test vector
+      const cse115a = winter.find((c) => c.id === 'cse-115a-01');
+      expect(cse115a).toBeDefined();
+      expect(cse115a?.days).toEqual(['Monday', 'Wednesday', 'Friday']);
+      expect(cse115a?.startTime).toBe('10:30');
+
+      // Verify department variety
+      const departments = new Set(courses.map((c) => c.department));
+      expect(departments).toContain('CSE');
+      expect(departments).toContain('MATH');
+      expect(departments).toContain('ART');
+      expect(departments).toContain('ECON');
+      expect(departments).toContain('STAT');
+
+      // Verify level variety
+      const levels = new Set(courses.map((c) => c.level));
+      expect(levels).toContain('LOWER');
+      expect(levels).toContain('UPPER');
     });
   });
 

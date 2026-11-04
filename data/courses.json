@@ -1,9 +1,10 @@
 [
   {
-    "id": "cse-101-f26",
+    "id": "cse-101-01",
     "code": "CSE 101",
     "title": "CSE 101: Introduction to Data Structures and Algorithms",
     "department": "CSE",
+    "level": "UPPER",
     "type": "MAJOR",
     "instructor": "Patrick Tantalo",
     "location": "Baskin Engr 101",
@@ -13,62 +14,22 @@
       "Friday"
     ],
     "startTime": "09:00",
-    "endTime": "10:10",
+    "endTime": "10:15",
     "color": "#00B4DB",
     "credits": 5,
-    "term": "Fall 2026",
+    "term": "Winter 2027",
     "ge": null,
-    "description": "Advanced data structures, graphs, balanced search trees, algorithm analysis, asymptotic notation, and proof techniques."
+    "description": "Data structures and algorithm design: balanced search trees, graph algorithms, asymptotic notation, greedy algorithms, and dynamic programming."
   },
   {
-    "id": "cse-12-f26",
-    "code": "CSE 12",
-    "title": "CSE 12: Computer Systems and Assembly Language",
+    "id": "cse-101-02",
+    "code": "CSE 101",
+    "title": "CSE 101: Introduction to Data Structures and Algorithms",
     "department": "CSE",
+    "level": "UPPER",
     "type": "MAJOR",
-    "instructor": "Max Dunne",
+    "instructor": "Suresh Lodha",
     "location": "Stevenson 150",
-    "days": [
-      "Monday",
-      "Wednesday"
-    ],
-    "startTime": "11:40",
-    "endTime": "12:45",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Fall 2026",
-    "ge": null,
-    "description": "Introduction to computer architecture, assembly language programming, CPU control paths, registers, and memory hierarchy."
-  },
-  {
-    "id": "cse-13s-f26",
-    "code": "CSE 13S",
-    "title": "CSE 13S: Computer Systems and C Programming",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Darrell Long",
-    "location": "Jack Baskin 152",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "13:20",
-    "endTime": "14:25",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Fall 2026",
-    "ge": null,
-    "description": "Systems programming in C/C++, pointers, memory layout, dynamic allocation, UNIX command-line utilities, and git version control."
-  },
-  {
-    "id": "cse-120-f26",
-    "code": "CSE 120",
-    "title": "CSE 120: Computer Architecture",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Heiner Litz",
-    "location": "Physical Sciences 110",
     "days": [
       "Tuesday",
       "Thursday"
@@ -77,76 +38,125 @@
     "endTime": "11:35",
     "color": "#00B4DB",
     "credits": 5,
-    "term": "Fall 2026",
+    "term": "Winter 2027",
     "ge": null,
-    "description": "Pipelining, instruction level parallelism, branch prediction, caches, virtual memory, and multicore systems."
+    "description": "Secondary lecture section for CSE 101 focusing on algorithmic principles and graph data structures."
   },
   {
-    "id": "cse-180-f26",
-    "code": "CSE 180",
-    "title": "CSE 180: Database Systems I",
+    "id": "cse-115a-01",
+    "code": "CSE 115A",
+    "title": "CSE 115A: Introduction to Software Engineering",
     "department": "CSE",
+    "level": "UPPER",
     "type": "MAJOR",
-    "instructor": "Wang-Chiew Tan",
-    "location": "Engineering 2 192",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "15:20",
-    "endTime": "16:55",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Fall 2026",
-    "ge": null,
-    "description": "Relational data model, relational algebra, SQL querying, schema normalization, and database transaction processing."
-  },
-  {
-    "id": "math-19a-f26",
-    "code": "MATH 19A",
-    "title": "MATH 19A: Calculus for Science, Engineering, and Mathematics",
-    "department": "MATH",
-    "type": "MAJOR",
-    "instructor": "Frank Bauerle",
-    "location": "Thimann 003",
+    "instructor": "Richard Jullig",
+    "location": "Baskin Engr 152",
     "days": [
       "Monday",
       "Wednesday",
       "Friday"
     ],
-    "startTime": "09:20",
-    "endTime": "10:25",
+    "startTime": "10:30",
+    "endTime": "11:45",
     "color": "#00B4DB",
     "credits": 5,
-    "term": "Fall 2026",
-    "ge": "MF",
-    "description": "Differential calculus, limits, continuity, derivative rules, implicit differentiation, and optimization problems."
+    "term": "Winter 2027",
+    "ge": null,
+    "description": "Software development lifecycle, agile methodologies, team collaboration, testing, CI/CD, and project deployment."
   },
   {
-    "id": "math-21-f26",
-    "code": "MATH 21",
-    "title": "MATH 21: Linear Algebra",
-    "department": "MATH",
+    "id": "cse-130-01",
+    "code": "CSE 130",
+    "title": "CSE 130: Principles of Computer Systems Design",
+    "department": "CSE",
+    "level": "UPPER",
     "type": "MAJOR",
-    "instructor": "Hongyun Wang",
-    "location": "Classroom Unit 2",
+    "instructor": "Peter Alvaro",
+    "location": "Physical Sciences 110",
     "days": [
       "Tuesday",
       "Thursday"
     ],
-    "startTime": "11:40",
-    "endTime": "13:15",
+    "startTime": "13:15",
+    "endTime": "14:50",
+    "color": "#00B4DB",
+    "credits": 5,
+    "term": "Winter 2027",
+    "ge": null,
+    "description": "Computer system design, operating system abstractions, multithreading, synchronization, file systems, and distributed concepts."
+  },
+  {
+    "id": "art-10f-01",
+    "code": "ART 10F",
+    "title": "ART 10F: 2D Design",
+    "department": "ART",
+    "level": "LOWER",
+    "type": "GE",
+    "instructor": "Elizabeth Stephens",
+    "location": "Digital Arts 101",
+    "days": [
+      "Monday",
+      "Wednesday"
+    ],
+    "startTime": "15:20",
+    "endTime": "16:55",
+    "color": "#FF6B6B",
+    "credits": 5,
+    "term": "Winter 2027",
+    "ge": [
+      "PR-C"
+    ],
+    "description": "Studio introduction to two-dimensional composition, color theory, media experiments, and creative visual expression satisfying Practice: Creative Process (PR)."
+  },
+  {
+    "id": "cse-12-01",
+    "code": "CSE 12",
+    "title": "CSE 12: Computer Systems and Assembly Language",
+    "department": "CSE",
+    "level": "LOWER",
+    "type": "MAJOR",
+    "instructor": "Max Dunne",
+    "location": "Stevenson 150",
+    "days": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "startTime": "09:00",
+    "endTime": "10:15",
+    "color": "#00B4DB",
+    "credits": 5,
+    "term": "Winter 2027",
+    "ge": null,
+    "description": "Introduction to computer architecture, assembly language programming, CPU control paths, registers, and memory hierarchy."
+  },
+  {
+    "id": "cse-101-f26",
+    "code": "CSE 101",
+    "title": "CSE 101: Introduction to Data Structures and Algorithms",
+    "department": "CSE",
+    "level": "UPPER",
+    "type": "MAJOR",
+    "instructor": "Patrick Tantalo",
+    "location": "Baskin Engr 101",
+    "days": [
+      "Monday",
+      "Wednesday",
+      "Friday"
+    ],
+    "startTime": "09:00",
+    "endTime": "10:15",
     "color": "#00B4DB",
     "credits": 5,
     "term": "Fall 2026",
     "ge": null,
-    "description": "Vector spaces, linear transformations, matrices, determinants, systems of linear equations, eigenvalues, and eigenvectors."
+    "description": "Advanced data structures, graphs, balanced search trees, algorithm analysis, asymptotic notation, and proof techniques."
   },
   {
     "id": "math-23a-f26",
     "code": "MATH 23A",
     "title": "MATH 23A: Vector Calculus",
     "department": "MATH",
+    "level": "LOWER",
     "type": "MAJOR",
     "instructor": "Beren Sanders",
     "location": "Thimann 001",
@@ -159,95 +169,17 @@
     "color": "#00B4DB",
     "credits": 5,
     "term": "Fall 2026",
-    "ge": "MF",
-    "description": "Multivariable functions, vectors in three-dimensional space, partial derivatives, directional derivatives, gradients, and multiple integrals."
-  },
-  {
-    "id": "am-10-f26",
-    "code": "AM 10",
-    "title": "AM 10: Mathematical Methods for Engineers I",
-    "department": "AM",
-    "type": "MAJOR",
-    "instructor": "Qi Gong",
-    "location": "Engineering 2 192",
-    "days": [
-      "Tuesday",
-      "Thursday"
+    "ge": [
+      "MF"
     ],
-    "startTime": "10:00",
-    "endTime": "11:35",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Fall 2026",
-    "ge": "MF",
-    "description": "Applications of linear algebra and differential equations to engineering systems, state-space representations, and numerical simulations."
-  },
-  {
-    "id": "ece-101-f26",
-    "code": "ECE 101",
-    "title": "ECE 101: Introduction to Electronic Circuits",
-    "department": "ECE",
-    "type": "MAJOR",
-    "instructor": "Holger Schmidt",
-    "location": "Baskin Engr 152",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "14:00",
-    "endTime": "15:05",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Fall 2026",
-    "ge": null,
-    "description": "Kirchhoff laws, nodal and mesh analysis, operational amplifiers, Thévenin and Norton equivalents, first and second order transient circuits."
-  },
-  {
-    "id": "phil-9-f26",
-    "code": "PHIL 9",
-    "title": "PHIL 9: Introduction to Logic",
-    "department": "PHIL",
-    "type": "GE",
-    "instructor": "Daniel Guevara",
-    "location": "Humanities 206",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "17:20",
-    "endTime": "18:55",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Fall 2026",
-    "ge": "MF",
-    "description": "Formal propositional and predicate logic, natural deduction proofs, truth tables, and fallacies in analytical arguments."
-  },
-  {
-    "id": "phil-11-f26",
-    "code": "PHIL 11",
-    "title": "PHIL 11: Critical Thinking",
-    "department": "PHIL",
-    "type": "GE",
-    "instructor": "David Bowe",
-    "location": "Cowell 131",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "09:00",
-    "endTime": "10:35",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Fall 2026",
-    "ge": "CC",
-    "description": "Systematic analysis of arguments, deduction, induction, cognitive biases, and critical evaluation of evidentiary claims."
+    "description": "Vectors in 3D Euclidean space, multivariable differential and integral calculus, and directional derivatives."
   },
   {
     "id": "art-10f-f26",
     "code": "ART 10F",
     "title": "ART 10F: 2D Design",
     "department": "ART",
+    "level": "LOWER",
     "type": "GE",
     "instructor": "Elizabeth Stephens",
     "location": "Digital Arts 101",
@@ -260,668 +192,40 @@
     "color": "#FF6B6B",
     "credits": 5,
     "term": "Fall 2026",
-    "ge": "PR",
-    "description": "Studio introduction to two-dimensional visual elements, composition principles, color interaction, and creative digital and physical media."
-  },
-  {
-    "id": "his-10a-f26",
-    "code": "HIS 10A",
-    "title": "HIS 10A: United States History to 1877",
-    "department": "HIS",
-    "type": "GE",
-    "instructor": "Michael Breen",
-    "location": "Humanities 150",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
+    "ge": [
+      "PR-C"
     ],
-    "startTime": "10:40",
-    "endTime": "11:45",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Fall 2026",
-    "ge": "ER",
-    "description": "Survey of colonial North American settlements, American Revolution, early constitutional governance, Jacksonian democracy, Civil War, and Reconstruction."
+    "description": "Two-dimensional visual art fundamentals, composition, balance, color theories, and creative presentation."
   },
   {
     "id": "econ-1-f26",
     "code": "ECON 1",
-    "title": "ECON 1: Introductory Microeconomics: Resource Allocation and Market Structure",
-    "department": "ECON",
-    "type": "GE",
-    "instructor": "Kuan-Ming Shen",
-    "location": "Classroom Unit 1",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "13:30",
-    "endTime": "15:05",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Fall 2026",
-    "ge": "PE",
-    "description": "Microeconomic theory, consumer choice, firm production functions, market structures, price elasticity, and market efficiency."
-  },
-  {
-    "id": "astr-1-f26",
-    "code": "ASTR 1",
-    "title": "ASTR 1: Theories of the Universe",
-    "department": "ASTR",
-    "type": "GE",
-    "instructor": "Graeme Smith",
-    "location": "Thimann 003",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "12:00",
-    "endTime": "13:05",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Fall 2026",
-    "ge": "SI",
-    "description": "Cosmological development, planetary orbits, stellar evolution, black holes, galactic structures, and the Big Bang theory."
-  },
-  {
-    "id": "musc-11a-f26",
-    "code": "MUSC 11A",
-    "title": "MUSC 11A: Introduction to Western Art Music",
-    "department": "MUSC",
-    "type": "GE",
-    "instructor": "Edward Jones",
-    "location": "Music Center 131",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "15:20",
-    "endTime": "16:55",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Fall 2026",
-    "ge": "PR",
-    "description": "Appreciative survey of European and American art music traditions from Medieval chant through contemporary orchestral composition."
-  },
-  {
-    "id": "film-80s-f26",
-    "code": "FILM 80S",
-    "title": "FILM 80S: Special Topics in Film and Digital Media",
-    "department": "FILM",
-    "type": "GE",
-    "instructor": "Jonathan Kahana",
-    "location": "Communications 150",
-    "days": [
-      "Monday",
-      "Wednesday"
-    ],
-    "startTime": "17:00",
-    "endTime": "18:35",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Fall 2026",
-    "ge": "IM",
-    "description": "Critical inquiry into cinematic technique, narrative conventions, documentary forms, and contemporary digital media practices."
-  },
-  {
-    "id": "cse-115a-01",
-    "code": "CSE 115A",
-    "title": "CSE 115A: Intro to Software Engineering",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Richard Jullig",
-    "location": "Baskin Engr 152",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "09:00",
-    "endTime": "10:10",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": null,
-    "description": "Introduction to software engineering principles, agile development, pair programming, automated testing, and team project delivery."
-  },
-  {
-    "id": "cse-130-01",
-    "code": "CSE 130",
-    "title": "CSE 130: Principles of Computer Systems Design",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Peter Alvaro",
-    "location": "Stevenson 150",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "10:40",
-    "endTime": "11:45",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": null,
-    "description": "Fundamental principles of computer systems design, concurrency, synchronization, caching, storage systems, and networking abstractions."
-  },
-  {
-    "id": "cse-101-01",
-    "code": "CSE 101",
-    "title": "CSE 101: Introduction to Data Structures and Algorithms",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Patrick Tantalo",
-    "location": "Classroom Unit 2",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "10:00",
-    "endTime": "11:35",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": null,
-    "description": "Advanced data structures, graphs, balanced search trees, algorithm analysis, asymptotic notation, and proof techniques."
-  },
-  {
-    "id": "cse-102-01",
-    "code": "CSE 102",
-    "title": "CSE 102: Introduction to Analysis of Algorithms",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Seshadhri Comandur",
-    "location": "Jack Baskin 152",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "13:15",
-    "endTime": "14:50",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": null,
-    "description": "Methods for designing and analyzing algorithms including greedy algorithms, dynamic programming, divide-and-conquer, and NP-completeness."
-  },
-  {
-    "id": "cse-120-01",
-    "code": "CSE 120",
-    "title": "CSE 120: Computer Architecture",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Heiner Litz",
-    "location": "Physical Sciences 110",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "13:20",
-    "endTime": "14:25",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": null,
-    "description": "Pipelined processors, instruction-level parallelism, caches, memory hierarchies, virtual memory, and hardware performance evaluation."
-  },
-  {
-    "id": "cse-103-01",
-    "code": "CSE 103",
-    "title": "CSE 103: Computational Models",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Phokion Kolaitis",
-    "location": "Engineering 2 192",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "15:20",
-    "endTime": "16:55",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": null,
-    "description": "Theory of computation covering finite automata, regular languages, context-free grammars, Turing machines, decidability, and undecidability."
-  },
-  {
-    "id": "cse-180-01",
-    "code": "CSE 180",
-    "title": "CSE 180: Database Systems I",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Wang-Chiew Tan",
-    "location": "Thimann 001",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "14:40",
-    "endTime": "15:45",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": null,
-    "description": "Relational database model, SQL programming, relational algebra, schema normalization, index structures, and transaction concepts."
-  },
-  {
-    "id": "cse-107-01",
-    "code": "CSE 107",
-    "title": "CSE 107: Probability and Statistics for Engineers",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "JJ Garcia-Luna-Aceves",
-    "location": "Merrill 102",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "08:30",
-    "endTime": "10:05",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": "SR",
-    "description": "Introduction to probability and statistics for engineering applications: random variables, expectation, distributions, hypothesis testing, and Bayesian analysis."
-  },
-  {
-    "id": "cse-13s-01",
-    "code": "CSE 13S",
-    "title": "CSE 13S: Computer Systems and C Programming",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Kerry Veenstra",
-    "location": "Media Theater 110",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "12:00",
-    "endTime": "13:05",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": null,
-    "description": "Introduction to systems programming using C, pointer manipulation, memory allocation, UNIX command-line development tools, and debuggers."
-  },
-  {
-    "id": "cse-12-01",
-    "code": "CSE 12",
-    "title": "CSE 12: Computer Systems and Assembly Language",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Max Dunne",
-    "location": "Earth & Marine B206",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "11:40",
-    "endTime": "13:15",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": "IN",
-    "description": "Introduction to computer hardware architecture, assembly language programming on RISC-V architectures, register operations, and stack conventions."
-  },
-  {
-    "id": "ece-101-01",
-    "code": "ECE 101",
-    "title": "ECE 101: Introduction to Electronic Circuits",
-    "department": "ECE",
-    "type": "MAJOR",
-    "instructor": "Matthew Guthaus",
-    "location": "Jack Baskin 156",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "08:00",
-    "endTime": "09:05",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": null,
-    "description": "DC and AC circuit analysis, Kirchhoff's laws, Thevenin and Norton equivalents, operational amplifiers, and passive filter designs."
-  },
-  {
-    "id": "ece-103-01",
-    "code": "ECE 103",
-    "title": "ECE 103: Signals and Systems",
-    "department": "ECE",
-    "type": "MAJOR",
-    "instructor": "Hamid Sadjadpour",
-    "location": "Baskin Engr 169",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "13:15",
-    "endTime": "14:50",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": null,
-    "description": "Continuous-time and discrete-time signals, linear time-invariant systems, Fourier series, Fourier transforms, Laplace transforms, and z-transforms."
-  },
-  {
-    "id": "ece-118-01",
-    "code": "ECE 118",
-    "title": "ECE 118: Introduction to Mechatronics",
-    "department": "ECE",
-    "type": "ELECTIVE",
-    "instructor": "Gabriel Elkaim",
-    "location": "BE 105",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "15:20",
-    "endTime": "16:55",
-    "color": "#9B51E0",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": null,
-    "description": "Hands-on integration of mechanical, electrical, and computer engineering principles in autonomous embedded mechatronic systems."
-  },
-  {
-    "id": "ece-151-01",
-    "code": "ECE 151",
-    "title": "ECE 151: Communications Systems",
-    "department": "ECE",
-    "type": "ELECTIVE",
-    "instructor": "Benjamin Friedlander",
-    "location": "Engineering 2 194",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "16:00",
-    "endTime": "17:05",
-    "color": "#9B51E0",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": null,
-    "description": "Analog and digital communication systems, modulation schemes (AM, FM, PSK, QAM), noise analysis, signal detection, and channel capacity."
-  },
-  {
-    "id": "math-19a-01",
-    "code": "MATH 19A",
-    "title": "MATH 19A: Calculus for Science, Engineering, and Mathematics",
-    "department": "MATH",
-    "type": "MAJOR",
-    "instructor": "Bauer Eastman",
-    "location": "Thimann Lecture 003",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "09:20",
-    "endTime": "10:25",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": "MF",
-    "description": "Differential calculus of single variable functions, limits, continuity, derivatives, optimization problems, and curve sketching."
-  },
-  {
-    "id": "math-19b-01",
-    "code": "MATH 19B",
-    "title": "MATH 19B: Calculus for Science, Engineering, and Mathematics",
-    "department": "MATH",
-    "type": "MAJOR",
-    "instructor": "Frank Bäuerle",
-    "location": "Classroom Unit 1",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "10:40",
-    "endTime": "11:45",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": "MF",
-    "description": "Integral calculus of single variable functions, fundamental theorem of calculus, integration techniques, applications to geometry and physics, and sequences and series."
-  },
-  {
-    "id": "math-21-01",
-    "code": "MATH 21",
-    "title": "MATH 21: Linear Algebra",
-    "department": "MATH",
-    "type": "MAJOR",
-    "instructor": "Pedro Morales",
-    "location": "Thimann 003",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "13:15",
-    "endTime": "14:50",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": "MF",
-    "description": "Systems of linear equations, matrices, determinants, vector spaces, subspaces, linear transformations, eigenvalues, and eigenvectors."
-  },
-  {
-    "id": "math-23a-01",
-    "code": "MATH 23A",
-    "title": "MATH 23A: Vector Calculus",
-    "department": "MATH",
-    "type": "MAJOR",
-    "instructor": "Martin Weissman",
-    "location": "Jack Baskin 152",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "13:20",
-    "endTime": "14:25",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": "MF",
-    "description": "Multivariable functions, vectors in three-dimensional space, partial derivatives, directional derivatives, gradients, and multiple integrals."
-  },
-  {
-    "id": "am-10-01",
-    "code": "AM 10",
-    "title": "AM 10: Mathematical Methods for Engineers I",
-    "department": "AM",
-    "type": "MAJOR",
-    "instructor": "Qi Gong",
-    "location": "Engineering 2 192",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "10:00",
-    "endTime": "11:35",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": "MF",
-    "description": "Applications of linear algebra and differential equations to engineering systems, state-space representations, and numerical simulations."
-  },
-  {
-    "id": "art-10f-01",
-    "code": "ART 10F",
-    "title": "ART 10F: 2D Design",
-    "department": "ART",
-    "type": "GE",
-    "instructor": "Elizabeth Stephens",
-    "location": "Digital Arts 101",
-    "days": [
-      "Monday",
-      "Wednesday"
-    ],
-    "startTime": "15:20",
-    "endTime": "16:55",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": "PR-C",
-    "description": "Two-dimensional design fundamentals, composition, color theory, visual hierarchy, and hands-on studio work in contemporary visual media."
-  },
-  {
-    "id": "phil-11-01",
-    "code": "PHIL 11",
-    "title": "PHIL 11: Critical Thinking",
-    "department": "PHIL",
-    "type": "GE",
-    "instructor": "Daniel Guevara",
-    "location": "Humanities 206",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "17:20",
-    "endTime": "18:55",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": "CC",
-    "description": "Analysis of arguments, informal fallacies, deductive vs inductive reasoning, and critical evaluation of claims in media and public discourse."
-  },
-  {
-    "id": "film-80s-01",
-    "code": "FILM 80S",
-    "title": "FILM 80S: Special Topics in Film and Digital Media",
-    "department": "FILM",
-    "type": "GE",
-    "instructor": "L.G. Carreno",
-    "location": "Kresge Clrm 321",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "13:15",
-    "endTime": "14:50",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": "IM",
-    "description": "Critical survey of digital media culture, cinematic storytelling techniques, narrative structure, and technological aesthetics."
-  },
-  {
-    "id": "his-10a-01",
-    "code": "HIS 10A",
-    "title": "HIS 10A: United States History to 1877",
-    "department": "HIS",
-    "type": "GE",
-    "instructor": "Greg O'Malley",
-    "location": "Humanities 110",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "10:40",
-    "endTime": "11:45",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": "ER",
-    "description": "Survey of United States history from indigenous societies through colonial settlements, the American Revolution, Civil War, and Reconstruction."
-  },
-  {
-    "id": "econ-1-01",
-    "code": "ECON 1",
     "title": "ECON 1: Introductory Microeconomics",
     "department": "ECON",
-    "type": "GE",
+    "level": "LOWER",
+    "type": "ELECTIVE",
     "instructor": "Julie Gonzalez",
     "location": "Classroom Unit 2",
     "days": [
       "Tuesday",
       "Thursday"
     ],
-    "startTime": "08:30",
-    "endTime": "10:05",
-    "color": "#FF6B6B",
+    "startTime": "10:00",
+    "endTime": "11:35",
+    "color": "#9B51E0",
     "credits": 5,
-    "term": "Winter 2027",
-    "ge": "PE-H",
-    "description": "Economic analysis of market behavior, consumer decision-making, supply and demand, competitive markets, externalities, and public policy."
-  },
-  {
-    "id": "musc-11a-01",
-    "code": "MUSC 11A",
-    "title": "MUSC 11A: Introduction to Western Classical Music",
-    "department": "MUSC",
-    "type": "GE",
-    "instructor": "Anatole Leikin",
-    "location": "Music Center 131",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
+    "term": "Fall 2026",
+    "ge": [
+      "PE-H"
     ],
-    "startTime": "14:40",
-    "endTime": "15:45",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": "TA",
-    "description": "Appreciation and listening analysis of Western classical music from medieval chant through Renaissance, Baroque, Classical, and Romantic eras."
-  },
-  {
-    "id": "astr-1-01",
-    "code": "ASTR 1",
-    "title": "ASTR 1: Introduction to the Cosmos",
-    "department": "ASTR",
-    "type": "GE",
-    "instructor": "Puragra Guhathakurta",
-    "location": "Media Theater 110",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "11:40",
-    "endTime": "13:15",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": "SI",
-    "description": "General survey of modern astronomy, stellar evolution, black holes, galactic structure, dark matter, and the cosmological history of the universe."
-  },
-  {
-    "id": "havc-30-01",
-    "code": "HAVC 30",
-    "title": "HAVC 30: Introduction to European Visual Culture",
-    "department": "HAVC",
-    "type": "GE",
-    "instructor": "Maria Evangelatou",
-    "location": "Porter Acacia 148",
-    "days": [
-      "Monday",
-      "Wednesday"
-    ],
-    "startTime": "17:20",
-    "endTime": "18:55",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Winter 2027",
-    "ge": "IM",
-    "description": "Visual culture, architecture, and painting in Europe from the Renaissance through the Enlightenment and modern period."
+    "description": "Introduction to microeconomic analysis, market structures, price mechanics, elasticity, and consumer choice."
   },
   {
     "id": "cse-102-s27",
     "code": "CSE 102",
     "title": "CSE 102: Introduction to Analysis of Algorithms",
     "department": "CSE",
+    "level": "UPPER",
     "type": "MAJOR",
     "instructor": "Martine Schlag",
     "location": "Baskin Engr 152",
@@ -930,121 +234,20 @@
       "Wednesday",
       "Friday"
     ],
-    "startTime": "09:00",
-    "endTime": "10:10",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Spring 2027",
-    "ge": null,
-    "description": "Methods for the design and analysis of algorithms, divide-and-conquer, greedy heuristics, dynamic programming, and NP-completeness."
-  },
-  {
-    "id": "cse-112-s27",
-    "code": "CSE 112",
-    "title": "CSE 112: Comparative Programming Languages",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Peter Alvaro",
-    "location": "Stevenson 150",
-    "days": [
-      "Monday",
-      "Wednesday"
-    ],
-    "startTime": "11:40",
-    "endTime": "12:45",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Spring 2027",
-    "ge": null,
-    "description": "Syntax and semantics of programming languages, paradigm comparison across functional, logic, imperative, and object-oriented architectures."
-  },
-  {
-    "id": "cse-115a-s27",
-    "code": "CSE 115A",
-    "title": "CSE 115A: Intro to Software Engineering",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Richard Jullig",
-    "location": "Jack Baskin 152",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "10:40",
+    "startTime": "10:30",
     "endTime": "11:45",
     "color": "#00B4DB",
     "credits": 5,
     "term": "Spring 2027",
     "ge": null,
-    "description": "Introduction to software engineering principles, agile development, pair programming, automated testing, and team project delivery."
-  },
-  {
-    "id": "cse-130-s27",
-    "code": "CSE 130",
-    "title": "CSE 130: Principles of Computer Systems Design",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Ethan Miller",
-    "location": "Classroom Unit 2",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "10:00",
-    "endTime": "11:35",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Spring 2027",
-    "ge": null,
-    "description": "Fundamental principles of computer systems design, concurrency, synchronization, caching, storage systems, and networking abstractions."
-  },
-  {
-    "id": "cse-107-s27",
-    "code": "CSE 107",
-    "title": "CSE 107: Probability and Statistics for Engineers",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "David Sutherland",
-    "location": "Engineering 2 192",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "13:15",
-    "endTime": "14:50",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Spring 2027",
-    "ge": "SR",
-    "description": "Axiomatic probability, discrete and continuous random variables, joint distributions, central limit theorem, and statistical inference for computing."
-  },
-  {
-    "id": "cse-180-s27",
-    "code": "CSE 180",
-    "title": "CSE 180: Database Systems I",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Wang-Chiew Tan",
-    "location": "Thimann 003",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "13:20",
-    "endTime": "14:25",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Spring 2027",
-    "ge": null,
-    "description": "Relational data model, relational algebra, SQL querying, schema normalization, and database transaction processing."
+    "description": "Time and space analysis of algorithms, recurrence relations, dynamic programming, divide-and-conquer, greedy techniques, and NP-completeness."
   },
   {
     "id": "stat-131-s27",
     "code": "STAT 131",
     "title": "STAT 131: Introduction to Probability Theory",
     "department": "STAT",
+    "level": "UPPER",
     "type": "MAJOR",
     "instructor": "Juhee Lee",
     "location": "Thimann 003",
@@ -1057,116 +260,17 @@
     "color": "#00B4DB",
     "credits": 5,
     "term": "Spring 2027",
-    "ge": "SR",
-    "description": "Mathematical development of probability theory, conditional distributions, transformation of random variables, and sampling distributions."
-  },
-  {
-    "id": "math-19b-s27",
-    "code": "MATH 19B",
-    "title": "MATH 19B: Calculus for Science, Engineering, and Mathematics",
-    "department": "MATH",
-    "type": "MAJOR",
-    "instructor": "Mark Eastman",
-    "location": "Classroom Unit 1",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
+    "ge": [
+      "SR"
     ],
-    "startTime": "10:40",
-    "endTime": "11:45",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Spring 2027",
-    "ge": "MF",
-    "description": "Integral calculus, fundamental theorem of calculus, integration techniques, applications to geometry and physics, and Taylor series."
-  },
-  {
-    "id": "math-21-s27",
-    "code": "MATH 21",
-    "title": "MATH 21: Linear Algebra",
-    "department": "MATH",
-    "type": "MAJOR",
-    "instructor": "Pedro Morales",
-    "location": "Jack Baskin 152",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "11:40",
-    "endTime": "13:15",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Spring 2027",
-    "ge": null,
-    "description": "Vector spaces, linear transformations, matrices, determinants, systems of linear equations, eigenvalues, and eigenvectors."
-  },
-  {
-    "id": "am-10-s27",
-    "code": "AM 10",
-    "title": "AM 10: Mathematical Methods for Engineers I",
-    "department": "AM",
-    "type": "MAJOR",
-    "instructor": "Ricardo Sanfelice",
-    "location": "Baskin Engr 152",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "08:30",
-    "endTime": "10:05",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Spring 2027",
-    "ge": "MF",
-    "description": "Applications of linear algebra and differential equations to engineering systems, state-space representations, and numerical simulations."
-  },
-  {
-    "id": "ece-103-s27",
-    "code": "ECE 103",
-    "title": "ECE 103: Signals and Systems",
-    "department": "ECE",
-    "type": "MAJOR",
-    "instructor": "Matthew Vargas",
-    "location": "Physical Sciences 110",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "12:00",
-    "endTime": "13:05",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Spring 2027",
-    "ge": null,
-    "description": "Continuous and discrete-time signals and linear time-invariant systems, convolution, Fourier transform, Laplace transform, and z-transform."
-  },
-  {
-    "id": "ece-118-s27",
-    "code": "ECE 118",
-    "title": "ECE 118: Introduction to Mechatronics",
-    "department": "ECE",
-    "type": "MAJOR",
-    "instructor": "Gabriel Elkaim",
-    "location": "Baskin Engr 101",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "15:20",
-    "endTime": "16:55",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Spring 2027",
-    "ge": null,
-    "description": "Interdisciplinary design of electro-mechanical systems, sensor integration, microcontroller programming, actuators, and autonomous robot labs."
+    "description": "Introduction to probability theory, discrete and continuous random variables, expectation, variance, and limit theorems."
   },
   {
     "id": "art-80t-s27",
     "code": "ART 80T",
     "title": "ART 80T: Digital Tools for Contemporary Art",
     "department": "ART",
+    "level": "LOWER",
     "type": "GE",
     "instructor": "Sean Fader",
     "location": "Digital Arts 101",
@@ -1179,115 +283,38 @@
     "color": "#FF6B6B",
     "credits": 5,
     "term": "Spring 2027",
-    "ge": "PR",
-    "description": "Hands-on studio course introducing software workflows, digital photography, vector illustration, and digital fabrication."
+    "ge": [
+      "PR-C"
+    ],
+    "description": "Digital imaging, vector graphics, multimedia design tools, and creative digital workflows."
   },
   {
-    "id": "art-10f-s27",
-    "code": "ART 10F",
-    "title": "ART 10F: 2D Design",
-    "department": "ART",
-    "type": "GE",
-    "instructor": "Elizabeth Stephens",
-    "location": "Digital Arts 101",
+    "id": "cse-30-s27",
+    "code": "CSE 30",
+    "title": "CSE 30: Programming Abstractions: Python",
+    "department": "CSE",
+    "level": "LOWER",
+    "type": "MAJOR",
+    "instructor": "Luca de Alfaro",
+    "location": "Stevenson 150",
     "days": [
       "Tuesday",
       "Thursday"
     ],
     "startTime": "09:00",
-    "endTime": "10:35",
-    "color": "#FF6B6B",
+    "endTime": "10:15",
+    "color": "#00B4DB",
     "credits": 5,
     "term": "Spring 2027",
-    "ge": "PR",
-    "description": "Studio introduction to two-dimensional visual elements, composition principles, color interaction, and creative digital and physical media."
-  },
-  {
-    "id": "phil-11-s27",
-    "code": "PHIL 11",
-    "title": "PHIL 11: Critical Thinking",
-    "department": "PHIL",
-    "type": "GE",
-    "instructor": "Daniel Guevara",
-    "location": "Humanities 206",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "17:20",
-    "endTime": "18:55",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Spring 2027",
-    "ge": "CC",
-    "description": "Systematic analysis of arguments, deduction, induction, cognitive biases, and critical evaluation of evidentiary claims."
-  },
-  {
-    "id": "film-80s-s27",
-    "code": "FILM 80S",
-    "title": "FILM 80S: Special Topics in Film and Digital Media",
-    "department": "FILM",
-    "type": "GE",
-    "instructor": "Shelley Stamp",
-    "location": "Communications 150",
-    "days": [
-      "Monday",
-      "Wednesday"
-    ],
-    "startTime": "13:30",
-    "endTime": "15:05",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Spring 2027",
-    "ge": "IM",
-    "description": "Critical inquiry into cinematic technique, narrative conventions, documentary forms, and contemporary digital media practices."
-  },
-  {
-    "id": "musc-11a-s27",
-    "code": "MUSC 11A",
-    "title": "MUSC 11A: Introduction to Western Art Music",
-    "department": "MUSC",
-    "type": "GE",
-    "instructor": "Shannon Dudley",
-    "location": "Music Center 131",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "10:00",
-    "endTime": "11:35",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Spring 2027",
-    "ge": "PR",
-    "description": "Appreciative survey of European and American art music traditions from Medieval chant through contemporary orchestral composition."
-  },
-  {
-    "id": "havc-30-s27",
-    "code": "HAVC 30",
-    "title": "HAVC 30: Introduction to European Visual Culture",
-    "department": "HAVC",
-    "type": "GE",
-    "instructor": "Katherine Cameron",
-    "location": "Porter Acad 148",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "14:00",
-    "endTime": "15:05",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Spring 2027",
-    "ge": "IM",
-    "description": "Critical examination of European painting, sculpture, and architecture from antiquity through the Renaissance and modern eras."
+    "ge": null,
+    "description": "Object-oriented programming, data structures, recursion, algorithm development, and abstraction using Python."
   },
   {
     "id": "cse-101-u27",
     "code": "CSE 101",
     "title": "CSE 101: Introduction to Data Structures and Algorithms",
     "department": "CSE",
+    "level": "UPPER",
     "type": "MAJOR",
     "instructor": "Patrick Tantalo",
     "location": "Classroom Unit 2",
@@ -1302,157 +329,37 @@
     "credits": 5,
     "term": "Summer 2027",
     "ge": null,
-    "description": "Accelerated 8-week course covering advanced data structures, graphs, balanced trees, and asymptotic analysis."
-  },
-  {
-    "id": "cse-12-u27",
-    "code": "CSE 12",
-    "title": "CSE 12: Computer Systems and Assembly Language",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Max Dunne",
-    "location": "Stevenson 150",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "10:00",
-    "endTime": "12:15",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Summer 2027",
-    "ge": null,
-    "description": "Accelerated summer course covering computer architecture, registers, and assembly language programming."
-  },
-  {
-    "id": "cse-13s-u27",
-    "code": "CSE 13S",
-    "title": "CSE 13S: Computer Systems and C Programming",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Darrell Long",
-    "location": "Jack Baskin 152",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "11:00",
-    "endTime": "12:45",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Summer 2027",
-    "ge": null,
-    "description": "Intensive summer programming in C/C++, memory management, UNIX tools, and low-level system calls."
-  },
-  {
-    "id": "cse-115a-u27",
-    "code": "CSE 115A",
-    "title": "CSE 115A: Intro to Software Engineering",
-    "department": "CSE",
-    "type": "MAJOR",
-    "instructor": "Dustin Harrison",
-    "location": "Baskin Engr 152",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "13:00",
-    "endTime": "14:45",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Summer 2027",
-    "ge": null,
-    "description": "Fast-paced agile software delivery, web applications, test-driven development, and team capstones."
-  },
-  {
-    "id": "math-19a-u27",
-    "code": "MATH 19A",
-    "title": "MATH 19A: Calculus for Science, Engineering, and Mathematics",
-    "department": "MATH",
-    "type": "MAJOR",
-    "instructor": "Frank Bauerle",
-    "location": "Thimann 003",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "09:00",
-    "endTime": "11:15",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Summer 2027",
-    "ge": "MF",
-    "description": "Summer session differential calculus, limits, derivatives, and curve sketching applications."
+    "description": "Accelerated summer session in data structures, algorithmic design, balanced trees, and graph algorithms."
   },
   {
     "id": "math-19b-u27",
     "code": "MATH 19B",
     "title": "MATH 19B: Calculus for Science, Engineering, and Mathematics",
     "department": "MATH",
+    "level": "LOWER",
     "type": "MAJOR",
     "instructor": "Pedro Morales",
     "location": "Classroom Unit 1",
     "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "09:20",
-    "endTime": "11:05",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Summer 2027",
-    "ge": "MF",
-    "description": "Summer session integral calculus, integration methods, arc length, volume of solids, and series."
-  },
-  {
-    "id": "math-21-u27",
-    "code": "MATH 21",
-    "title": "MATH 21: Linear Algebra",
-    "department": "MATH",
-    "type": "MAJOR",
-    "instructor": "Hongyun Wang",
-    "location": "Thimann 001",
-    "days": [
       "Tuesday",
       "Thursday"
     ],
-    "startTime": "13:00",
-    "endTime": "15:15",
+    "startTime": "10:00",
+    "endTime": "11:35",
     "color": "#00B4DB",
     "credits": 5,
     "term": "Summer 2027",
-    "ge": null,
-    "description": "Vector spaces, matrices, linear independence, basis, dimension, eigenvalues, and linear transformations."
-  },
-  {
-    "id": "stat-131-u27",
-    "code": "STAT 131",
-    "title": "STAT 131: Introduction to Probability Theory",
-    "department": "STAT",
-    "type": "MAJOR",
-    "instructor": "Athanasios Kottas",
-    "location": "Engineering 2 192",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
+    "ge": [
+      "MF"
     ],
-    "startTime": "15:00",
-    "endTime": "16:45",
-    "color": "#00B4DB",
-    "credits": 5,
-    "term": "Summer 2027",
-    "ge": "SR",
-    "description": "Summer probability theory, combinatorial analysis, distributions, expectation, and limit theorems."
+    "description": "Definite and indefinite integrals, techniques of integration, applications to physics and engineering."
   },
   {
     "id": "art-10f-u27",
     "code": "ART 10F",
     "title": "ART 10F: 2D Design",
     "department": "ART",
+    "level": "LOWER",
     "type": "GE",
     "instructor": "Elizabeth Stephens",
     "location": "Digital Arts 101",
@@ -1465,68 +372,30 @@
     "color": "#FF6B6B",
     "credits": 5,
     "term": "Summer 2027",
-    "ge": "PR",
-    "description": "Studio introduction to two-dimensional visual elements, composition principles, and creative media."
+    "ge": [
+      "PR-C"
+    ],
+    "description": "Intensive summer studio course exploring 2D composition, color mechanics, and expressive form."
   },
   {
-    "id": "phil-11-u27",
-    "code": "PHIL 11",
-    "title": "PHIL 11: Critical Thinking",
-    "department": "PHIL",
-    "type": "GE",
-    "instructor": "David Bowe",
-    "location": "Humanities 206",
+    "id": "cse-12-u27",
+    "code": "CSE 12",
+    "title": "CSE 12: Computer Systems and Assembly Language",
+    "department": "CSE",
+    "level": "LOWER",
+    "type": "MAJOR",
+    "instructor": "Max Dunne",
+    "location": "Stevenson 150",
     "days": [
       "Tuesday",
       "Thursday"
     ],
-    "startTime": "15:30",
-    "endTime": "17:45",
-    "color": "#FF6B6B",
+    "startTime": "13:00",
+    "endTime": "14:45",
+    "color": "#00B4DB",
     "credits": 5,
     "term": "Summer 2027",
-    "ge": "CC",
-    "description": "Systematic analysis of arguments, deduction, induction, fallacies, and scientific reasoning."
-  },
-  {
-    "id": "econ-1-u27",
-    "code": "ECON 1",
-    "title": "ECON 1: Introductory Microeconomics",
-    "department": "ECON",
-    "type": "GE",
-    "instructor": "Kuan-Ming Shen",
-    "location": "Classroom Unit 1",
-    "days": [
-      "Monday",
-      "Wednesday",
-      "Friday"
-    ],
-    "startTime": "10:00",
-    "endTime": "11:45",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Summer 2027",
-    "ge": "PE",
-    "description": "Microeconomic resource allocation, market structures, competitive equilibrium, and market failure."
-  },
-  {
-    "id": "astr-1-u27",
-    "code": "ASTR 1",
-    "title": "ASTR 1: Theories of the Universe",
-    "department": "ASTR",
-    "type": "GE",
-    "instructor": "Graeme Smith",
-    "location": "Thimann 003",
-    "days": [
-      "Tuesday",
-      "Thursday"
-    ],
-    "startTime": "12:00",
-    "endTime": "14:15",
-    "color": "#FF6B6B",
-    "credits": 5,
-    "term": "Summer 2027",
-    "ge": "SI",
-    "description": "Theories of cosmic origin, stars, black holes, galaxy evolution, and observational cosmology."
+    "ge": null,
+    "description": "Accelerated summer architecture course covering assembly language, memory layout, and processor organization."
   }
 ]
