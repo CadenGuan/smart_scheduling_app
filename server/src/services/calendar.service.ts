@@ -286,7 +286,7 @@ export class CalendarService {
       compliantUnpinned.forEach((c) => availableBaseCodes.add(extractBaseCourseCode(c)));
 
       if (
-        (availableBaseCodes.size >= targetCourseCount && targetCredits <= 15) ||
+        (availableBaseCodes.size >= targetCourseCount) ||
         violatingUnpinned.length === 0
       ) {
         // Sufficient compliant candidates exist to fulfill target course count; strictly discard free-day violators
