@@ -4,6 +4,9 @@ export default defineConfig({
   test: {
     environment: 'node',
     fileParallelism: false,
+    env: {
+      USE_MOCK_AGENT: 'true',
+    },
     coverage: {
       provider: 'v8',
       include: ['src/**'],

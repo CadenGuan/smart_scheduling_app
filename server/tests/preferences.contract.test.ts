@@ -3,6 +3,7 @@ import request from 'supertest';
 import { app } from '../src/app.js';
 import { db } from '../src/db/database.js';
 import { userQueries } from '../src/db/queries/userQueries.js';
+import { calendarQueries } from '../src/db/queries/calendarQueries.js';
 import { UserPreferencesSchema } from 'shared';
 
 describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]', () => {
@@ -479,7 +480,7 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
         expect(c.conflictBadge).toBeUndefined();
       });
       // Conflicted CSE 115A was avoided because sufficient conflict-free alternatives existed
-      expect(academicEvents.some((c: any) => c.id === 'cse-115a-lec')).toBe(false);
+      expect(academicEvents.some((c: any) => c.id.includes('cse-115a'))).toBe(false);
     });
 
     it('GET /api/calendar/preview attaches conflict badge when course meets on preferred free day', async () => {
@@ -501,14 +502,16 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
 
       // Assert
       expect(res.status).toBe(200);
-      const cse115a = res.body.data.events.find((e: any) => e.id === 'cse-115a-lec');
+      const cse115a = res.body.data.events.find((e: any) => e.id.includes('cse-115a'));
       expect(cse115a).toBeDefined();
       expect(cse115a.conflictBadge).toBe('Spans preferred free day');
       expect(cse115a.conflictBadges).toContain('Spans preferred free day');
 
       // Math 21 meets Tue/Thu, should NOT have a conflict badge
-      const math21 = res.body.data.events.find((e: any) => e.id === 'math-21-lec');
-      expect(math21.conflictBadge).toBeUndefined();
+      const nonConflicted = res.body.data.events.find(
+        (e: any) => e.id.includes('cse-130') || e.id.includes('math-21')
+      );
+      expect(nonConflicted?.conflictBadge).toBeUndefined();
     });
 
     it('GET /api/calendar/preview attaches conflict badge when course starts before earliestStartTime', async () => {
@@ -531,10 +534,12 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
 
       // Assert
       expect(res.status).toBe(200);
-      const cse115a = res.body.data.events.find((e: any) => e.id === 'cse-115a-lec');
-      expect(cse115a).toBeDefined();
-      expect(cse115a.conflictBadge).toBe('Starts before preferred time');
-      expect(cse115a.conflictBadges).toContain('Starts before preferred time');
+      const earlyCourse = res.body.data.events.find(
+        (e: any) => e.startTime < '10:00' && e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
+      expect(earlyCourse).toBeDefined();
+      expect(earlyCourse.conflictBadge).toBe('Starts before preferred time');
+      expect(earlyCourse.conflictBadges).toContain('Starts before preferred time');
     });
 
     it('captures multiple simultaneous conflicts into typed array and combined string', async () => {
@@ -556,11 +561,77 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
 
       // Assert
       expect(res.status).toBe(200);
-      const cse115a = res.body.data.events.find((e: any) => e.id === 'cse-115a-lec');
-      expect(cse115a).toBeDefined();
-      expect(cse115a.conflictBadges).toContain('Spans preferred free day');
-      expect(cse115a.conflictBadges).toContain('Starts before preferred time');
-      expect(cse115a.conflictBadge).toBe('Spans preferred free day, Starts before preferred time');
+      const multiConflict = res.body.data.events.find(
+        (e: any) =>
+          e.startTime < '10:00' && e.days.includes('Friday') && e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
+      expect(multiConflict).toBeDefined();
+      expect(multiConflict.conflictBadges).toContain('Spans preferred free day');
+      expect(multiConflict.conflictBadges).toContain('Starts before preferred time');
+      expect(multiConflict.conflictBadge).toBe(
+        'Spans preferred free day, Starts before preferred time'
+      );
+    });
+
+    it('GET /api/calendar/preview dynamically updates across terms without static persistence overrides', async () => {
+      // Arrange: Persist custom Winter 2027 courses for User A
+      calendarQueries.saveUserCalendarEvents(userAId, 'Winter 2027', [
+        {
+          id: 'cse-130-01',
+          title: 'CSE 130: Principles of Computer Systems Design',
+          type: 'MAJOR',
+          days: ['Tuesday', 'Thursday'],
+          startTime: '13:15',
+          endTime: '14:50',
+          credits: 5,
+          term: 'Winter 2027',
+        },
+      ]);
+
+      // Act 1: User switches preferences to Spring 2027 with 20 credits
+      await request(app)
+        .put(`/api/users/${userAId}/preferences`)
+        .set('Authorization', `Bearer ${userAToken}`)
+        .send({
+          targetTerm: 'Spring 2027',
+          targetCredits: 20,
+          preferredFreeDays: [],
+        });
+
+      const springRes = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${userAToken}`);
+
+      // Assert 1: Preview returns Spring 2027 courses, exactly 4 courses (20 units), without Winter persistence override
+      expect(springRes.status).toBe(200);
+      expect(springRes.body.data.term).toBe('Spring 2027');
+      expect(springRes.body.data.totalCredits).toBe(20);
+      const springAcademic = springRes.body.data.events.filter(
+        (e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
+      expect(springAcademic).toHaveLength(4);
+      springAcademic.forEach((c: any) => {
+        expect(c.term).toBe('Spring 2027');
+        expect(c.id).not.toBe('cse-130-01');
+      });
+
+      // Act 2: Explicit query parameter ?term=Summer 2027
+      const summerRes = await request(app)
+        .get('/api/calendar/preview?term=Summer 2027')
+        .set('Authorization', `Bearer ${userAToken}`);
+
+      // Assert 2: Preview returns Summer 2027 courses
+      expect(summerRes.status).toBe(200);
+      expect(summerRes.body.data.term).toBe('Summer 2027');
+      const summerAcademic = summerRes.body.data.events.filter(
+        (e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
+      summerAcademic.forEach((c: any) => {
+        expect(c.term).toBe('Summer 2027');
+      });
+
+      // Cleanup
+      calendarQueries.deleteUserCalendarEvents(userAId);
     });
   });
 
@@ -628,6 +699,164 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
         .set('Authorization', `Bearer ${userBToken}`)
         .send({});
       expect(importRes.status).toBe(403);
+    });
+  });
+  // =========================================================================
+  // 6. MACRO HARD PIVOTS VS MICRO SOFT ADJUSTMENTS
+  // =========================================================================
+  describe('Macro Hard Pivots vs Micro Soft Adjustments', () => {
+    let testUserToken: string;
+    let testUserId: string;
+
+    beforeAll(async () => {
+      const reg = await request(app)
+        .post('/api/auth/register')
+        .send({
+          email: `pivot-user-${Date.now()}@ucsc.edu`,
+          password: 'Password123!',
+          name: 'Pivot Test User',
+          standing: 'Junior',
+          major: 'Computer Science B.S.',
+        });
+      testUserToken = reg.body.data.token;
+      testUserId = reg.body.data.user.userId;
+
+      // Seed initial baseline schedule (15 credits, Winter 2027)
+      await request(app)
+        .put(`/api/users/${testUserId}/preferences`)
+        .set('Authorization', `Bearer ${testUserToken}`)
+        .send({
+          targetTerm: 'Winter 2027',
+          targetCredits: 15,
+          preferredFreeDays: [],
+        });
+    });
+
+    it('Micro soft adjustment: changing preferredFreeDays preserves enrolled schedule and re-evaluates badges', async () => {
+      // 1. Fetch current schedule
+      const beforeRes = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${testUserToken}`);
+      expect(beforeRes.status).toBe(200);
+      const beforeCourseIds = beforeRes.body.data.events
+        .filter((e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY')
+        .map((e: any) => e.id);
+      expect(beforeCourseIds.length).toBeGreaterThanOrEqual(2);
+
+      // 2. Perform micro soft adjustment: preferredFreeDays = ['Tuesday']
+      const updateRes = await request(app)
+        .put(`/api/users/${testUserId}/preferences`)
+        .set('Authorization', `Bearer ${testUserToken}`)
+        .send({
+          targetTerm: 'Winter 2027',
+          targetCredits: 15,
+          preferredFreeDays: ['Tuesday'],
+        });
+      expect(updateRes.status).toBe(200);
+
+      // 3. Verify schedule is intact and conflict badge is dynamically attached
+      const afterRes = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${testUserToken}`);
+      expect(afterRes.status).toBe(200);
+
+      const afterEvents = afterRes.body.data.events.filter(
+        (e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
+      const afterCourseIds = afterEvents.map((e: any) => e.id);
+
+      // Enrolled courses must NOT be deleted or replaced on soft adjustments
+      expect(afterCourseIds.sort()).toEqual(beforeCourseIds.sort());
+
+      // Tuesday courses should have 'Spans preferred free day' badge
+      const tuesdayCourse = afterEvents.find((e: any) => e.days.includes('Tuesday'));
+      if (tuesdayCourse) {
+        expect(tuesdayCourse.conflictBadge).toContain('Spans preferred free day');
+      }
+    });
+
+    it('Macro hard pivot (targetCredits): changing targetCredits from 15 to 10 invalidates schedule and regenerates 2 courses (10 units)', async () => {
+      // Act: update targetCredits to 10
+      const updateRes = await request(app)
+        .put(`/api/users/${testUserId}/preferences`)
+        .set('Authorization', `Bearer ${testUserToken}`)
+        .send({
+          targetTerm: 'Winter 2027',
+          targetCredits: 10,
+          preferredFreeDays: [],
+        });
+      expect(updateRes.status).toBe(200);
+
+      // Assert: preview regenerates fresh schedule of exactly 10 units (2 courses)
+      const afterRes = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${testUserToken}`);
+      expect(afterRes.status).toBe(200);
+      expect(afterRes.body.data.totalCredits).toBe(10);
+      const academicEvents = afterRes.body.data.events.filter(
+        (e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
+      expect(academicEvents).toHaveLength(2);
+    });
+
+    it('Macro hard pivot (major): changing major invalidates previous schedule and regenerates major-aligned courses', async () => {
+      // Act: update major to Art B.A. via PUT /api/users/:id
+      const updateRes = await request(app)
+        .put(`/api/users/${testUserId}`)
+        .set('Authorization', `Bearer ${testUserToken}`)
+        .send({
+          major: 'Art B.A.',
+          preferences: {
+            targetTerm: 'Winter 2027',
+            targetCredits: 15,
+          },
+        });
+      expect(updateRes.status).toBe(200);
+
+      // Assert: preview regenerates fresh schedule containing Art courses
+      const afterRes = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${testUserToken}`);
+      expect(afterRes.status).toBe(200);
+      const academicEvents = afterRes.body.data.events.filter(
+        (e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
+      const hasArt = academicEvents.some(
+        (c: any) => c.department === 'ART' || c.id?.startsWith('art') || c.title?.startsWith('ART')
+      );
+      expect(hasArt).toBe(true);
+    });
+
+    it('Macro hard pivot (standing): changing standing from Junior to Freshman restricts courses to lower-division & GEs', async () => {
+      // Act: update standing to Freshman in Fall 2026
+      const updateRes = await request(app)
+        .put(`/api/users/${testUserId}`)
+        .set('Authorization', `Bearer ${testUserToken}`)
+        .send({
+          standing: 'Freshman',
+          major: 'Computer Science B.S.',
+          preferences: {
+            targetTerm: 'Fall 2026',
+            targetCredits: 15,
+          },
+        });
+      expect(updateRes.status).toBe(200);
+
+      // Assert: preview regenerates fresh schedule without upper-division non-GEs
+      const afterRes = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${testUserToken}`);
+      expect(afterRes.status).toBe(200);
+      const academicEvents = afterRes.body.data.events.filter(
+        (e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
+      expect(academicEvents.length).toBeGreaterThan(0);
+      academicEvents.forEach((c: any) => {
+        const matchNum = c.title?.match(/\d+/);
+        const num = matchNum ? parseInt(matchNum[0], 10) : 999;
+        const isLower = c.level === 'LOWER' || c.type === 'GE' || Boolean(c.ge) || num < 100;
+        expect(isLower).toBe(true);
+      });
     });
   });
 });

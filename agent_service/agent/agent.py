@@ -11,7 +11,8 @@ def run_agent(
     student: Dict[str, Any],
     preferences: Dict[str, Any],
     schedule: List[Dict[str, Any]],
-    history: List[Dict[str, Any]]
+    history: List[Dict[str, Any]],
+    use_mock_override: Any = None
 ) -> Dict[str, Any]:
     """
     Main entrypoint for the LangChain agent.
@@ -19,8 +20,15 @@ def run_agent(
     Otherwise, gracefully delegates to the internal mock agent for offline execution.
     """
     api_key = os.environ.get('GEMINI_API_KEY') or os.environ.get('GOOGLE_API_KEY')
+    use_mock = use_mock_override if use_mock_override is not None else (
+        (os.environ.get('USE_MOCK_AGENT', 'false').lower() in ('true', '1', 't') or os.environ.get('AGENT_MODE', '').lower() == 'mock')
+    )
 
-    # If no API key configured, use deterministic mock agent
+    # If mock explicitly enabled (e.g. during automated test execution), use deterministic mock agent
+    if use_mock:
+        return run_mock_agent(prompt, student, preferences, schedule, history)
+
+    # If no API key configured, gracefully delegate to internal mock agent
     if not api_key:
         return run_mock_agent(prompt, student, preferences, schedule, history)
 
@@ -31,8 +39,9 @@ def run_agent(
         set_tool_context(student, preferences, schedule)
         tools = get_inspection_tools()
 
+        model_name = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')
         llm = ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash",
+            model=model_name,
             google_api_key=api_key,
             temperature=0.4,
         )
@@ -80,6 +89,10 @@ def run_agent(
             content_text = final_response.content
         else:
             content_text = ai_msg.content
+
+        if isinstance(content_text, list):
+            text_parts = [(p.get('text', '') if isinstance(p, dict) else str(p)) for p in content_text]
+            content_text = '\n'.join(text_parts)
 
         # Extract proposed courses matching CalendarEvent schema
         proposed_courses: List[Dict[str, Any]] = []
@@ -136,7 +149,7 @@ def run_agent(
             'response': str(content_text),
             'proposedCourses': proposed_courses,
             'toolCalls': tool_calls_executed,
-            'model': 'gemini-1.5-flash',
+            'model': model_name,
         }
 
     except Exception as e:

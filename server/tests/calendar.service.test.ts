@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   CalendarService,
   coursesOverlap,
@@ -1159,6 +1159,816 @@ describe('CalendarService Domain Service Test Suite', () => {
       calendarQueries.deleteUserCalendarEvents(testUserId);
       const afterFullDelete = calendarQueries.getUserCalendarEvents(testUserId);
       expect(afterFullDelete).toHaveLength(0);
+    });
+
+    it('generates conflict-free 15-credit preview for Fall 2026', () => {
+      const preview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Fall 2026',
+        targetCredits: 15,
+      });
+
+      expect(preview.term).toBe('Fall 2026');
+      expect(preview.totalCredits).toBe(15);
+      const academicEvents = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academicEvents).toHaveLength(3);
+      for (const event of academicEvents) {
+        expect(event.term).toBe('Fall 2026');
+      }
+    });
+
+    it('generates conflict-free 15-credit preview for Winter 2027', () => {
+      const preview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        targetCredits: 15,
+      });
+
+      expect(preview.term).toBe('Winter 2027');
+      expect(preview.totalCredits).toBe(15);
+      const academicEvents = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academicEvents).toHaveLength(3);
+      for (const event of academicEvents) {
+        expect(event.term).toBe('Winter 2027');
+      }
+    });
+
+    it('generates conflict-free 15-credit preview for Spring 2027', () => {
+      const preview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Spring 2027',
+        targetCredits: 15,
+      });
+
+      expect(preview.term).toBe('Spring 2027');
+      expect(preview.totalCredits).toBe(15);
+      const academicEvents = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academicEvents).toHaveLength(3);
+      for (const event of academicEvents) {
+        expect(event.term).toBe('Spring 2027');
+      }
+    });
+
+    it('generates conflict-free 15-credit preview for Summer 2027', () => {
+      const preview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Summer 2027',
+        targetCredits: 15,
+      });
+
+      expect(preview.term).toBe('Summer 2027');
+      expect(preview.totalCredits).toBe(15);
+      const academicEvents = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academicEvents).toHaveLength(3);
+      for (const event of academicEvents) {
+        expect(event.term).toBe('Summer 2027');
+      }
+    });
+  });
+
+  describe('Greedy Oracle Preference & Section Deduplication Engine (Tickets 01-05 Spec)', () => {
+    it('strictly guarantees that each course on the preview has only ONE section present (no duplicate CSE 101)', () => {
+      // Arrange: Winter 2027 contains both cse-101-01 (MWF 09:00) and cse-101-02 (TuTh 10:00)
+      // Act: Generate 15-credit preview
+      const preview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        targetCredits: 15,
+        standing: 'Junior',
+        major: 'Computer Science B.S.',
+      });
+
+      // Assert
+      const academicEvents = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academicEvents).toHaveLength(3);
+
+      const cse101Sections = academicEvents.filter((e) =>
+        (e.code || e.title).toUpperCase().includes('CSE 101')
+      );
+      expect(cse101Sections).toHaveLength(1);
+    });
+
+    it('enforces preferred free days as a hard constraint for unpinned courses', () => {
+      // Arrange: Friday is a preferred free day; CSE 101-01 and CSE 115A-01 meet on Friday
+      // Act
+      const preview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        preferredFreeDays: ['Friday'],
+        targetCredits: 15,
+        standing: 'Junior',
+        major: 'Computer Science B.S.',
+      });
+
+      // Assert: No unpinned academic event meets on Friday
+      const academicEvents = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academicEvents.length).toBeGreaterThan(0);
+      academicEvents.forEach((course) => {
+        expect(course.days).not.toContain('Friday');
+      });
+    });
+
+    it('allows explicitly pinned courses to bypass hard free day exclusions with badge', () => {
+      // Arrange: Pin CSE 101-01 (meets on Friday) while Friday is a preferred free day
+      const pinnedPool: CalendarEvent[] = [
+        {
+          id: 'cse-101-01',
+          code: 'CSE 101',
+          title: 'CSE 101: Introduction to Data Structures and Algorithms',
+          days: ['Monday', 'Wednesday', 'Friday'],
+          startTime: '09:00',
+          endTime: '10:15',
+          pinned: true,
+          credits: 5,
+          term: 'Winter 2027',
+        },
+        {
+          id: 'cse-130-01',
+          code: 'CSE 130',
+          title: 'CSE 130: Principles of Computer Systems Design',
+          days: ['Tuesday', 'Thursday'],
+          startTime: '13:15',
+          endTime: '14:50',
+          credits: 5,
+          term: 'Winter 2027',
+        },
+      ];
+
+      // Act
+      const preview = CalendarService.getPreview(
+        undefined,
+        {
+          targetTerm: 'Winter 2027',
+          preferredFreeDays: ['Friday'],
+          targetCredits: 10,
+        },
+        pinnedPool
+      );
+
+      // Assert: Pinned course is scheduled and badged
+      const pinnedCourse = preview.events.find((e) => e.id === 'cse-101-01');
+      expect(pinnedCourse).toBeDefined();
+      expect(pinnedCourse?.pinned).toBe(true);
+      expect(pinnedCourse?.conflictBadges).toContain('Spans preferred free day');
+    });
+
+    it('filters courses by class standing: Freshmen receive lower division (< 100), not upper division', () => {
+      // Act: Freshman requesting 10 units in Winter 2027
+      const freshmanPreview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        standing: 'Freshman',
+        targetCredits: 10,
+        major: 'Computer Science B.S.',
+      });
+
+      // Assert: Only lower division (< 100) or GE courses are returned (CSE 12, ART 10F)
+      const academic = freshmanPreview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+      academic.forEach((course) => {
+        const numMatch = (course.code || course.title).match(/\d+/);
+        if (numMatch && course.type !== 'GE') {
+          expect(parseInt(numMatch[0], 10)).toBeLessThan(100);
+        }
+      });
+      // CSE 101, CSE 115A, CSE 130 must NOT be scheduled for freshmen
+      const upperDiv = academic.filter(
+        (c) => (c.code || c.title).includes('101') || (c.code || c.title).includes('115A')
+      );
+      expect(upperDiv).toHaveLength(0);
+    });
+
+    it('prioritizes declared major department courses before electives/GEs', () => {
+      // Act: Junior CS major vs Art major
+      const csPreview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        standing: 'Junior',
+        major: 'Computer Science B.S.',
+        targetCredits: 10,
+      });
+
+      const csAcademic = csPreview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(csAcademic).toHaveLength(2);
+      // CS major should have CS courses scheduled
+      csAcademic.forEach((c) => {
+        expect((c.department || c.code || c.title).toUpperCase()).toContain('CSE');
+      });
+    });
+
+    it('filters courses by class standing: Juniors and Seniors receive upper division (>= 100) and capstones', () => {
+      // Act: Junior requesting 15 units in Winter 2027
+      const juniorPreview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        standing: 'Junior',
+        targetCredits: 15,
+        major: 'Computer Science B.S.',
+      });
+
+      // Assert: Exactly 3 courses, all upper division (CSE 101, CSE 115A, CSE 130), lower division CSE 12 is excluded
+      const academic = juniorPreview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(3);
+      academic.forEach((course) => {
+        const numMatch =
+          (course.code || course.title).match(/(?:[A-Z]{2,5})\s*(\d+)/i) ||
+          (course.code || course.title).match(/\d+/);
+        if (numMatch && course.type !== 'GE') {
+          expect(parseInt(numMatch[1] ?? numMatch[0], 10)).toBeGreaterThanOrEqual(100);
+        }
+      });
+      const cse12 = academic.find((c) => (c.code || c.title).includes('CSE 12'));
+      expect(cse12).toBeUndefined();
+    });
+
+    it('prioritizes Art department courses for Art majors over other department offerings', () => {
+      // Act: Art major requesting 10 credits in Spring 2027 (which has ART 80T, STAT 131, CSE 102, CSE 30)
+      const artPreview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Spring 2027',
+        standing: 'Junior',
+        major: 'Art B.A.',
+        targetCredits: 10,
+      });
+
+      const academic = artPreview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+
+      // First course must be the matching Art major department course
+      const artCourse = academic.find((c) =>
+        (c.department || c.code || c.title).toUpperCase().includes('ART')
+      );
+      expect(artCourse).toBeDefined();
+      expect(artCourse?.code || artCourse?.title).toContain('ART 80T');
+
+      // Second course should be GE (STAT 131 with GE: SR) filling the elective slot rather than non-GE CSE courses
+      const geCourse = academic.find((c) => c.type === 'GE' || Boolean(c.ge));
+      expect(geCourse).toBeDefined();
+    });
+
+    it('prioritizes Economics department courses for Economics majors in Fall 2026', () => {
+      // Act: Economics major requesting 10 credits in Fall 2026 (which has ECON 1, MATH 23A, ART 10F, CSE 101)
+      const econPreview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Fall 2026',
+        standing: 'Freshman',
+        major: 'Economics B.A.',
+        targetCredits: 10,
+      });
+
+      const academic = econPreview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+
+      // Economics course must be scheduled
+      const econCourse = academic.find((c) =>
+        (c.department || c.code || c.title).toUpperCase().includes('ECON')
+      );
+      expect(econCourse).toBeDefined();
+      expect(econCourse?.code || econCourse?.title).toContain('ECON 1');
+    });
+
+    it('schedules out-of-window courses with badges when credit target requires them', () => {
+      // Arrange: Preferred window is 09:00 - 12:00. CSE 130 is 13:15-14:50 (outside).
+      // Act: Request 15 credits (3 courses) in Winter 2027 with Junior CS major
+      const preview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        earliestStartTime: '09:00',
+        latestEndTime: '12:00',
+        targetCredits: 15,
+        standing: 'Junior',
+        major: 'Computer Science B.S.',
+      });
+
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(3);
+
+      const cse130 = academic.find((c) => (c.code || c.title).includes('130'));
+      expect(cse130).toBeDefined();
+      expect(cse130?.conflictBadges).toContain('Ends after preferred time');
+      expect(cse130?.conflictBadge).toContain('Ends after preferred time');
+    });
+
+    it('attaches "Starts before preferred time" badge when scheduled course begins prior to earliestStartTime', () => {
+      // Arrange: Earliest start time is 09:30, but CSE 115A starts at 09:00
+      const preview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        earliestStartTime: '09:30',
+        targetCredits: 15,
+        standing: 'Junior',
+        major: 'Computer Science B.S.',
+      });
+
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      const earlyCourse = academic.find((c) => c.startTime < '09:30');
+      expect(earlyCourse).toBeDefined();
+      expect(earlyCourse?.conflictBadges).toContain('Starts before preferred time');
+    });
+
+    it('prefers spaced non-consecutive courses over clusters that would exceed maxBackToBackHours', () => {
+      // Arrange: Two candidate pools, one spaced and one tightly clustered
+      const pool: CalendarEvent[] = [
+        {
+          id: 'anchor',
+          code: 'CSE 101',
+          title: 'CSE 101',
+          days: ['Tuesday'],
+          startTime: '09:00',
+          endTime: '11:00',
+          credits: 5,
+          pinned: true,
+        },
+        {
+          id: 'back-to-back-candidate',
+          code: 'CSE 115A',
+          title: 'CSE 115A',
+          days: ['Tuesday'],
+          startTime: '11:15', // Only 15 min gap, creating 09:00 - 13:15 cluster (4.25 hrs)
+          endTime: '13:15',
+          credits: 5,
+        },
+        {
+          id: 'spaced-candidate',
+          code: 'CSE 130',
+          title: 'CSE 130',
+          days: ['Tuesday'],
+          startTime: '14:30', // Spaced out
+          endTime: '16:30',
+          credits: 5,
+        },
+      ];
+
+      // Act: Request 10 credits (2 courses) with maxBackToBackHours = 3
+      const preview = CalendarService.getPreview(
+        undefined,
+        {
+          targetCredits: 10,
+          maxBackToBackHours: 3,
+        },
+        pool
+      );
+
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+
+      const ids = academic.map((c) => c.id);
+      expect(ids).toContain('anchor');
+      expect(ids).toContain('spaced-candidate');
+      expect(ids).not.toContain('back-to-back-candidate');
+    });
+
+    it('soft time constraint prefers courses within the preferred time window over out-of-window courses', () => {
+      // Arrange: Preferred window is 09:00 - 12:00. CSE 130 is 13:15-14:50 (outside).
+      // Act
+      const preview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        earliestStartTime: '09:00',
+        latestEndTime: '12:00',
+        targetCredits: 10,
+        standing: 'Junior',
+        major: 'Computer Science B.S.',
+      });
+
+      // Assert: In-window morning courses (09:00 - 11:45) are scheduled before afternoon CSE 130
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+      const cse130 = academic.find((c) => (c.code || c.title).includes('130'));
+      expect(cse130).toBeUndefined();
+    });
+
+    it('accurately scales candidate course count according to target credit quotas (10, 15, 20 units)', () => {
+      // Act 1: 10 credits -> 2 courses
+      const p10 = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        targetCredits: 10,
+      });
+      const academic10 = p10.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic10).toHaveLength(2);
+      expect(p10.totalCredits).toBe(10);
+
+      // Act 2: 15 credits -> 3 courses
+      const p15 = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        targetCredits: 15,
+      });
+      const academic15 = p15.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic15).toHaveLength(3);
+      expect(p15.totalCredits).toBe(15);
+
+      // Act 3: 20 credits -> 4 courses
+      const p20 = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        targetCredits: 20,
+      });
+      const academic20 = p20.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic20).toHaveLength(4);
+      expect(p20.totalCredits).toBe(20);
+    });
+
+    it('identifies and badges consecutive class hours exceeding maxBackToBackHours', () => {
+      // Arrange: Two adjacent courses on MWF that together exceed 2 hours back-to-back
+      const b2bPool: CalendarEvent[] = [
+        {
+          id: 'course-1',
+          code: 'CSE 101',
+          title: 'CSE 101',
+          days: ['Monday', 'Wednesday', 'Friday'],
+          startTime: '09:00',
+          endTime: '10:30',
+          credits: 5,
+          pinned: true,
+          term: 'Winter 2027',
+        },
+        {
+          id: 'course-2',
+          code: 'CSE 115A',
+          title: 'CSE 115A',
+          days: ['Monday', 'Wednesday', 'Friday'],
+          startTime: '10:45',
+          endTime: '12:45',
+          credits: 5,
+          pinned: true,
+          term: 'Winter 2027',
+        },
+      ];
+
+      // Act: Max back-to-back set to 2 hours
+      const preview = CalendarService.getPreview(
+        undefined,
+        {
+          targetTerm: 'Winter 2027',
+          maxBackToBackHours: 2,
+          targetCredits: 10,
+        },
+        b2bPool
+      );
+
+      // Assert: Both courses in the cluster get the badge
+      const course1 = preview.events.find((e) => e.id === 'course-1');
+      const course2 = preview.events.find((e) => e.id === 'course-2');
+      expect(course1?.conflictBadges).toContain('Exceeds max back-to-back hours');
+      expect(course2?.conflictBadges).toContain('Exceeds max back-to-back hours');
+    });
+
+    it('strictly rejects duplicate section candidates when passing both cse-101-01 and cse-101-02 in eventsPool', () => {
+      // Arrange: Candidate pool with two conflicting sections of CSE 101 plus a distinct course CSE 130
+      const duplicatePool: CalendarEvent[] = [
+        {
+          id: 'cse-101-01',
+          code: 'CSE 101',
+          title: 'CSE 101: Introduction to Data Structures and Algorithms',
+          days: ['Monday', 'Wednesday', 'Friday'],
+          startTime: '09:00',
+          endTime: '10:15',
+          credits: 5,
+          color: '#00B4DB',
+        },
+        {
+          id: 'cse-101-02',
+          code: 'CSE 101',
+          title: 'CSE 101: Introduction to Data Structures and Algorithms',
+          days: ['Tuesday', 'Thursday'],
+          startTime: '10:00',
+          endTime: '11:35',
+          credits: 5,
+          color: '#00B4DB',
+        },
+        {
+          id: 'cse-130-01',
+          code: 'CSE 130',
+          title: 'CSE 130: Principles of Computer Systems Design',
+          days: ['Tuesday', 'Thursday'],
+          startTime: '13:15',
+          endTime: '14:50',
+          credits: 5,
+          color: '#00B4DB',
+        },
+      ];
+
+      // Act: Request 10 credits (2 courses) from a 3-course pool where 2 candidates are CSE 101
+      const preview = CalendarService.getPreview(
+        undefined,
+        {
+          targetCredits: 10,
+        },
+        duplicatePool
+      );
+
+      // Assert: Exactly ONE section of CSE 101 is scheduled, and total course count is 2
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+      expect(preview.totalCredits).toBe(10);
+
+      const cse101Sections = academic.filter((c) =>
+        (c.code || c.title).toUpperCase().includes('CSE 101')
+      );
+      expect(cse101Sections).toHaveLength(1);
+
+      const cse130Sections = academic.filter((c) =>
+        (c.code || c.title).toUpperCase().includes('CSE 130')
+      );
+      expect(cse130Sections).toHaveLength(1);
+    });
+
+    it('strictly excludes unpinned Friday courses when Friday is specified in preferredFreeDays', () => {
+      // Arrange: Pool with Friday courses (cse-101-01, cse-115a-01) and non-Friday courses (cse-101-02, cse-130-01, art-10f-01)
+      const freeDayPool: CalendarEvent[] = [
+        {
+          id: 'cse-101-01',
+          code: 'CSE 101',
+          title: 'CSE 101: Data Structures (MWF)',
+          days: ['Monday', 'Wednesday', 'Friday'],
+          startTime: '09:00',
+          endTime: '10:15',
+          credits: 5,
+        },
+        {
+          id: 'cse-101-02',
+          code: 'CSE 101',
+          title: 'CSE 101: Data Structures (TuTh)',
+          days: ['Tuesday', 'Thursday'],
+          startTime: '10:00',
+          endTime: '11:35',
+          credits: 5,
+        },
+        {
+          id: 'cse-115a-01',
+          code: 'CSE 115A',
+          title: 'CSE 115A: Software Engineering (MWF)',
+          days: ['Monday', 'Wednesday', 'Friday'],
+          startTime: '10:30',
+          endTime: '11:45',
+          credits: 5,
+        },
+        {
+          id: 'cse-130-01',
+          code: 'CSE 130',
+          title: 'CSE 130: Computer Systems Design (TuTh)',
+          days: ['Tuesday', 'Thursday'],
+          startTime: '13:15',
+          endTime: '14:50',
+          credits: 5,
+        },
+        {
+          id: 'art-10f-01',
+          code: 'ART 10F',
+          title: 'ART 10F: 2D Design (MW)',
+          days: ['Monday', 'Wednesday'],
+          startTime: '15:20',
+          endTime: '16:55',
+          credits: 5,
+        },
+      ];
+
+      // Act: Request 15 credits (3 courses) with Friday as preferred free day
+      const preview = CalendarService.getPreview(
+        undefined,
+        {
+          targetCredits: 15,
+          preferredFreeDays: ['Friday'],
+        },
+        freeDayPool
+      );
+
+      // Assert: Exactly 3 non-Friday courses scheduled, and 0 courses meet on Friday
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(3);
+      academic.forEach((course) => {
+        expect(course.days).not.toContain('Friday');
+      });
+
+      // Verify that non-Friday section cse-101-02 was scheduled rather than Friday section cse-101-01
+      expect(academic.some((c) => c.id === 'cse-101-02')).toBe(true);
+      expect(academic.some((c) => c.id === 'cse-101-01')).toBe(false);
+      expect(academic.some((c) => c.id === 'cse-115a-01')).toBe(false);
+    });
+
+    describe('Ticket 04: Credit Quotas, Candidate Scaling & Dynamic Term Switching', () => {
+      it('scales candidate selection to 2 courses (10 units) when targetCredits is 10', () => {
+        const p10 = CalendarService.getPreview(undefined, {
+          targetTerm: 'Winter 2027',
+          targetCredits: 10,
+        });
+        const academic10 = p10.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+        expect(academic10).toHaveLength(2);
+        expect(p10.totalCredits).toBe(10);
+      });
+
+      it('scales candidate selection to 3 courses (15 units) when targetCredits is 12 to 15', () => {
+        const p12 = CalendarService.getPreview(undefined, {
+          targetTerm: 'Winter 2027',
+          targetCredits: 12,
+        });
+        const academic12 = p12.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+        expect(academic12).toHaveLength(3);
+        expect(p12.totalCredits).toBe(15);
+
+        const p15 = CalendarService.getPreview(undefined, {
+          targetTerm: 'Winter 2027',
+          targetCredits: 15,
+        });
+        const academic15 = p15.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+        expect(academic15).toHaveLength(3);
+        expect(p15.totalCredits).toBe(15);
+      });
+
+      it('scales candidate selection to 4 courses (20 units) when targetCredits is 16 to 20', () => {
+        const p16 = CalendarService.getPreview(undefined, {
+          targetTerm: 'Winter 2027',
+          targetCredits: 16,
+        });
+        const academic16 = p16.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+        expect(academic16).toHaveLength(4);
+        expect(p16.totalCredits).toBe(20);
+
+        const p20 = CalendarService.getPreview(undefined, {
+          targetTerm: 'Winter 2027',
+          targetCredits: 20,
+        });
+        const academic20 = p20.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+        expect(academic20).toHaveLength(4);
+        expect(p20.totalCredits).toBe(20);
+      });
+
+      it('continues selecting courses while currentCredits < targetCredits and valid distinct base-code candidates remain', () => {
+        // Arrange: Pool with candidate courses having distinct base codes
+        const candidatePool: CalendarEvent[] = [
+          {
+            id: 'c1',
+            code: 'CSE 101-01',
+            title: 'CSE 101: Data Structures',
+            days: ['Monday', 'Wednesday'],
+            startTime: '09:00',
+            endTime: '10:15',
+            credits: 5,
+            term: 'Winter 2027',
+          },
+          {
+            id: 'c2',
+            code: 'CSE 101-02',
+            title: 'CSE 101: Data Structures Section 2',
+            days: ['Tuesday', 'Thursday'],
+            startTime: '10:00',
+            endTime: '11:15',
+            credits: 5,
+            term: 'Winter 2027',
+          },
+          {
+            id: 'c3',
+            code: 'CSE 115A',
+            title: 'CSE 115A: Software Engineering',
+            days: ['Monday', 'Wednesday'],
+            startTime: '10:30',
+            endTime: '11:45',
+            credits: 5,
+            term: 'Winter 2027',
+          },
+          {
+            id: 'c4',
+            code: 'CSE 130',
+            title: 'CSE 130: Computer Systems Design',
+            days: ['Tuesday', 'Thursday'],
+            startTime: '13:15',
+            endTime: '14:50',
+            credits: 5,
+            term: 'Winter 2027',
+          },
+          {
+            id: 'c5',
+            code: 'ART 10F',
+            title: 'ART 10F: 2D Design',
+            days: ['Monday', 'Wednesday'],
+            startTime: '15:20',
+            endTime: '16:55',
+            credits: 5,
+            term: 'Winter 2027',
+          },
+        ];
+
+        // Act: Target 15 credits (requires 3 distinct courses)
+        const preview = CalendarService.getPreview(
+          undefined,
+          { targetCredits: 15, targetTerm: 'Winter 2027' },
+          candidatePool
+        );
+
+        // Assert: Exactly 3 distinct courses selected, deduplicating CSE 101
+        const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+        expect(academic).toHaveLength(3);
+        expect(preview.totalCredits).toBe(15);
+        const codes = academic.map((c) => (c.code || c.title).split(/[-:]/)[0].trim());
+        const uniqueCodes = new Set(codes);
+        expect(uniqueCodes.size).toBe(3);
+      });
+
+      it('returns authentic quarter-specific courses when targetTerm is Fall 2026', () => {
+        const fall = CalendarService.getPreview(undefined, {
+          targetTerm: 'Fall 2026',
+          targetCredits: 15,
+        });
+        expect(fall.term).toBe('Fall 2026');
+        const fallAcademic = fall.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+        expect(fallAcademic).toHaveLength(3);
+        expect(fallAcademic.map((c) => c.id)).toContain('cse-101-f26');
+        fallAcademic.forEach((c) => expect(c.term).toBe('Fall 2026'));
+      });
+
+      it('returns authentic quarter-specific courses when targetTerm is Winter 2027', () => {
+        const winter = CalendarService.getPreview(undefined, {
+          targetTerm: 'Winter 2027',
+          targetCredits: 15,
+        });
+        expect(winter.term).toBe('Winter 2027');
+        const winterAcademic = winter.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+        expect(winterAcademic).toHaveLength(3);
+        expect(winterAcademic.map((c) => c.id)).toContain('cse-101-01');
+        winterAcademic.forEach((c) => expect(c.term).toBe('Winter 2027'));
+      });
+
+      it('returns authentic quarter-specific courses when targetTerm is Spring 2027', () => {
+        const spring = CalendarService.getPreview(undefined, {
+          targetTerm: 'Spring 2027',
+          targetCredits: 15,
+        });
+        expect(spring.term).toBe('Spring 2027');
+        const springAcademic = spring.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+        expect(springAcademic).toHaveLength(3);
+        expect(springAcademic.map((c) => c.id)).toContain('cse-102-s27');
+        springAcademic.forEach((c) => expect(c.term).toBe('Spring 2027'));
+      });
+
+      it('returns authentic quarter-specific courses when targetTerm is Summer 2027', () => {
+        const summer = CalendarService.getPreview(undefined, {
+          targetTerm: 'Summer 2027',
+          targetCredits: 15,
+        });
+        expect(summer.term).toBe('Summer 2027');
+        const summerAcademic = summer.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+        expect(summerAcademic).toHaveLength(3);
+        expect(summerAcademic.map((c) => c.id)).toContain('cse-101-u27');
+        summerAcademic.forEach((c) => expect(c.term).toBe('Summer 2027'));
+      });
+
+      describe('term isolation and persistence override prevention', () => {
+        let testUserId: string;
+
+        beforeEach(() => {
+          testUserId = 'test-user-term-switch-' + uuidv4();
+          userQueries.createUser({
+            user_id: testUserId,
+            email: `${testUserId}@ucsc.edu`,
+            name: 'Term Switcher',
+            password_hash: 'hash',
+            standing: 'Junior',
+            major: 'Computer Science B.S.',
+            preferences: JSON.stringify({
+              targetTerm: 'Winter 2027',
+              targetCredits: 15,
+            }),
+          });
+
+          calendarQueries.saveUserCalendarEvents(testUserId, 'Winter 2027', [
+            {
+              id: 'cse-130-01',
+              title: 'CSE 130: Principles of Computer Systems Design',
+              type: 'MAJOR',
+              days: ['Tuesday', 'Thursday'],
+              startTime: '13:15',
+              endTime: '14:50',
+              credits: 5,
+              term: 'Winter 2027',
+            },
+          ]);
+        });
+
+        afterEach(() => {
+          calendarQueries.deleteUserCalendarEvents(testUserId);
+        });
+
+        it('returns saved courses when term matches persisted schedule', () => {
+          const winterPreview = CalendarService.getPreview(testUserId);
+          expect(winterPreview.term).toBe('Winter 2027');
+          expect(winterPreview.events.some((e) => e.id === 'cse-130-01')).toBe(true);
+        });
+
+        it('switches to fresh term courses without stale events when student updates targetTerm', () => {
+          userQueries.updateUserProfile(testUserId, {
+            preferences: JSON.stringify({
+              targetTerm: 'Spring 2027',
+              targetCredits: 15,
+            }),
+          });
+
+          const springPreview = CalendarService.getPreview(testUserId);
+          expect(springPreview.term).toBe('Spring 2027');
+          const springAcademic = springPreview.events.filter(
+            (e) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+          );
+          expect(springAcademic.length).toBeGreaterThan(0);
+          springAcademic.forEach((c) => {
+            expect(c.term).toBe('Spring 2027');
+            expect(c.id).not.toBe('cse-130-01');
+          });
+        });
+
+        it('overrides persisted courses when targetTerm query override is provided', () => {
+          const fallPreview = CalendarService.getPreview(testUserId, { targetTerm: 'Fall 2026' });
+          expect(fallPreview.term).toBe('Fall 2026');
+          const fallAcademic = fallPreview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+          fallAcademic.forEach((c) => {
+            expect(c.term).toBe('Fall 2026');
+            expect(c.id).not.toBe('cse-130-01');
+          });
+        });
+      });
     });
   });
 });

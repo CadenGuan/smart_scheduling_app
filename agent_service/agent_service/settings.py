@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from agent_service/.env or server/.env
-load_dotenv(BASE_DIR / '.env')
+load_dotenv(BASE_DIR / '.env', override=True)
 load_dotenv(BASE_DIR.parent / 'server' / '.env')
 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'ucsc-slug-agent-secret-key-2026')

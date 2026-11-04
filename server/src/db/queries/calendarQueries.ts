@@ -1,4 +1,4 @@
-import { CalendarEvent, CourseType } from 'shared';
+import { CalendarEvent, CourseType, getCourseTypeColor } from 'shared';
 import { db } from '../database.js';
 
 export interface UserCalendarEventRow {
@@ -16,19 +16,6 @@ export interface UserCalendarEventRow {
   conflict_badges: string;
   created_at?: string;
 }
-
-const getColorForType = (type: string): string => {
-  switch (type) {
-    case 'GE':
-      return '#FF6B6B';
-    case 'ELECTIVE':
-      return '#9B51E0';
-    case 'GOOGLE_CALENDAR_BUSY':
-      return '#A0AEC0';
-    default:
-      return '#00B4DB';
-  }
-};
 
 export const calendarQueries = {
   saveUserCalendarEvents: (
@@ -137,7 +124,7 @@ export const calendarQueries = {
         days,
         startTime: row.start_time,
         endTime: row.end_time,
-        color: getColorForType(row.type),
+        color: getCourseTypeColor(row.type),
         credits: row.credits ?? 5,
         term: row.term,
         pinned: Boolean(row.pinned),

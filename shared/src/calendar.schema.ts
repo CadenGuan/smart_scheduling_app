@@ -4,6 +4,22 @@ import { DayEnum } from './onboarding.schema.js';
 export const CourseTypeEnum = z.enum(['MAJOR', 'GE', 'ELECTIVE', 'GOOGLE_CALENDAR_BUSY']);
 export type CourseType = z.infer<typeof CourseTypeEnum>;
 
+export function getCourseTypeColor(type: string): string {
+  switch (type) {
+    case 'GE':
+      return '#FF6B6B';
+    case 'ELECTIVE':
+      return '#9B51E0';
+    case 'GOOGLE_CALENDAR_BUSY':
+      return '#A0AEC0';
+    default:
+      return '#00B4DB';
+  }
+}
+
+export const CourseLevelEnum = z.enum(['LOWER', 'UPPER', 'CAPSTONE']);
+export type CourseLevel = z.infer<typeof CourseLevelEnum>;
+
 export const ConflictBadgeSchema = z.enum([
   'Spans preferred free day',
   'Starts before preferred time',
@@ -15,7 +31,10 @@ export type ConflictBadgeType = z.infer<typeof ConflictBadgeSchema>;
 
 export const CalendarEventSchema = z.object({
   id: z.string(),
+  code: z.string().optional(),
   title: z.string(),
+  department: z.string().optional(),
+  level: CourseLevelEnum.optional(),
   type: CourseTypeEnum,
   instructor: z.string().optional(),
   location: z.string().optional(),
@@ -25,11 +44,35 @@ export const CalendarEventSchema = z.object({
   color: z.string(),
   credits: z.number().optional(),
   term: z.string().optional(),
+  ge: z.array(z.string()).nullable().optional(),
+  description: z.string().optional(),
   conflictBadge: z.string().optional(),
   conflictBadges: z.array(ConflictBadgeSchema).optional(),
   pinned: z.boolean().optional(),
 });
 export type CalendarEvent = z.infer<typeof CalendarEventSchema>;
+
+export const CourseSchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  title: z.string(),
+  department: z.string(),
+  level: CourseLevelEnum,
+  type: CourseTypeEnum.optional().default('MAJOR'),
+  instructor: z.string().optional(),
+  location: z.string().optional(),
+  days: z.array(DayEnum),
+  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
+  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
+  color: z.string().optional().default('#00B4DB'),
+  credits: z.number().default(5),
+  term: z.string(),
+  ge: z.array(z.string()).nullable().optional(),
+  description: z.string().optional(),
+});
+export type Course = z.infer<typeof CourseSchema>;
+export const CourseCatalogItemSchema = CourseSchema;
+export type CourseCatalogItem = Course;
 
 export const CalendarPreviewResponseSchema = z.object({
   success: z.boolean(),
@@ -48,7 +91,7 @@ export const CurriculumNodeSchema = z.object({
   code: z.string(),
   title: z.string(),
   credits: z.number(),
-  level: z.enum(['LOWER', 'UPPER', 'CAPSTONE']),
+  level: CourseLevelEnum,
   status: CurriculumNodeStatusEnum,
   prerequisites: z.array(z.string()),
   unmetPrerequisites: z.array(z.string()),
@@ -69,3 +112,26 @@ export const CurriculumDagResponseSchema = z.object({
   }),
 });
 export type CurriculumDagResponse = z.infer<typeof CurriculumDagResponseSchema>;
+
+export const SaveCalendarEventsRequestSchema = z.object({
+  term: z.string().optional().default('Winter 2027'),
+  events: z.array(CalendarEventSchema),
+});
+export type SaveCalendarEventsRequest = z.infer<typeof SaveCalendarEventsRequestSchema>;
+
+export const SaveCalendarEventsResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.object({
+    message: z.string(),
+    count: z.number(),
+  }),
+});
+export type SaveCalendarEventsResponse = z.infer<typeof SaveCalendarEventsResponseSchema>;
+
+export const ClearCalendarEventsResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.object({
+    message: z.string(),
+  }),
+});
+export type ClearCalendarEventsResponse = z.infer<typeof ClearCalendarEventsResponseSchema>;

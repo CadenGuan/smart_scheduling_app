@@ -26,13 +26,20 @@ def process_agent_query(request: HttpRequest) -> JsonResponse:
     schedule = data.get('currentSchedule', [])
     history = data.get('history', [])
 
+    use_mock = data.get('useMock')
+    if use_mock is None:
+        header_val = request.headers.get('X-Mock-Agent') or request.META.get('HTTP_X_MOCK_AGENT')
+        if header_val:
+            use_mock = str(header_val).lower() in ('true', '1', 't')
+
     try:
         result = run_agent(
             prompt=prompt,
             student=student,
             preferences=preferences,
             schedule=schedule,
-            history=history
+            history=history,
+            use_mock_override=use_mock
         )
         if not isinstance(result, dict):
             result = {'response': str(result), 'proposedCourses': [], 'toolCalls': []}

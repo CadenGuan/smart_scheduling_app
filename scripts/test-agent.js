@@ -15,6 +15,7 @@ const env = {
   ...process.env,
   PYTHONPATH: agentServiceDir,
   DJANGO_SETTINGS_MODULE: 'agent_service.settings',
+  USE_MOCK_AGENT: 'true',
 };
 
 const child = spawn(pytestBin, [testsDir], { stdio: 'inherit', env });

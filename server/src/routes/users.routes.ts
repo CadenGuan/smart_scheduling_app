@@ -1,5 +1,6 @@
 import { Router, Response } from 'express';
 import { userQueries, UserRow } from '../db/queries/userQueries.js';
+import { CalendarService } from '../services/calendar.service.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validate.middleware.js';
@@ -89,8 +90,10 @@ router.put(
     if (!user) return;
 
     const userId = req.params.id;
+    const newPrefs = req.body;
+    CalendarService.handleMacroHardPivot(userId, user, undefined, undefined, newPrefs);
     userQueries.updateUserProfile(userId, {
-      preferences: JSON.stringify(req.body),
+      preferences: JSON.stringify(newPrefs),
     });
 
     const updatedUser = userQueries.findUserById(userId);
@@ -116,6 +119,8 @@ router.put(
 
     const validatedPreferences =
       preferences !== undefined ? JSON.stringify(preferences) : undefined;
+
+    CalendarService.handleMacroHardPivot(userId, user, major, standing, preferences);
 
     userQueries.updateUserProfile(userId, {
       name,

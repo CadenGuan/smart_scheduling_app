@@ -10,7 +10,9 @@
     "client"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace=server\" \"npm run dev --workspace=client\" \"npm run dev:agent\"",
+    "dev": "node scripts/start-dev.mjs",
+    "dev:all": "concurrently \"npm run dev --workspace=server\" \"npm run dev --workspace=client\" \"npm run dev:agent\"",
+    "dev:mock": "node scripts/run-mock.mjs",
     "dev:agent": "node scripts/run-agent.js",
     "setup:agent": "node -e \"const { execSync } = require('child_process'); const cmd = process.platform === 'win32' ? 'py -3.11 -m venv agent_service/.venv && .\\\\agent_service\\\\.venv\\\\Scripts\\\\pip.exe install -r agent_service/requirements.txt' : 'python3.11 -m venv agent_service/.venv && agent_service/.venv/bin/pip install -r agent_service/requirements.txt'; execSync(cmd, { stdio: 'inherit' });\"",
     "db:reset": "rm -f data/app.db*",

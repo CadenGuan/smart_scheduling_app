@@ -300,8 +300,10 @@ describe('100% Comprehensive Coverage Verification Test Suite', () => {
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(res.status).toBe(200);
-      const math21 = res.body.data.events.find((e: any) => e.id === 'math-21-lec');
-      expect(math21.conflictBadge).toBe('Ends after preferred time');
+      const lateCourse = res.body.data.events.find(
+        (e: any) => e.id === 'cse-130-01' || e.id === 'math-21-lec'
+      );
+      expect(lateCourse.conflictBadge).toBe('Ends after preferred time');
     });
   });
 

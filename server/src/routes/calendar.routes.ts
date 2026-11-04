@@ -1,5 +1,7 @@
 import { Router, Response } from 'express';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.middleware.js';
+import { validateBody } from '../middleware/validate.middleware.js';
+import { SaveCalendarEventsRequestSchema } from 'shared';
 import { CalendarService } from '../services/calendar.service.js';
 import { IcsService } from '../services/ics.service.js';
 import { DeadlinesService } from '../services/deadlines.service.js';
@@ -10,14 +12,11 @@ const router = Router();
 // GET /api/calendar/preview
 router.get('/preview', requireAuth, (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user?.userId;
-  const persistedEvents = userId ? calendarQueries.getUserCalendarEvents(userId) : [];
-
-  let preview;
-  if (persistedEvents.length > 0) {
-    preview = CalendarService.getPreview(userId, undefined, persistedEvents);
-  } else {
-    preview = CalendarService.getPreview(userId);
-  }
+  const term = req.query.term as string | undefined;
+  const preview = CalendarService.getPreview(
+    userId,
+    term ? { targetTerm: term as any } : undefined
+  );
 
   res.status(200).json({
     success: true,
@@ -70,19 +69,28 @@ router.get('/deadlines/export', requireAuth, (req: AuthenticatedRequest, res: Re
 });
 
 // POST /api/calendar/events - Save custom schedule
-router.post('/events', requireAuth, (req: AuthenticatedRequest, res: Response) => {
-  const userId = req.user?.userId;
-  if (!userId) {
-    res.status(401).json({ success: false, error: 'UNAUTHORIZED' });
-    return;
+router.post(
+  '/events',
+  requireAuth,
+  validateBody(SaveCalendarEventsRequestSchema),
+  (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: 'UNAUTHORIZED' });
+      return;
+    }
+    const term = req.body.term || 'Winter 2027';
+    const events = req.body.events || [];
+    calendarQueries.saveUserCalendarEvents(userId, term, events);
+    res.status(200).json({
+      success: true,
+      data: {
+        message: 'Schedule saved successfully',
+        count: events.length,
+      },
+    });
   }
-  const term = (req.body.term as string) || 'Winter 2027';
-  const events = req.body.events || [];
-  calendarQueries.saveUserCalendarEvents(userId, term, events);
-  res
-    .status(200)
-    .json({ success: true, message: 'Schedule saved successfully', count: events.length });
-});
+);
 
 // GET /api/calendar/events - Retrieve saved custom schedule
 router.get('/events', requireAuth, (req: AuthenticatedRequest, res: Response) => {
@@ -105,7 +113,12 @@ router.delete('/events', requireAuth, (req: AuthenticatedRequest, res: Response)
   }
   const term = req.query.term as string | undefined;
   calendarQueries.deleteUserCalendarEvents(userId, term);
-  res.status(200).json({ success: true, message: 'Schedule cleared successfully' });
+  res.status(200).json({
+    success: true,
+    data: {
+      message: 'Schedule cleared successfully',
+    },
+  });
 });
 
 export default router;

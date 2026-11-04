@@ -67,10 +67,14 @@ def find_courses(
 
         # Filter by GE type if provided
         if ge:
-            course_ge = (course.get('ge') or "").strip().upper()
-            if not course_ge:
-                continue
-            if ge not in course_ge and not course_ge.startswith(ge):
+            raw_ge = course.get('ge')
+            if isinstance(raw_ge, list):
+                ge_list = [str(x).strip().upper() for x in raw_ge]
+            elif isinstance(raw_ge, str) and raw_ge.strip():
+                ge_list = [raw_ge.strip().upper()]
+            else:
+                ge_list = []
+            if not any(ge in item or item.startswith(ge) for item in ge_list):
                 continue
 
         # Filter by query keyword if provided
