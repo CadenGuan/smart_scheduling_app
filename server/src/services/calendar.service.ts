@@ -137,6 +137,7 @@ export function computeTimeDeviationPenalty(diffMinutes: number): number {
 export function isUsingMockAgent(): boolean {
   return (
     process.env.USE_MOCK_AGENT === 'true' ||
+    process.env.AGENT_MODE === 'mock' ||
     process.env.NODE_ENV === 'test' ||
     Boolean(process.env.VITEST)
   );

@@ -21,7 +21,7 @@ def run_agent(
     """
     api_key = os.environ.get('GEMINI_API_KEY') or os.environ.get('GOOGLE_API_KEY')
     use_mock = use_mock_override if use_mock_override is not None else (
-        os.environ.get('USE_MOCK_AGENT', 'false').lower() in ('true', '1', 't')
+        (os.environ.get('USE_MOCK_AGENT', 'false').lower() in ('true', '1', 't') or os.environ.get('AGENT_MODE', '').lower() == 'mock')
     )
 
     # If mock explicitly enabled (e.g. during automated test execution), use deterministic mock agent
@@ -89,6 +89,10 @@ def run_agent(
             content_text = final_response.content
         else:
             content_text = ai_msg.content
+
+        if isinstance(content_text, list):
+            text_parts = [(p.get('text', '') if isinstance(p, dict) else str(p)) for p in content_text]
+            content_text = '\n'.join(text_parts)
 
         # Extract proposed courses matching CalendarEvent schema
         proposed_courses: List[Dict[str, Any]] = []

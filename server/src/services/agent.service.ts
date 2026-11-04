@@ -18,6 +18,7 @@ export class AgentService {
 
     const useMock =
       process.env.USE_MOCK_AGENT === 'true' ||
+      process.env.AGENT_MODE === 'mock' ||
       process.env.NODE_ENV === 'test' ||
       Boolean(process.env.VITEST);
 

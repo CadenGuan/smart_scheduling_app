@@ -1,5 +1,7 @@
 import { Router, Response } from 'express';
 import { userQueries, UserRow } from '../db/queries/userQueries.js';
+import { calendarQueries } from '../db/queries/calendarQueries.js';
+import { CalendarService, isUsingMockAgent } from '../services/calendar.service.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validate.middleware.js';
@@ -79,6 +81,81 @@ router.get(
   })
 );
 
+/**
+ * Detects whether an incoming profile/preferences update constitutes a Macro Hard Pivot.
+ * Macro Hard Pivot fields:
+ * - major
+ * - standing
+ * - targetTerm
+ * - targetCredits
+ *
+ * When a macro pivot occurs:
+ * 1. Invalidate and clear persisted events in user_calendar_events (including resetting pinned status).
+ * 2. In mock/offline mode, immediately re-run the greedy selection algorithm to generate and persist
+ *    a clean fresh baseline schedule matching the new major/standing/term/credits.
+ *
+ * Micro Soft adjustments (preferredFreeDays, earliestStartTime, latestEndTime, maxBackToBackHours):
+ * Retain persisted courses intact and re-evaluate dynamic conflict badges in place.
+ */
+function handleMacroHardPivotIfNeeded(
+  userId: string,
+  user: UserRow,
+  newMajor: string | undefined,
+  newStanding: string | undefined,
+  newPrefs: any
+): void {
+  let prevPrefs: any = {};
+  if (user.preferences) {
+    try {
+      prevPrefs = JSON.parse(user.preferences);
+    } catch {
+      prevPrefs = {};
+    }
+  }
+
+  const standingChanged = Boolean(
+    newStanding !== undefined && user.standing && newStanding !== user.standing
+  );
+  const majorChanged = Boolean(
+    newMajor !== undefined && user.major && newMajor !== user.major
+  );
+
+  const oldTerm = prevPrefs?.targetTerm || 'Winter 2027';
+  const newTerm = newPrefs?.targetTerm;
+  const termChanged = Boolean(newTerm && newTerm !== oldTerm);
+
+  const oldCredits = prevPrefs?.targetCredits ?? 15;
+  const newCredits = newPrefs?.targetCredits;
+  const creditsChanged = Boolean(newCredits !== undefined && newCredits !== oldCredits);
+
+  const existingEvents = calendarQueries.getUserCalendarEvents(userId, oldTerm);
+  const isInitialSetup = existingEvents.length === 0;
+
+  const isMacroPivot = isInitialSetup || standingChanged || majorChanged || termChanged || creditsChanged;
+
+  if (isMacroPivot) {
+    // 1. Invalidate and clear all persisted schedule events and reset pinned courses (clean slate)
+    calendarQueries.deleteUserCalendarEvents(userId);
+
+    // 2. In mock / offline mode, immediately generate fresh baseline schedule matching the new macro parameters
+    if (isUsingMockAgent()) {
+      const mergedPrefs = { ...(prevPrefs || {}), ...(newPrefs || {}) };
+      const freshPreview = CalendarService.getPreview(userId, {
+        ...mergedPrefs,
+        standing: newStanding || user.standing,
+        major: newMajor || user.major,
+      });
+
+      const academicEvents = freshPreview.events.filter(
+        (e) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
+      if (academicEvents.length > 0) {
+        calendarQueries.saveUserCalendarEvents(userId, freshPreview.term, academicEvents);
+      }
+    }
+  }
+}
+
 // 3. Update User Preferences Only
 router.put(
   '/:id/preferences',
@@ -89,8 +166,10 @@ router.put(
     if (!user) return;
 
     const userId = req.params.id;
+    const newPrefs = req.body;
+    handleMacroHardPivotIfNeeded(userId, user, undefined, undefined, newPrefs);
     userQueries.updateUserProfile(userId, {
-      preferences: JSON.stringify(req.body),
+      preferences: JSON.stringify(newPrefs),
     });
 
     const updatedUser = userQueries.findUserById(userId);
@@ -116,6 +195,8 @@ router.put(
 
     const validatedPreferences =
       preferences !== undefined ? JSON.stringify(preferences) : undefined;
+
+    handleMacroHardPivotIfNeeded(userId, user, major, standing, preferences);
 
     userQueries.updateUserProfile(userId, {
       name,

@@ -688,4 +688,152 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
       expect(importRes.status).toBe(403);
     });
   });
+  // =========================================================================
+  // 6. MACRO HARD PIVOTS VS MICRO SOFT ADJUSTMENTS
+  // =========================================================================
+  describe('Macro Hard Pivots vs Micro Soft Adjustments', () => {
+    let testUserToken: string;
+    let testUserId: string;
+
+    beforeAll(async () => {
+      const reg = await request(app)
+        .post('/api/auth/register')
+        .send({
+          email: `pivot-user-${Date.now()}@ucsc.edu`,
+          password: 'Password123!',
+          name: 'Pivot Test User',
+          standing: 'Junior',
+          major: 'Computer Science B.S.',
+        });
+      testUserToken = reg.body.data.token;
+      testUserId = reg.body.data.user.userId;
+
+      // Seed initial baseline schedule (15 credits, Winter 2027)
+      await request(app)
+        .put(`/api/users/${testUserId}/preferences`)
+        .set('Authorization', `Bearer ${testUserToken}`)
+        .send({
+          targetTerm: 'Winter 2027',
+          targetCredits: 15,
+          preferredFreeDays: [],
+        });
+    });
+
+    it('Micro soft adjustment: changing preferredFreeDays preserves enrolled schedule and re-evaluates badges', async () => {
+      // 1. Fetch current schedule
+      const beforeRes = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${testUserToken}`);
+      expect(beforeRes.status).toBe(200);
+      const beforeCourseIds = beforeRes.body.data.events
+        .filter((e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY')
+        .map((e: any) => e.id);
+      expect(beforeCourseIds.length).toBeGreaterThanOrEqual(2);
+
+      // 2. Perform micro soft adjustment: preferredFreeDays = ['Tuesday']
+      const updateRes = await request(app)
+        .put(`/api/users/${testUserId}/preferences`)
+        .set('Authorization', `Bearer ${testUserToken}`)
+        .send({
+          targetTerm: 'Winter 2027',
+          targetCredits: 15,
+          preferredFreeDays: ['Tuesday'],
+        });
+      expect(updateRes.status).toBe(200);
+
+      // 3. Verify schedule is intact and conflict badge is dynamically attached
+      const afterRes = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${testUserToken}`);
+      expect(afterRes.status).toBe(200);
+
+      const afterEvents = afterRes.body.data.events.filter((e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      const afterCourseIds = afterEvents.map((e: any) => e.id);
+
+      // Enrolled courses must NOT be deleted or replaced on soft adjustments
+      expect(afterCourseIds.sort()).toEqual(beforeCourseIds.sort());
+
+      // Tuesday courses should have 'Spans preferred free day' badge
+      const tuesdayCourse = afterEvents.find((e: any) => e.days.includes('Tuesday'));
+      if (tuesdayCourse) {
+        expect(tuesdayCourse.conflictBadge).toContain('Spans preferred free day');
+      }
+    });
+
+    it('Macro hard pivot (targetCredits): changing targetCredits from 15 to 10 invalidates schedule and regenerates 2 courses (10 units)', async () => {
+      // Act: update targetCredits to 10
+      const updateRes = await request(app)
+        .put(`/api/users/${testUserId}/preferences`)
+        .set('Authorization', `Bearer ${testUserToken}`)
+        .send({
+          targetTerm: 'Winter 2027',
+          targetCredits: 10,
+          preferredFreeDays: [],
+        });
+      expect(updateRes.status).toBe(200);
+
+      // Assert: preview regenerates fresh schedule of exactly 10 units (2 courses)
+      const afterRes = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${testUserToken}`);
+      expect(afterRes.status).toBe(200);
+      expect(afterRes.body.data.totalCredits).toBe(10);
+      const academicEvents = afterRes.body.data.events.filter((e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academicEvents).toHaveLength(2);
+    });
+
+    it('Macro hard pivot (major): changing major invalidates previous schedule and regenerates major-aligned courses', async () => {
+      // Act: update major to Art B.A. via PUT /api/users/:id
+      const updateRes = await request(app)
+        .put(`/api/users/${testUserId}`)
+        .set('Authorization', `Bearer ${testUserToken}`)
+        .send({
+          major: 'Art B.A.',
+          preferences: {
+            targetTerm: 'Winter 2027',
+            targetCredits: 15,
+          },
+        });
+      expect(updateRes.status).toBe(200);
+
+      // Assert: preview regenerates fresh schedule containing Art courses
+      const afterRes = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${testUserToken}`);
+      expect(afterRes.status).toBe(200);
+      const academicEvents = afterRes.body.data.events.filter((e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      const hasArt = academicEvents.some((c: any) => c.department === 'ART' || c.id?.startsWith('art') || c.title?.startsWith('ART'));
+      expect(hasArt).toBe(true);
+    });
+
+    it('Macro hard pivot (standing): changing standing from Junior to Freshman restricts courses to lower-division & GEs', async () => {
+      // Act: update standing to Freshman in Fall 2026
+      const updateRes = await request(app)
+        .put(`/api/users/${testUserId}`)
+        .set('Authorization', `Bearer ${testUserToken}`)
+        .send({
+          standing: 'Freshman',
+          major: 'Computer Science B.S.',
+          preferences: {
+            targetTerm: 'Fall 2026',
+            targetCredits: 15,
+          },
+        });
+      expect(updateRes.status).toBe(200);
+
+      // Assert: preview regenerates fresh schedule without upper-division non-GEs
+      const afterRes = await request(app)
+        .get('/api/calendar/preview')
+        .set('Authorization', `Bearer ${testUserToken}`);
+      expect(afterRes.status).toBe(200);
+      const academicEvents = afterRes.body.data.events.filter((e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academicEvents.length).toBeGreaterThan(0);
+      academicEvents.forEach((c: any) => {
+        const matchNum = c.title?.match(/\d+/);
+        const num = matchNum ? parseInt(matchNum[0], 10) : 999;
+        const isLower = c.level === 'LOWER' || c.type === 'GE' || Boolean(c.ge) || num < 100;
+        expect(isLower).toBe(true);
+      });
+    });
+  });
 });
