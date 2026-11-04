@@ -320,7 +320,7 @@ export class CalendarService {
       }
     }
 
-    const courseCount = academicPool.length === 0 ? 0 : Math.min(academicPool.length, targetCourseCount);
+    const _courseCount = academicPool.length === 0 ? 0 : Math.min(academicPool.length, targetCourseCount);
 
     const isUnderclassman = userStanding === 'Freshman' || userStanding === 'Sophomore';
 
@@ -400,7 +400,7 @@ export class CalendarService {
         remainingCandidates.length > 0
       ) {
         const scored = remainingCandidates.map((candidate) => {
-          const indBadges = getIndividualConflicts(
+          const _indBadges = getIndividualConflicts(
             candidate,
             preferredFreeDays,
             earliestStartTime,
