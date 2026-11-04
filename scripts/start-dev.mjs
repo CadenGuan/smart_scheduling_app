@@ -60,18 +60,10 @@ rl.question('\nSelect mode (1 or 2, default is 1): ', (answer) => {
   process.env.AGENT_MODE = isMock ? 'mock' : 'live';
   process.env.USE_MOCK_AGENT = isMock ? 'true' : 'false';
 
-  const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  const devArgs = [
-    'exec',
-    'concurrently',
-    '--',
-    'npm run dev --workspace=server',
-    'npm run dev --workspace=client',
-    'npm run dev:agent',
-  ];
-
-  const child = spawn(npmCmd, devArgs, {
+  const devArgs = ['run', 'dev:all'];
+  const child = spawn('npm', devArgs, {
     stdio: 'inherit',
+    shell: true,
     env: { ...process.env },
   });
 
@@ -79,3 +71,4 @@ rl.question('\nSelect mode (1 or 2, default is 1): ', (answer) => {
     process.exit(code || 0);
   });
 });
+

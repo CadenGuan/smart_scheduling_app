@@ -31,12 +31,13 @@ console.log('\n>>> Starting in STRICT MOCK MODE (Offline Catalog Greedy Preview,
 process.env.AGENT_MODE = 'mock';
 process.env.USE_MOCK_AGENT = 'true';
 
-const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-const child = spawn(npmCmd, ['run', 'dev:all'], {
+const child = spawn('npm', ['run', 'dev:all'], {
   stdio: 'inherit',
+  shell: true,
   env: { ...process.env },
 });
 
 child.on('exit', (code) => {
   process.exit(code || 0);
 });
+
