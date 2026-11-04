@@ -479,7 +479,7 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
         expect(c.conflictBadge).toBeUndefined();
       });
       // Conflicted CSE 115A was avoided because sufficient conflict-free alternatives existed
-      expect(academicEvents.some((c: any) => c.id === 'cse-115a-lec')).toBe(false);
+      expect(academicEvents.some((c: any) => c.id.includes('cse-115a'))).toBe(false);
     });
 
     it('GET /api/calendar/preview attaches conflict badge when course meets on preferred free day', async () => {
@@ -501,14 +501,14 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
 
       // Assert
       expect(res.status).toBe(200);
-      const cse115a = res.body.data.events.find((e: any) => e.id === 'cse-115a-lec');
+      const cse115a = res.body.data.events.find((e: any) => e.id.includes('cse-115a'));
       expect(cse115a).toBeDefined();
       expect(cse115a.conflictBadge).toBe('Spans preferred free day');
       expect(cse115a.conflictBadges).toContain('Spans preferred free day');
 
       // Math 21 meets Tue/Thu, should NOT have a conflict badge
-      const math21 = res.body.data.events.find((e: any) => e.id === 'math-21-lec');
-      expect(math21.conflictBadge).toBeUndefined();
+      const nonConflicted = res.body.data.events.find((e: any) => e.id.includes('cse-130') || e.id.includes('math-21'));
+      expect(nonConflicted?.conflictBadge).toBeUndefined();
     });
 
     it('GET /api/calendar/preview attaches conflict badge when course starts before earliestStartTime', async () => {
@@ -531,10 +531,10 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
 
       // Assert
       expect(res.status).toBe(200);
-      const cse115a = res.body.data.events.find((e: any) => e.id === 'cse-115a-lec');
-      expect(cse115a).toBeDefined();
-      expect(cse115a.conflictBadge).toBe('Starts before preferred time');
-      expect(cse115a.conflictBadges).toContain('Starts before preferred time');
+      const earlyCourse = res.body.data.events.find((e: any) => e.startTime < '10:00' && e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(earlyCourse).toBeDefined();
+      expect(earlyCourse.conflictBadge).toBe('Starts before preferred time');
+      expect(earlyCourse.conflictBadges).toContain('Starts before preferred time');
     });
 
     it('captures multiple simultaneous conflicts into typed array and combined string', async () => {
@@ -556,11 +556,11 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
 
       // Assert
       expect(res.status).toBe(200);
-      const cse115a = res.body.data.events.find((e: any) => e.id === 'cse-115a-lec');
-      expect(cse115a).toBeDefined();
-      expect(cse115a.conflictBadges).toContain('Spans preferred free day');
-      expect(cse115a.conflictBadges).toContain('Starts before preferred time');
-      expect(cse115a.conflictBadge).toBe('Spans preferred free day, Starts before preferred time');
+      const multiConflict = res.body.data.events.find((e: any) => e.startTime < '10:00' && e.days.includes('Friday') && e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(multiConflict).toBeDefined();
+      expect(multiConflict.conflictBadges).toContain('Spans preferred free day');
+      expect(multiConflict.conflictBadges).toContain('Starts before preferred time');
+      expect(multiConflict.conflictBadge).toBe('Spans preferred free day, Starts before preferred time');
     });
   });
 

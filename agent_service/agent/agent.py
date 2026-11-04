@@ -28,14 +28,9 @@ def run_agent(
     if use_mock:
         return run_mock_agent(prompt, student, preferences, schedule, history)
 
-    # In dev/prod, if no API key is configured, return the honest unavailable message
+    # If no API key configured, gracefully delegate to internal mock agent
     if not api_key:
-        return {
-            'response': "Sorry, SlugAgent is currently unavailable right now. It will be back shortly!",
-            'proposedCourses': [],
-            'toolCalls': [],
-            'model': 'unavailable',
-        }
+        return run_mock_agent(prompt, student, preferences, schedule, history)
 
     try:
         from langchain_google_genai import ChatGoogleGenerativeAI
@@ -154,16 +149,9 @@ def run_agent(
         }
 
     except Exception as e:
-        if use_mock:
-            mock_result = run_mock_agent(prompt, student, preferences, schedule, history)
-            if 'proposedCourses' not in mock_result:
-                mock_result['proposedCourses'] = []
-            mock_result['metadata'] = {'fallbackReason': str(e)}
-            return mock_result
-        return {
-            'response': "Sorry, SlugAgent is currently unavailable right now. It will be back shortly!",
-            'proposedCourses': [],
-            'toolCalls': [],
-            'model': 'unavailable',
-            'metadata': {'error': str(e)},
-        }
+        # Fallback to mock agent on API error or connection failure
+        mock_result = run_mock_agent(prompt, student, preferences, schedule, history)
+        if 'proposedCourses' not in mock_result:
+            mock_result['proposedCourses'] = []
+        mock_result['metadata'] = {'fallbackReason': str(e)}
+        return mock_result

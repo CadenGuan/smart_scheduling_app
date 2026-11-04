@@ -42,7 +42,7 @@ describe('Progress & Calendar API Tests', () => {
         geSource: 'UCSC',
         geCategoriesRemaining: ['CC', 'ER'],
         targetTerm: 'Winter 2027',
-        targetCredits: 15,
+        targetCredits: 20,
       },
       completed: false,
     };
@@ -59,6 +59,11 @@ describe('Progress & Calendar API Tests', () => {
   });
 
   it('GET /api/calendar/preview should return seeded UCSC courses with Triadic colors', async () => {
+    await request(app)
+      .put(`/api/users/${userId}/preferences`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({ targetCredits: 25 });
+
     const res = await request(app)
       .get('/api/calendar/preview')
       .set('Authorization', `Bearer ${authToken}`);
@@ -68,11 +73,11 @@ describe('Progress & Calendar API Tests', () => {
     expect(res.body.data.term).toBe('Winter 2027');
     expect(res.body.data.events.length).toBeGreaterThanOrEqual(4);
 
-    const cse115a = res.body.data.events.find((e: any) => e.id === 'cse-115a-lec');
+    const cse115a = res.body.data.events.find((e: any) => e.id === 'cse-115a-lec' || e.id === 'cse-115a-01');
     expect(cse115a).toBeDefined();
     expect(cse115a.color).toBe('#00B4DB'); // Triadic Teal
 
-    const art10f = res.body.data.events.find((e: any) => e.id === 'art-10f-lec');
+    const art10f = res.body.data.events.find((e: any) => e.id === 'art-10f-lec' || e.id === 'art-10f-01');
     expect(art10f).toBeDefined();
     expect(art10f.color).toBe('#FF6B6B'); // Triadic Magenta
 

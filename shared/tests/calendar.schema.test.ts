@@ -199,10 +199,10 @@ describe('Calendar Schema Architectural Contract Tests [TESTING_GOLDEN_RULES.md 
       const courses = JSON.parse(rawData);
 
       expect(Array.isArray(courses)).toBe(true);
-      expect(courses).toHaveLength(18);
+      expect(courses).toHaveLength(21);
     });
 
-    it('validates that all 18 courses strictly conform to CourseSchema and CalendarEventSchema', () => {
+    it('validates that all curated courses strictly conform to CourseSchema and CalendarEventSchema', () => {
       const rawData = fs.readFileSync(coursesJsonPath, 'utf8');
       const courses = JSON.parse(rawData);
 
@@ -237,7 +237,7 @@ describe('Calendar Schema Architectural Contract Tests [TESTING_GOLDEN_RULES.md 
       const spring = courses.filter((c) => c.term === 'Spring 2027');
       const summer = courses.filter((c) => c.term === 'Summer 2027');
 
-      expect(winter).toHaveLength(6);
+      expect(winter).toHaveLength(9);
       expect(fall).toHaveLength(4);
       expect(spring).toHaveLength(4);
       expect(summer).toHaveLength(4);

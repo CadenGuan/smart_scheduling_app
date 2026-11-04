@@ -13,8 +13,8 @@
       "Wednesday",
       "Friday"
     ],
-    "startTime": "09:00",
-    "endTime": "10:15",
+    "startTime": "10:30",
+    "endTime": "11:45",
     "color": "#00B4DB",
     "credits": 5,
     "term": "Winter 2027",
@@ -56,8 +56,8 @@
       "Wednesday",
       "Friday"
     ],
-    "startTime": "10:30",
-    "endTime": "11:45",
+    "startTime": "09:00",
+    "endTime": "10:15",
     "color": "#00B4DB",
     "credits": 5,
     "term": "Winter 2027",
@@ -128,6 +128,74 @@
     "term": "Winter 2027",
     "ge": null,
     "description": "Introduction to computer architecture, assembly language programming, CPU control paths, registers, and memory hierarchy."
+  },
+  {
+    "id": "math-21-01",
+    "code": "MATH 21",
+    "title": "MATH 21: Linear Algebra",
+    "department": "MATH",
+    "level": "LOWER",
+    "type": "MAJOR",
+    "instructor": "Frank Bauerle",
+    "location": "Physical Sciences 110",
+    "days": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "startTime": "13:30",
+    "endTime": "15:05",
+    "color": "#9B59B6",
+    "credits": 5,
+    "term": "Winter 2027",
+    "ge": null,
+    "description": "Systems of linear equations, matrices, determinants, vector spaces, linear transformations, eigenvalues, and eigenvectors."
+  },
+  {
+    "id": "phil-11-01",
+    "code": "PHIL 11",
+    "title": "PHIL 11: Introduction to Philosophy",
+    "department": "PHIL",
+    "level": "LOWER",
+    "type": "GE",
+    "instructor": "Daniel Guevara",
+    "location": "Cowell College 131",
+    "days": [
+      "Tuesday",
+      "Thursday"
+    ],
+    "startTime": "11:40",
+    "endTime": "13:15",
+    "color": "#E67E22",
+    "credits": 5,
+    "term": "Winter 2027",
+    "ge": [
+      "CC"
+    ],
+    "description": "An introduction to the main problems and philosophical theories concerning knowledge, mind, ethics, and metaphysics."
+  },
+  {
+    "id": "his-10a-01",
+    "code": "HIS 10A",
+    "title": "HIS 10A: United States History to 1877",
+    "department": "HIS",
+    "level": "LOWER",
+    "type": "GE",
+    "instructor": "Greg O'Malley",
+    "location": "Stevenson 150",
+    "days": [
+      "Monday",
+      "Wednesday",
+      "Friday"
+    ],
+    "startTime": "13:20",
+    "endTime": "14:25",
+    "color": "#E74C3C",
+    "credits": 5,
+    "term": "Winter 2027",
+    "ge": [
+      "ER"
+    ],
+    "description": "Survey of the Americas from early settlement through colonization, revolution, and the Civil War satisfying Ethnicity and Race (ER)."
   },
   {
     "id": "cse-101-f26",

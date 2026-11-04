@@ -124,10 +124,63 @@ export function wouldExceedBackToBack(courses: CalendarEvent[], maxHours: number
   return false;
 }
 
+export function extractBaseCourseCode(course: CalendarEvent): string {
+  const raw = course.code || course.title.split(':')[0].trim();
+  return raw.replace(/-\d+$/, '').replace(/\s+section\s+\d+$/i, '').trim().toUpperCase();
+}
+
+export const getBaseCourseCode = extractBaseCourseCode;
+
+export function getCourseNumericLevel(course: CalendarEvent): number | null {
+  const match = (course.code || course.title).match(/\d+/);
+  return match ? parseInt(match[0], 10) : null;
+}
+
+export function isLowerDivision(course: CalendarEvent): boolean {
+  if (course.level === 'LOWER') return true;
+  if (course.level === 'UPPER' || course.level === 'CAPSTONE') return false;
+  const num = getCourseNumericLevel(course);
+  return num !== null ? num < 100 : false;
+}
+
+export function isUpperDivision(course: CalendarEvent): boolean {
+  if (course.level === 'UPPER' || course.level === 'CAPSTONE') return true;
+  if (course.level === 'LOWER') return false;
+  const num = getCourseNumericLevel(course);
+  return num !== null ? num >= 100 : false;
+}
+
+export function matchesMajorDepartment(course: CalendarEvent, majorStr?: string): boolean {
+  if (!majorStr) return true;
+  const normMajor = majorStr.toLowerCase();
+  const dept = (course.department || (course.code || course.title).split(' ')[0] || '').toUpperCase();
+
+  if (
+    normMajor.includes('computer science') ||
+    normMajor.includes('cs') ||
+    normMajor.includes('computer engineering')
+  ) {
+    return dept === 'CSE' || dept === 'CMPS' || dept === 'CMPE';
+  }
+  if (normMajor.includes('art')) {
+    return dept === 'ART' || dept === 'HAVC' || dept === 'FILM';
+  }
+  if (normMajor.includes('economics') || normMajor.includes('econ')) {
+    return dept === 'ECON';
+  }
+  if (normMajor.includes('math')) {
+    return dept === 'MATH' || dept === 'AM' || dept === 'STAT';
+  }
+  if (normMajor.includes('technology') || normMajor.includes('tim')) {
+    return dept === 'TIM' || dept === 'CSE';
+  }
+  return dept.length > 0 && normMajor.toUpperCase().includes(dept);
+}
+
 export class CalendarService {
   static getPreview(
     userId?: string,
-    preferencesOverride?: Partial<UserPreferences>,
+    preferencesOverride?: Partial<UserPreferences> & { standing?: string; major?: string },
     eventsPool?: CalendarEvent[]
   ): {
     term: string;
@@ -135,20 +188,29 @@ export class CalendarService {
     events: CalendarEvent[];
   } {
     let preferences: Partial<UserPreferences> = {};
+    let userStanding = 'Junior';
+    let userMajor = 'Computer Science B.S.';
 
     if (userId) {
       const user = userQueries.findUserById(userId);
-      if (user?.preferences) {
-        try {
-          preferences = JSON.parse(user.preferences);
-        } catch {
-          preferences = {};
+      if (user) {
+        if (user.standing) userStanding = user.standing;
+        if (user.major) userMajor = user.major;
+        if (user.preferences) {
+          try {
+            preferences = JSON.parse(user.preferences);
+          } catch {
+            preferences = {};
+          }
         }
       }
     }
 
     if (preferencesOverride) {
-      preferences = { ...preferences, ...preferencesOverride };
+      const { standing: ovStanding, major: ovMajor, ...prefsOnly } = preferencesOverride as any;
+      if (ovStanding) userStanding = ovStanding;
+      if (ovMajor) userMajor = ovMajor;
+      preferences = { ...preferences, ...prefsOnly };
     }
 
     const term = preferences.targetTerm || eventsPool?.find((e) => e.term)?.term || 'Winter 2027';
@@ -162,17 +224,17 @@ export class CalendarService {
     if (!pool && userId) {
       const savedUserEvents = calendarQueries.getUserCalendarEvents(userId, term);
       if (savedUserEvents.length > 0) {
-        pool = savedUserEvents;
+        pool = savedUserEvents.map((e) => ({ ...e }));
       }
     }
     if (!pool) {
-      pool = sampleCalendarEvents;
+      pool = sampleCalendarEvents.map((e) => ({ ...e }));
     }
 
     const termMatchedPool = pool.filter(
       (e) => e.type !== 'GOOGLE_CALENDAR_BUSY' && (!e.term || e.term === term || Boolean(e.pinned))
     );
-    const academicPool =
+    const initialAcademicPool =
       termMatchedPool.length > 0
         ? termMatchedPool
         : pool.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
@@ -180,8 +242,7 @@ export class CalendarService {
     let busyEvents = pool.filter(
       (e) => e.type === 'GOOGLE_CALENDAR_BUSY' && (!e.term || e.term === term)
     );
-    // If pool has academic courses (e.g. from agent proposedCourses) but no busy events,
-    // retain external commitments from saved user schedule or sample calendar
+    // Retain external Google Calendar commitments if not in active pool
     if (busyEvents.length === 0 && pool.length > 0) {
       if (userId) {
         const savedUserBusy = calendarQueries
@@ -198,29 +259,92 @@ export class CalendarService {
       }
     }
 
-    const courseCount = Math.max(1, Math.min(academicPool.length, Math.round(targetCredits / 5)));
+    // Determine target course count from credit quota
+    let targetCourseCount = 3;
+    if (targetCredits <= 10) {
+      targetCourseCount = 2;
+    } else if (targetCredits <= 15) {
+      targetCourseCount = 3;
+    } else {
+      targetCourseCount = Math.max(3, Math.round(targetCredits / 5));
+    }
+
+    // Hard Day Exclusion: filter academicPool before greedy selection
+    let academicPool = initialAcademicPool;
+    if (preferredFreeDays.length > 0) {
+      const pinned = initialAcademicPool.filter((c) => Boolean(c.pinned));
+      const compliantUnpinned = initialAcademicPool.filter(
+        (c) => !c.pinned && !c.days.some((d) => preferredFreeDays.includes(d))
+      );
+      const violatingUnpinned = initialAcademicPool.filter(
+        (c) => !c.pinned && c.days.some((d) => preferredFreeDays.includes(d))
+      );
+
+      // Check how many unique base codes are available among compliant candidates + pinned
+      const availableBaseCodes = new Set<string>();
+      pinned.forEach((c) => availableBaseCodes.add(extractBaseCourseCode(c)));
+      compliantUnpinned.forEach((c) => availableBaseCodes.add(extractBaseCourseCode(c)));
+
+      if (
+        (availableBaseCodes.size >= targetCourseCount && targetCredits <= 15) ||
+        violatingUnpinned.length === 0
+      ) {
+        // Sufficient compliant candidates exist to fulfill target course count; strictly discard free-day violators
+        academicPool = [...pinned, ...compliantUnpinned];
+      } else {
+        // Fallback edge case: compliant candidates cannot satisfy credit quota, allow violators as fallback
+        academicPool = [...pinned, ...compliantUnpinned, ...violatingUnpinned];
+      }
+    }
+
+    const courseCount = academicPool.length === 0 ? 0 : Math.min(academicPool.length, targetCourseCount);
+
+    const isUnderclassman = userStanding === 'Freshman' || userStanding === 'Sophomore';
 
     // Partition candidates into pinned (unconditionally scheduled) and unpinned
     const uniquePinned: CalendarEvent[] = [];
     const seenIds = new Set<string>();
+    const selectedBaseCodes = new Set<string>();
+
     for (const course of academicPool) {
       if (course.pinned && !seenIds.has(course.id)) {
         seenIds.add(course.id);
-        uniquePinned.push(course);
+        const baseCode = extractBaseCourseCode(course);
+        if (!selectedBaseCodes.has(baseCode)) {
+          selectedBaseCodes.add(baseCode);
+          uniquePinned.push(course);
+        }
       }
     }
 
+    // Unpinned candidates: apply hard constraints (free days & class standing level)
     const uniqueUnpinned: CalendarEvent[] = [];
     for (const course of academicPool) {
       if (!course.pinned && !seenIds.has(course.id)) {
         seenIds.add(course.id);
+
+        // If base code is already selected via pinned course, exclude it immediately
+        const baseCode = extractBaseCourseCode(course);
+        if (selectedBaseCodes.has(baseCode)) {
+          continue;
+        }
+
+        // Hard constraint 2: Class Standing (Freshman/Sophomore restricted to lower-division & GEs)
+        if (isUnderclassman && isUpperDivision(course) && course.type !== 'GE') {
+          continue;
+        }
+
         uniqueUnpinned.push(course);
       }
     }
 
     // Pinned courses bypass greedy omission and are unconditionally selected first
     const selectedCandidates: CalendarEvent[] = [...uniquePinned];
-    const remainingCandidates: CalendarEvent[] = [...uniqueUnpinned];
+
+    // Filter out remaining candidates that duplicate base course codes of pinned courses
+    let remainingCandidates: CalendarEvent[] = uniqueUnpinned.filter(
+      (c) => !selectedBaseCodes.has(extractBaseCourseCode(c))
+    );
 
     // If pinned courses are fewer than courseCount, fill remaining slots greedily
     while (selectedCandidates.length < courseCount && remainingCandidates.length > 0) {
@@ -237,15 +361,46 @@ export class CalendarService {
           causesB2B = wouldExceedBackToBack([...selectedCandidates, candidate], maxBackToBackHours);
         }
 
-        const score = indBadges.length + (collides ? 10 : 0) + (causesB2B ? 5 : 0);
+        // Soft time window penalties
+        let softTimePenalty = 0;
+        if (earliestStartTime && candidate.startTime < earliestStartTime) {
+          softTimePenalty += 2;
+        }
+        if (latestEndTime && candidate.endTime > latestEndTime) {
+          softTimePenalty += 2;
+        }
+
+        // Major department prioritization
+        const isMajorDept = matchesMajorDepartment(candidate, userMajor);
+        const isGeCourse = candidate.type === 'GE' || Boolean(candidate.ge);
+        const majorPenalty = isMajorDept ? 0 : isGeCourse ? 5 : 8;
+
+        // Standing alignment: upperclassmen prioritize upper-division over lower-division
+        let standingPenalty = 0;
+        if (!isUnderclassman && isLowerDivision(candidate)) {
+          standingPenalty = 3;
+        }
+
+        const score =
+          (collides ? 100 : 0) +
+          (causesB2B ? 10 : 0) +
+          softTimePenalty +
+          majorPenalty +
+          standingPenalty +
+          indBadges.length;
+
         return { candidate, score };
       });
 
       scored.sort((a, b) => a.score - b.score);
       const best = scored[0].candidate;
       selectedCandidates.push(best);
-      const idx = remainingCandidates.findIndex((c) => c.id === best.id);
-      remainingCandidates.splice(idx, 1);
+      selectedBaseCodes.add(getBaseCourseCode(best));
+
+      // Section Deduplication: Purge ALL candidates sharing the same base course code
+      remainingCandidates = remainingCandidates.filter(
+        (c) => !selectedBaseCodes.has(getBaseCourseCode(c))
+      );
     }
 
     // Attach conflict badges
@@ -286,7 +441,7 @@ export class CalendarService {
     };
   }
 
-  static getCurriculumDag(
+    static getCurriculumDag(
     userId?: string,
     completedOverride?: string[]
   ): {
