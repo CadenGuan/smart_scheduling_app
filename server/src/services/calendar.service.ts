@@ -265,8 +265,10 @@ export class CalendarService {
       targetCourseCount = 2;
     } else if (targetCredits <= 15) {
       targetCourseCount = 3;
+    } else if (targetCredits <= 20) {
+      targetCourseCount = 4;
     } else {
-      targetCourseCount = Math.max(3, Math.round(targetCredits / 5));
+      targetCourseCount = Math.max(3, Math.ceil(targetCredits / 5));
     }
 
     // Hard Day Exclusion: filter academicPool before greedy selection
@@ -349,14 +351,15 @@ export class CalendarService {
 
     // Pinned courses bypass greedy omission and are unconditionally selected first
     const selectedCandidates: CalendarEvent[] = [...uniquePinned];
+    let currentCredits = selectedCandidates.reduce((sum, c) => sum + (c.credits || 5), 0);
 
     // Filter out remaining candidates that duplicate base course codes of pinned courses
     let remainingCandidates: CalendarEvent[] = uniqueUnpinned.filter(
       (c) => !selectedBaseCodes.has(extractBaseCourseCode(c))
     );
 
-    // If pinned courses are fewer than courseCount, fill remaining slots greedily
-    while (selectedCandidates.length < courseCount && remainingCandidates.length > 0) {
+    // Continue selecting courses while currentCredits < targetCredits and valid distinct base-code candidates remain
+    while (currentCredits < targetCredits && remainingCandidates.length > 0) {
       const scored = remainingCandidates.map((candidate) => {
         const indBadges = getIndividualConflicts(
           candidate,
@@ -412,6 +415,7 @@ export class CalendarService {
       const best = scored[0].candidate;
       selectedCandidates.push(best);
       selectedBaseCodes.add(getBaseCourseCode(best));
+      currentCredits += best.credits || 5;
 
       // Section Deduplication: Purge ALL candidates sharing the same base course code
       remainingCandidates = remainingCandidates.filter(
