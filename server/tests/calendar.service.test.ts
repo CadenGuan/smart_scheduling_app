@@ -1304,6 +1304,163 @@ describe('CalendarService Domain Service Test Suite', () => {
       });
     });
 
+    it('filters courses by class standing: Juniors and Seniors receive upper division (>= 100) and capstones', () => {
+      // Act: Junior requesting 15 units in Winter 2027
+      const juniorPreview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        standing: 'Junior',
+        targetCredits: 15,
+        major: 'Computer Science B.S.',
+      });
+
+      // Assert: Exactly 3 courses, all upper division (CSE 101, CSE 115A, CSE 130), lower division CSE 12 is excluded
+      const academic = juniorPreview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(3);
+      academic.forEach((course) => {
+        const numMatch =
+          (course.code || course.title).match(/(?:[A-Z]{2,5})\s*(\d+)/i) ||
+          (course.code || course.title).match(/\d+/);
+        if (numMatch && course.type !== 'GE') {
+          expect(parseInt(numMatch[1] ?? numMatch[0], 10)).toBeGreaterThanOrEqual(100);
+        }
+      });
+      const cse12 = academic.find((c) => (c.code || c.title).includes('CSE 12'));
+      expect(cse12).toBeUndefined();
+    });
+
+    it('prioritizes Art department courses for Art majors over other department offerings', () => {
+      // Act: Art major requesting 10 credits in Spring 2027 (which has ART 80T, STAT 131, CSE 102, CSE 30)
+      const artPreview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Spring 2027',
+        standing: 'Junior',
+        major: 'Art B.A.',
+        targetCredits: 10,
+      });
+
+      const academic = artPreview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+
+      // First course must be the matching Art major department course
+      const artCourse = academic.find((c) =>
+        (c.department || c.code || c.title).toUpperCase().includes('ART')
+      );
+      expect(artCourse).toBeDefined();
+      expect(artCourse?.code || artCourse?.title).toContain('ART 80T');
+
+      // Second course should be GE (STAT 131 with GE: SR) filling the elective slot rather than non-GE CSE courses
+      const geCourse = academic.find((c) => c.type === 'GE' || Boolean(c.ge));
+      expect(geCourse).toBeDefined();
+    });
+
+    it('prioritizes Economics department courses for Economics majors in Fall 2026', () => {
+      // Act: Economics major requesting 10 credits in Fall 2026 (which has ECON 1, MATH 23A, ART 10F, CSE 101)
+      const econPreview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Fall 2026',
+        standing: 'Freshman',
+        major: 'Economics B.A.',
+        targetCredits: 10,
+      });
+
+      const academic = econPreview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+
+      // Economics course must be scheduled
+      const econCourse = academic.find((c) =>
+        (c.department || c.code || c.title).toUpperCase().includes('ECON')
+      );
+      expect(econCourse).toBeDefined();
+      expect(econCourse?.code || econCourse?.title).toContain('ECON 1');
+    });
+
+    it('schedules out-of-window courses with badges when credit target requires them', () => {
+      // Arrange: Preferred window is 09:00 - 12:00. CSE 130 is 13:15-14:50 (outside).
+      // Act: Request 15 credits (3 courses) in Winter 2027 with Junior CS major
+      const preview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        earliestStartTime: '09:00',
+        latestEndTime: '12:00',
+        targetCredits: 15,
+        standing: 'Junior',
+        major: 'Computer Science B.S.',
+      });
+
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(3);
+
+      const cse130 = academic.find((c) => (c.code || c.title).includes('130'));
+      expect(cse130).toBeDefined();
+      expect(cse130?.conflictBadges).toContain('Ends after preferred time');
+      expect(cse130?.conflictBadge).toContain('Ends after preferred time');
+    });
+
+    it('attaches "Starts before preferred time" badge when scheduled course begins prior to earliestStartTime', () => {
+      // Arrange: Earliest start time is 09:30, but CSE 115A starts at 09:00
+      const preview = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        earliestStartTime: '09:30',
+        targetCredits: 15,
+        standing: 'Junior',
+        major: 'Computer Science B.S.',
+      });
+
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      const earlyCourse = academic.find((c) => c.startTime < '09:30');
+      expect(earlyCourse).toBeDefined();
+      expect(earlyCourse?.conflictBadges).toContain('Starts before preferred time');
+    });
+
+    it('prefers spaced non-consecutive courses over clusters that would exceed maxBackToBackHours', () => {
+      // Arrange: Two candidate pools, one spaced and one tightly clustered
+      const pool: CalendarEvent[] = [
+        {
+          id: 'anchor',
+          code: 'CSE 101',
+          title: 'CSE 101',
+          days: ['Tuesday'],
+          startTime: '09:00',
+          endTime: '11:00',
+          credits: 5,
+          pinned: true,
+        },
+        {
+          id: 'back-to-back-candidate',
+          code: 'CSE 115A',
+          title: 'CSE 115A',
+          days: ['Tuesday'],
+          startTime: '11:15', // Only 15 min gap, creating 09:00 - 13:15 cluster (4.25 hrs)
+          endTime: '13:15',
+          credits: 5,
+        },
+        {
+          id: 'spaced-candidate',
+          code: 'CSE 130',
+          title: 'CSE 130',
+          days: ['Tuesday'],
+          startTime: '14:30', // Spaced out
+          endTime: '16:30',
+          credits: 5,
+        },
+      ];
+
+      // Act: Request 10 credits (2 courses) with maxBackToBackHours = 3
+      const preview = CalendarService.getPreview(
+        undefined,
+        {
+          targetCredits: 10,
+          maxBackToBackHours: 3,
+        },
+        pool
+      );
+
+      const academic = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      expect(academic).toHaveLength(2);
+
+      const ids = academic.map((c) => c.id);
+      expect(ids).toContain('anchor');
+      expect(ids).toContain('spaced-candidate');
+      expect(ids).not.toContain('back-to-back-candidate');
+    });
+
     it('soft time constraint prefers courses within the preferred time window over out-of-window courses', () => {
       // Arrange: Preferred window is 09:00 - 12:00. CSE 130 is 13:15-14:50 (outside).
       // Act

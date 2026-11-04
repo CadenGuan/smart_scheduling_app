@@ -157,7 +157,7 @@ export function matchesMajorDepartment(course: CalendarEvent, majorStr?: string)
 
   if (
     normMajor.includes('computer science') ||
-    normMajor.includes('cs') ||
+    /\bcs\b/i.test(majorStr) ||
     normMajor.includes('computer engineering')
   ) {
     return dept === 'CSE' || dept === 'CMPS' || dept === 'CMPE';
@@ -171,7 +171,7 @@ export function matchesMajorDepartment(course: CalendarEvent, majorStr?: string)
   if (normMajor.includes('math')) {
     return dept === 'MATH' || dept === 'AM' || dept === 'STAT';
   }
-  if (normMajor.includes('technology') || normMajor.includes('tim')) {
+  if (normMajor.includes('technology') || /\btim\b/i.test(majorStr)) {
     return dept === 'TIM' || dept === 'CSE';
   }
   return dept.length > 0 && normMajor.toUpperCase().includes(dept);
@@ -317,6 +317,15 @@ export class CalendarService {
       }
     }
 
+    // Determine candidate availability for class standing
+    const lowerOrGeBaseCodes = new Set<string>();
+    for (const course of academicPool) {
+      if (course.pinned || isLowerDivision(course) || course.type === 'GE' || Boolean(course.ge)) {
+        lowerOrGeBaseCodes.add(extractBaseCourseCode(course));
+      }
+    }
+    const hasSufficientLowerCourses = lowerOrGeBaseCodes.size >= targetCourseCount;
+
     // Unpinned candidates: apply hard constraints (free days & class standing level)
     const uniqueUnpinned: CalendarEvent[] = [];
     for (const course of academicPool) {
@@ -330,7 +339,7 @@ export class CalendarService {
         }
 
         // Hard constraint 2: Class Standing (Freshman/Sophomore restricted to lower-division & GEs)
-        if (isUnderclassman && isUpperDivision(course) && course.type !== 'GE') {
+        if (isUnderclassman && hasSufficientLowerCourses && isUpperDivision(course) && course.type !== 'GE' && !course.ge) {
           continue;
         }
 
@@ -361,24 +370,32 @@ export class CalendarService {
           causesB2B = wouldExceedBackToBack([...selectedCandidates, candidate], maxBackToBackHours);
         }
 
-        // Soft time window penalties
+        // Soft time window penalties: +2 per hour of deviation, min 3 penalty points
         let softTimePenalty = 0;
         if (earliestStartTime && candidate.startTime < earliestStartTime) {
-          softTimePenalty += 2;
+          const diffMinutes = toMinutes(earliestStartTime) - toMinutes(candidate.startTime);
+          const hoursDev = Math.ceil(diffMinutes / 60);
+          softTimePenalty += Math.max(3, hoursDev * 2);
         }
         if (latestEndTime && candidate.endTime > latestEndTime) {
-          softTimePenalty += 2;
+          const diffMinutes = toMinutes(candidate.endTime) - toMinutes(latestEndTime);
+          const hoursDev = Math.ceil(diffMinutes / 60);
+          softTimePenalty += Math.max(3, hoursDev * 2);
         }
 
         // Major department prioritization
         const isMajorDept = matchesMajorDepartment(candidate, userMajor);
         const isGeCourse = candidate.type === 'GE' || Boolean(candidate.ge);
-        const majorPenalty = isMajorDept ? 0 : isGeCourse ? 5 : 8;
+        const majorPenalty = isMajorDept ? 0 : isGeCourse ? 5 : 15;
 
-        // Standing alignment: upperclassmen prioritize upper-division over lower-division
+        // Standing alignment:
+        // Underclassmen prioritize lower-division foundations & GEs over upper-division
+        // Upperclassmen prioritize upper-division & GEs over lower-division non-GE
         let standingPenalty = 0;
-        if (!isUnderclassman && isLowerDivision(candidate)) {
-          standingPenalty = 3;
+        if (isUnderclassman && isUpperDivision(candidate) && !isGeCourse) {
+          standingPenalty = 10;
+        } else if (!isUnderclassman && isLowerDivision(candidate) && !isGeCourse) {
+          standingPenalty = 10;
         }
 
         const score =
@@ -386,8 +403,7 @@ export class CalendarService {
           (causesB2B ? 10 : 0) +
           softTimePenalty +
           majorPenalty +
-          standingPenalty +
-          indBadges.length;
+          standingPenalty;
 
         return { candidate, score };
       });
