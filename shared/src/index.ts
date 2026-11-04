@@ -48,11 +48,7 @@ export {
   ClearCalendarEventsResponseSchema,
 } from './calendar.schema.js';
 
-export type {
-  CourseLevel,
-  Course,
-  CourseCatalogItem,
-} from './calendar.schema.js';
+export type { CourseLevel, Course, CourseCatalogItem } from './calendar.schema.js';
 
 export {
   AgentSenderEnum,

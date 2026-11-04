@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   CalendarService,
   coursesOverlap,
@@ -1237,8 +1237,8 @@ describe('CalendarService Domain Service Test Suite', () => {
       const academicEvents = preview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
       expect(academicEvents).toHaveLength(3);
 
-      const cse101Sections = academicEvents.filter(
-        (e) => (e.code || e.title).toUpperCase().includes('CSE 101')
+      const cse101Sections = academicEvents.filter((e) =>
+        (e.code || e.title).toUpperCase().includes('CSE 101')
       );
       expect(cse101Sections).toHaveLength(1);
     });
@@ -1325,7 +1325,9 @@ describe('CalendarService Domain Service Test Suite', () => {
         }
       });
       // CSE 101, CSE 115A, CSE 130 must NOT be scheduled for freshmen
-      const upperDiv = academic.filter((c) => (c.code || c.title).includes('101') || (c.code || c.title).includes('115A'));
+      const upperDiv = academic.filter(
+        (c) => (c.code || c.title).includes('101') || (c.code || c.title).includes('115A')
+      );
       expect(upperDiv).toHaveLength(0);
     });
 
@@ -1524,19 +1526,28 @@ describe('CalendarService Domain Service Test Suite', () => {
 
     it('accurately scales candidate course count according to target credit quotas (10, 15, 20 units)', () => {
       // Act 1: 10 credits -> 2 courses
-      const p10 = CalendarService.getPreview(undefined, { targetTerm: 'Winter 2027', targetCredits: 10 });
+      const p10 = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        targetCredits: 10,
+      });
       const academic10 = p10.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
       expect(academic10).toHaveLength(2);
       expect(p10.totalCredits).toBe(10);
 
       // Act 2: 15 credits -> 3 courses
-      const p15 = CalendarService.getPreview(undefined, { targetTerm: 'Winter 2027', targetCredits: 15 });
+      const p15 = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        targetCredits: 15,
+      });
       const academic15 = p15.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
       expect(academic15).toHaveLength(3);
       expect(p15.totalCredits).toBe(15);
 
       // Act 3: 20 credits -> 4 courses
-      const p20 = CalendarService.getPreview(undefined, { targetTerm: 'Winter 2027', targetCredits: 20 });
+      const p20 = CalendarService.getPreview(undefined, {
+        targetTerm: 'Winter 2027',
+        targetCredits: 20,
+      });
       const academic20 = p20.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
       expect(academic20).toHaveLength(4);
       expect(p20.totalCredits).toBe(20);
@@ -1636,13 +1647,13 @@ describe('CalendarService Domain Service Test Suite', () => {
       expect(academic).toHaveLength(2);
       expect(preview.totalCredits).toBe(10);
 
-      const cse101Sections = academic.filter(
-        (c) => (c.code || c.title).toUpperCase().includes('CSE 101')
+      const cse101Sections = academic.filter((c) =>
+        (c.code || c.title).toUpperCase().includes('CSE 101')
       );
       expect(cse101Sections).toHaveLength(1);
 
-      const cse130Sections = academic.filter(
-        (c) => (c.code || c.title).toUpperCase().includes('CSE 130')
+      const cse130Sections = academic.filter((c) =>
+        (c.code || c.title).toUpperCase().includes('CSE 130')
       );
       expect(cse130Sections).toHaveLength(1);
     });
@@ -1721,31 +1732,47 @@ describe('CalendarService Domain Service Test Suite', () => {
     });
 
     describe('Ticket 04: Credit Quotas, Candidate Scaling & Dynamic Term Switching', () => {
-      it('accurately scales candidate selection across credit quotas (10 -> 2 courses, 15 -> 3 courses, 20 -> 4 courses)', () => {
-        // Arrange & Act 1: 10 credits -> exactly 2 courses (10 units)
-        const p10 = CalendarService.getPreview(undefined, { targetTerm: 'Winter 2027', targetCredits: 10 });
+      it('scales candidate selection to 2 courses (10 units) when targetCredits is 10', () => {
+        const p10 = CalendarService.getPreview(undefined, {
+          targetTerm: 'Winter 2027',
+          targetCredits: 10,
+        });
         const academic10 = p10.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
         expect(academic10).toHaveLength(2);
         expect(p10.totalCredits).toBe(10);
+      });
 
-        // Arrange & Act 2: 12-15 credits -> exactly 3 courses (15 units)
-        const p12 = CalendarService.getPreview(undefined, { targetTerm: 'Winter 2027', targetCredits: 12 });
+      it('scales candidate selection to 3 courses (15 units) when targetCredits is 12 to 15', () => {
+        const p12 = CalendarService.getPreview(undefined, {
+          targetTerm: 'Winter 2027',
+          targetCredits: 12,
+        });
         const academic12 = p12.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
         expect(academic12).toHaveLength(3);
         expect(p12.totalCredits).toBe(15);
 
-        const p15 = CalendarService.getPreview(undefined, { targetTerm: 'Winter 2027', targetCredits: 15 });
+        const p15 = CalendarService.getPreview(undefined, {
+          targetTerm: 'Winter 2027',
+          targetCredits: 15,
+        });
         const academic15 = p15.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
         expect(academic15).toHaveLength(3);
         expect(p15.totalCredits).toBe(15);
+      });
 
-        // Arrange & Act 3: 16-20 credits -> exactly 4 courses (20 units)
-        const p16 = CalendarService.getPreview(undefined, { targetTerm: 'Winter 2027', targetCredits: 16 });
+      it('scales candidate selection to 4 courses (20 units) when targetCredits is 16 to 20', () => {
+        const p16 = CalendarService.getPreview(undefined, {
+          targetTerm: 'Winter 2027',
+          targetCredits: 16,
+        });
         const academic16 = p16.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
         expect(academic16).toHaveLength(4);
         expect(p16.totalCredits).toBe(20);
 
-        const p20 = CalendarService.getPreview(undefined, { targetTerm: 'Winter 2027', targetCredits: 20 });
+        const p20 = CalendarService.getPreview(undefined, {
+          targetTerm: 'Winter 2027',
+          targetCredits: 20,
+        });
         const academic20 = p20.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
         expect(academic20).toHaveLength(4);
         expect(p20.totalCredits).toBe(20);
@@ -1822,114 +1849,125 @@ describe('CalendarService Domain Service Test Suite', () => {
         expect(uniqueCodes.size).toBe(3);
       });
 
-      it('returns authentic quarter-specific courses for Fall 2026, Winter 2027, Spring 2027, and Summer 2027', () => {
-        // Arrange & Act
-        const fall = CalendarService.getPreview(undefined, { targetTerm: 'Fall 2026', targetCredits: 15 });
-        const winter = CalendarService.getPreview(undefined, { targetTerm: 'Winter 2027', targetCredits: 15 });
-        const spring = CalendarService.getPreview(undefined, { targetTerm: 'Spring 2027', targetCredits: 15 });
-        const summer = CalendarService.getPreview(undefined, { targetTerm: 'Summer 2027', targetCredits: 15 });
-
-        // Assert: Terms
+      it('returns authentic quarter-specific courses when targetTerm is Fall 2026', () => {
+        const fall = CalendarService.getPreview(undefined, {
+          targetTerm: 'Fall 2026',
+          targetCredits: 15,
+        });
         expect(fall.term).toBe('Fall 2026');
-        expect(winter.term).toBe('Winter 2027');
-        expect(spring.term).toBe('Spring 2027');
-        expect(summer.term).toBe('Summer 2027');
-
-        // Assert: Course counts and credits
         const fallAcademic = fall.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
-        const winterAcademic = winter.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
-        const springAcademic = spring.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
-        const summerAcademic = summer.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
-
         expect(fallAcademic).toHaveLength(3);
-        expect(winterAcademic).toHaveLength(3);
-        expect(springAcademic).toHaveLength(3);
-        expect(summerAcademic).toHaveLength(3);
-
-        // Assert: Term-specific course identity
-        const fallIds = fallAcademic.map((c) => c.id);
-        const winterIds = winterAcademic.map((c) => c.id);
-        const springIds = springAcademic.map((c) => c.id);
-        const summerIds = summerAcademic.map((c) => c.id);
-
-        expect(fallIds).toContain('cse-101-f26');
-        expect(winterIds).toContain('cse-101-01');
-        expect(springIds).toContain('cse-102-s27');
-        expect(summerIds).toContain('cse-101-u27');
-
-        // Verify all quarter course sets are distinct
+        expect(fallAcademic.map((c) => c.id)).toContain('cse-101-f26');
         fallAcademic.forEach((c) => expect(c.term).toBe('Fall 2026'));
+      });
+
+      it('returns authentic quarter-specific courses when targetTerm is Winter 2027', () => {
+        const winter = CalendarService.getPreview(undefined, {
+          targetTerm: 'Winter 2027',
+          targetCredits: 15,
+        });
+        expect(winter.term).toBe('Winter 2027');
+        const winterAcademic = winter.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+        expect(winterAcademic).toHaveLength(3);
+        expect(winterAcademic.map((c) => c.id)).toContain('cse-101-01');
         winterAcademic.forEach((c) => expect(c.term).toBe('Winter 2027'));
+      });
+
+      it('returns authentic quarter-specific courses when targetTerm is Spring 2027', () => {
+        const spring = CalendarService.getPreview(undefined, {
+          targetTerm: 'Spring 2027',
+          targetCredits: 15,
+        });
+        expect(spring.term).toBe('Spring 2027');
+        const springAcademic = spring.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+        expect(springAcademic).toHaveLength(3);
+        expect(springAcademic.map((c) => c.id)).toContain('cse-102-s27');
         springAcademic.forEach((c) => expect(c.term).toBe('Spring 2027'));
+      });
+
+      it('returns authentic quarter-specific courses when targetTerm is Summer 2027', () => {
+        const summer = CalendarService.getPreview(undefined, {
+          targetTerm: 'Summer 2027',
+          targetCredits: 15,
+        });
+        expect(summer.term).toBe('Summer 2027');
+        const summerAcademic = summer.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+        expect(summerAcademic).toHaveLength(3);
+        expect(summerAcademic.map((c) => c.id)).toContain('cse-101-u27');
         summerAcademic.forEach((c) => expect(c.term).toBe('Summer 2027'));
       });
 
-      it('ensures no static persistence override forces old Winter 2027 courses onto a student switching terms', () => {
-        // Arrange: Create test user and persist Winter 2027 courses
-        const testUserId = 'test-user-term-switch-' + uuidv4();
-        const initialWinterPrefs = {
-          targetTerm: 'Winter 2027',
-          targetCredits: 15,
-        };
-        userQueries.createUser({
-          user_id: testUserId,
-          email: `${testUserId}@ucsc.edu`,
-          name: 'Term Switcher',
-          password_hash: 'hash',
-          standing: 'Junior',
-          major: 'Computer Science B.S.',
-          preferences: JSON.stringify(initialWinterPrefs),
+      describe('term isolation and persistence override prevention', () => {
+        let testUserId: string;
+
+        beforeEach(() => {
+          testUserId = 'test-user-term-switch-' + uuidv4();
+          userQueries.createUser({
+            user_id: testUserId,
+            email: `${testUserId}@ucsc.edu`,
+            name: 'Term Switcher',
+            password_hash: 'hash',
+            standing: 'Junior',
+            major: 'Computer Science B.S.',
+            preferences: JSON.stringify({
+              targetTerm: 'Winter 2027',
+              targetCredits: 15,
+            }),
+          });
+
+          calendarQueries.saveUserCalendarEvents(testUserId, 'Winter 2027', [
+            {
+              id: 'cse-130-01',
+              title: 'CSE 130: Principles of Computer Systems Design',
+              type: 'MAJOR',
+              days: ['Tuesday', 'Thursday'],
+              startTime: '13:15',
+              endTime: '14:50',
+              credits: 5,
+              term: 'Winter 2027',
+            },
+          ]);
         });
 
-        // Persist explicit custom schedule for Winter 2027
-        calendarQueries.saveUserCalendarEvents(testUserId, 'Winter 2027', [
-          {
-            id: 'cse-130-01',
-            title: 'CSE 130: Principles of Computer Systems Design',
-            type: 'MAJOR',
-            days: ['Tuesday', 'Thursday'],
-            startTime: '13:15',
-            endTime: '14:50',
-            credits: 5,
-            term: 'Winter 2027',
-          },
-        ]);
-
-        // Act 1: Verify Winter 2027 returns the saved Winter courses
-        const winterPreview = CalendarService.getPreview(testUserId);
-        expect(winterPreview.term).toBe('Winter 2027');
-        expect(winterPreview.events.some((e) => e.id === 'cse-130-01')).toBe(true);
-
-        // Act 2: Student switches term to Spring 2027 in preferences
-        userQueries.updateUserProfile(testUserId, {
-          preferences: JSON.stringify({
-            targetTerm: 'Spring 2027',
-            targetCredits: 15,
-          }),
+        afterEach(() => {
+          calendarQueries.deleteUserCalendarEvents(testUserId);
         });
 
-        const springPreview = CalendarService.getPreview(testUserId);
-
-        // Assert: Spring preview cleanly uses Spring courses without any stale Winter 2027 courses
-        expect(springPreview.term).toBe('Spring 2027');
-        const springAcademic = springPreview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
-        expect(springAcademic.length).toBeGreaterThan(0);
-        springAcademic.forEach((c) => {
-          expect(c.term).toBe('Spring 2027');
-          expect(c.id).not.toBe('cse-130-01');
+        it('returns saved courses when term matches persisted schedule', () => {
+          const winterPreview = CalendarService.getPreview(testUserId);
+          expect(winterPreview.term).toBe('Winter 2027');
+          expect(winterPreview.events.some((e) => e.id === 'cse-130-01')).toBe(true);
         });
 
-        // Act 3: Explicit query override for Fall 2026
-        const fallPreview = CalendarService.getPreview(testUserId, { targetTerm: 'Fall 2026' });
-        expect(fallPreview.term).toBe('Fall 2026');
-        const fallAcademic = fallPreview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
-        fallAcademic.forEach((c) => {
-          expect(c.term).toBe('Fall 2026');
-          expect(c.id).not.toBe('cse-130-01');
+        it('switches to fresh term courses without stale events when student updates targetTerm', () => {
+          userQueries.updateUserProfile(testUserId, {
+            preferences: JSON.stringify({
+              targetTerm: 'Spring 2027',
+              targetCredits: 15,
+            }),
+          });
+
+          const springPreview = CalendarService.getPreview(testUserId);
+          expect(springPreview.term).toBe('Spring 2027');
+          const springAcademic = springPreview.events.filter(
+            (e) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+          );
+          expect(springAcademic.length).toBeGreaterThan(0);
+          springAcademic.forEach((c) => {
+            expect(c.term).toBe('Spring 2027');
+            expect(c.id).not.toBe('cse-130-01');
+          });
         });
 
-        // Clean up
-        calendarQueries.deleteUserCalendarEvents(testUserId);
+        it('overrides persisted courses when targetTerm query override is provided', () => {
+          const fallPreview = CalendarService.getPreview(testUserId, { targetTerm: 'Fall 2026' });
+          expect(fallPreview.term).toBe('Fall 2026');
+          const fallAcademic = fallPreview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+          fallAcademic.forEach((c) => {
+            expect(c.term).toBe('Fall 2026');
+            expect(c.id).not.toBe('cse-130-01');
+          });
+        });
       });
     });
   });

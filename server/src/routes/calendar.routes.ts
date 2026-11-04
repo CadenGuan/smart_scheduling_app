@@ -13,7 +13,10 @@ const router = Router();
 router.get('/preview', requireAuth, (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user?.userId;
   const term = req.query.term as string | undefined;
-  const preview = CalendarService.getPreview(userId, term ? { targetTerm: term as any } : undefined);
+  const preview = CalendarService.getPreview(
+    userId,
+    term ? { targetTerm: term as any } : undefined
+  );
 
   res.status(200).json({
     success: true,

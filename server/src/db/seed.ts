@@ -18,7 +18,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Winter 2027',
     ge: null,
-    description: 'Data structures and algorithm design: balanced search trees, graph algorithms, asymptotic notation, greedy algorithms, and dynamic programming.',
+    description:
+      'Data structures and algorithm design: balanced search trees, graph algorithms, asymptotic notation, greedy algorithms, and dynamic programming.',
   },
   {
     id: 'cse-101-02',
@@ -36,7 +37,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Winter 2027',
     ge: null,
-    description: 'Secondary lecture section for CSE 101 focusing on algorithmic principles and graph data structures.',
+    description:
+      'Secondary lecture section for CSE 101 focusing on algorithmic principles and graph data structures.',
   },
   {
     id: 'cse-115a-01',
@@ -54,7 +56,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Winter 2027',
     ge: null,
-    description: 'Software development lifecycle, agile methodologies, team collaboration, testing, CI/CD, and project deployment.',
+    description:
+      'Software development lifecycle, agile methodologies, team collaboration, testing, CI/CD, and project deployment.',
   },
   {
     id: 'cse-130-01',
@@ -72,7 +75,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Winter 2027',
     ge: null,
-    description: 'Computer system design, operating system abstractions, multithreading, synchronization, file systems, and distributed concepts.',
+    description:
+      'Computer system design, operating system abstractions, multithreading, synchronization, file systems, and distributed concepts.',
   },
   {
     id: 'art-10f-01',
@@ -90,7 +94,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Winter 2027',
     ge: ['PR-C'],
-    description: 'Studio introduction to two-dimensional composition, color theory, media experiments, and creative visual expression satisfying Practice: Creative Process (PR).',
+    description:
+      'Studio introduction to two-dimensional composition, color theory, media experiments, and creative visual expression satisfying Practice: Creative Process (PR).',
   },
   {
     id: 'cse-12-01',
@@ -108,7 +113,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Winter 2027',
     ge: null,
-    description: 'Introduction to computer architecture, assembly language programming, CPU control paths, registers, and memory hierarchy.',
+    description:
+      'Introduction to computer architecture, assembly language programming, CPU control paths, registers, and memory hierarchy.',
   },
 
   // Google Calendar Busy Shift
@@ -142,7 +148,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Fall 2026',
     ge: null,
-    description: 'Advanced data structures, graphs, balanced search trees, algorithm analysis, asymptotic notation, and proof techniques.',
+    description:
+      'Advanced data structures, graphs, balanced search trees, algorithm analysis, asymptotic notation, and proof techniques.',
   },
   {
     id: 'math-23a-f26',
@@ -160,7 +167,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Fall 2026',
     ge: ['MF'],
-    description: 'Vectors in 3D Euclidean space, multivariable differential and integral calculus, and directional derivatives.',
+    description:
+      'Vectors in 3D Euclidean space, multivariable differential and integral calculus, and directional derivatives.',
   },
   {
     id: 'art-10f-f26',
@@ -178,7 +186,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Fall 2026',
     ge: ['PR-C'],
-    description: 'Two-dimensional visual art fundamentals, composition, balance, color theories, and creative presentation.',
+    description:
+      'Two-dimensional visual art fundamentals, composition, balance, color theories, and creative presentation.',
   },
   {
     id: 'econ-1-f26',
@@ -196,7 +205,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Fall 2026',
     ge: ['PE-H'],
-    description: 'Introduction to microeconomic analysis, market structures, price mechanics, elasticity, and consumer choice.',
+    description:
+      'Introduction to microeconomic analysis, market structures, price mechanics, elasticity, and consumer choice.',
   },
 
   // Spring 2027 Academic Courses (4 curated courses)
@@ -216,7 +226,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Spring 2027',
     ge: null,
-    description: 'Time and space analysis of algorithms, recurrence relations, dynamic programming, divide-and-conquer, greedy techniques, and NP-completeness.',
+    description:
+      'Time and space analysis of algorithms, recurrence relations, dynamic programming, divide-and-conquer, greedy techniques, and NP-completeness.',
   },
   {
     id: 'stat-131-s27',
@@ -234,7 +245,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Spring 2027',
     ge: ['SR'],
-    description: 'Introduction to probability theory, discrete and continuous random variables, expectation, variance, and limit theorems.',
+    description:
+      'Introduction to probability theory, discrete and continuous random variables, expectation, variance, and limit theorems.',
   },
   {
     id: 'art-80t-s27',
@@ -252,7 +264,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Spring 2027',
     ge: ['PR-C'],
-    description: 'Digital imaging, vector graphics, multimedia design tools, and creative digital workflows.',
+    description:
+      'Digital imaging, vector graphics, multimedia design tools, and creative digital workflows.',
   },
   {
     id: 'cse-30-s27',
@@ -270,7 +283,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Spring 2027',
     ge: null,
-    description: 'Object-oriented programming, data structures, recursion, algorithm development, and abstraction using Python.',
+    description:
+      'Object-oriented programming, data structures, recursion, algorithm development, and abstraction using Python.',
   },
 
   // Summer 2027 Academic Courses (4 curated courses)
@@ -290,7 +304,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Summer 2027',
     ge: null,
-    description: 'Accelerated summer session in data structures, algorithmic design, balanced trees, and graph algorithms.',
+    description:
+      'Accelerated summer session in data structures, algorithmic design, balanced trees, and graph algorithms.',
   },
   {
     id: 'math-19b-u27',
@@ -308,7 +323,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Summer 2027',
     ge: ['MF'],
-    description: 'Definite and indefinite integrals, techniques of integration, applications to physics and engineering.',
+    description:
+      'Definite and indefinite integrals, techniques of integration, applications to physics and engineering.',
   },
   {
     id: 'art-10f-u27',
@@ -326,7 +342,8 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Summer 2027',
     ge: ['PR-C'],
-    description: 'Intensive summer studio course exploring 2D composition, color mechanics, and expressive form.',
+    description:
+      'Intensive summer studio course exploring 2D composition, color mechanics, and expressive form.',
   },
   {
     id: 'cse-12-u27',
@@ -344,6 +361,7 @@ export const sampleCalendarEvents: CalendarEvent[] = [
     credits: 5,
     term: 'Summer 2027',
     ge: null,
-    description: 'Accelerated summer architecture course covering assembly language, memory layout, and processor organization.',
+    description:
+      'Accelerated summer architecture course covering assembly language, memory layout, and processor organization.',
   },
 ];

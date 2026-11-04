@@ -1,6 +1,6 @@
 import { CalendarEvent, ConflictBadgeType, UserPreferences } from 'shared';
 import { sampleCalendarEvents } from '../db/seed.js';
-import { userQueries } from '../db/queries/userQueries.js';
+import { userQueries, UserRow } from '../db/queries/userQueries.js';
 import { calendarQueries } from '../db/queries/calendarQueries.js';
 
 function toMinutes(timeStr: string): number {
@@ -126,7 +126,11 @@ export function wouldExceedBackToBack(courses: CalendarEvent[], maxHours: number
 
 export function extractBaseCourseCode(course: CalendarEvent): string {
   const raw = course.code || course.title.split(':')[0].trim();
-  return raw.replace(/-\d+$/, '').replace(/\s+section\s+\d+$/i, '').trim().toUpperCase();
+  return raw
+    .replace(/-\d+$/, '')
+    .replace(/\s+section\s+\d+$/i, '')
+    .trim()
+    .toUpperCase();
 }
 
 export function computeTimeDeviationPenalty(diffMinutes: number): number {
@@ -165,7 +169,11 @@ export function isUpperDivision(course: CalendarEvent): boolean {
 export function matchesMajorDepartment(course: CalendarEvent, majorStr?: string): boolean {
   if (!majorStr) return true;
   const normMajor = majorStr.toLowerCase();
-  const dept = (course.department || (course.code || course.title).split(' ')[0] || '').toUpperCase();
+  const dept = (
+    course.department ||
+    (course.code || course.title).split(' ')[0] ||
+    ''
+  ).toUpperCase();
 
   if (
     normMajor.includes('computer science') ||
@@ -189,7 +197,88 @@ export function matchesMajorDepartment(course: CalendarEvent, majorStr?: string)
   return dept.length > 0 && normMajor.toUpperCase().includes(dept);
 }
 
+export const SCORING_PENALTIES = {
+  TIME_COLLISION: 100,
+  EXCEEDS_BACK_TO_BACK: 10,
+  NON_MAJOR_COURSE: 15,
+  NON_MAJOR_GE: 5,
+  UNDERCLASSMAN_UPPER_DIV: 10,
+  UPPERCLASSMAN_LOWER_DIV: 10,
+} as const;
+
 export class CalendarService {
+  /**
+   * Detects whether an incoming profile/preferences update constitutes a Macro Hard Pivot.
+   * Macro Hard Pivot fields:
+   * - major
+   * - standing
+   * - targetTerm
+   * - targetCredits
+   *
+   * When a macro pivot occurs:
+   * 1. Invalidate and clear persisted events in user_calendar_events (including resetting pinned status).
+   * 2. In mock/offline mode, immediately re-run the greedy selection algorithm to generate and persist
+   *    a clean fresh baseline schedule matching the new major/standing/term/credits.
+   *
+   * Micro Soft adjustments (preferredFreeDays, earliestStartTime, latestEndTime, maxBackToBackHours):
+   * Retain persisted courses intact and re-evaluate dynamic conflict badges in place.
+   */
+  static handleMacroHardPivot(
+    userId: string,
+    user: UserRow,
+    newMajor: string | undefined,
+    newStanding: string | undefined,
+    newPrefs: any
+  ): void {
+    let prevPrefs: any = {};
+    if (user.preferences) {
+      try {
+        prevPrefs = JSON.parse(user.preferences);
+      } catch {
+        prevPrefs = {};
+      }
+    }
+
+    const standingChanged = Boolean(
+      newStanding !== undefined && user.standing && newStanding !== user.standing
+    );
+    const majorChanged = Boolean(newMajor !== undefined && user.major && newMajor !== user.major);
+
+    const oldTerm = prevPrefs?.targetTerm || 'Winter 2027';
+    const newTerm = newPrefs?.targetTerm;
+    const termChanged = Boolean(newTerm && newTerm !== oldTerm);
+
+    const oldCredits = prevPrefs?.targetCredits ?? 15;
+    const newCredits = newPrefs?.targetCredits;
+    const creditsChanged = Boolean(newCredits !== undefined && newCredits !== oldCredits);
+
+    const existingEvents = calendarQueries.getUserCalendarEvents(userId, oldTerm);
+    const isInitialSetup = existingEvents.length === 0;
+
+    const isMacroPivot =
+      isInitialSetup || standingChanged || majorChanged || termChanged || creditsChanged;
+
+    if (isMacroPivot) {
+      // 1. Invalidate and clear all persisted schedule events and reset pinned courses (clean slate)
+      calendarQueries.deleteUserCalendarEvents(userId);
+
+      // 2. In mock / offline mode, immediately generate fresh baseline schedule matching the new macro parameters
+      if (isUsingMockAgent()) {
+        const mergedPrefs = { ...(prevPrefs || {}), ...(newPrefs || {}) };
+        const freshPreview = CalendarService.getPreview(userId, {
+          ...mergedPrefs,
+          standing: newStanding || user.standing,
+          major: newMajor || user.major,
+        });
+
+        const academicEvents = freshPreview.events.filter((e) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+        if (academicEvents.length > 0) {
+          calendarQueries.saveUserCalendarEvents(userId, freshPreview.term, academicEvents);
+        }
+      }
+    }
+  }
+
   static getPreview(
     userId?: string,
     preferencesOverride?: Partial<UserPreferences> & { standing?: string; major?: string },
@@ -308,10 +397,7 @@ export class CalendarService {
       pinned.forEach((c) => availableBaseCodes.add(extractBaseCourseCode(c)));
       compliantUnpinned.forEach((c) => availableBaseCodes.add(extractBaseCourseCode(c)));
 
-      if (
-        (availableBaseCodes.size >= targetCourseCount) ||
-        violatingUnpinned.length === 0
-      ) {
+      if (availableBaseCodes.size >= targetCourseCount || violatingUnpinned.length === 0) {
         // Sufficient compliant candidates exist to fulfill target course count; strictly discard free-day violators
         academicPool = [...pinned, ...compliantUnpinned];
       } else {
@@ -320,7 +406,8 @@ export class CalendarService {
       }
     }
 
-    const _courseCount = academicPool.length === 0 ? 0 : Math.min(academicPool.length, targetCourseCount);
+    const _courseCount =
+      academicPool.length === 0 ? 0 : Math.min(academicPool.length, targetCourseCount);
 
     const isUnderclassman = userStanding === 'Freshman' || userStanding === 'Sophomore';
 
@@ -362,7 +449,13 @@ export class CalendarService {
         }
 
         // Hard constraint 2: Class Standing (Freshman/Sophomore restricted to lower-division & GEs)
-        if (isUnderclassman && hasSufficientLowerCourses && isUpperDivision(course) && course.type !== 'GE' && !course.ge) {
+        if (
+          isUnderclassman &&
+          hasSufficientLowerCourses &&
+          isUpperDivision(course) &&
+          course.type !== 'GE' &&
+          !course.ge
+        ) {
           continue;
         }
 
@@ -409,7 +502,10 @@ export class CalendarService {
           const collides = selectedCandidates.some((sel) => coursesOverlap(sel, candidate));
           let causesB2B = false;
           if (maxBackToBackHours) {
-            causesB2B = wouldExceedBackToBack([...selectedCandidates, candidate], maxBackToBackHours);
+            causesB2B = wouldExceedBackToBack(
+              [...selectedCandidates, candidate],
+              maxBackToBackHours
+            );
           }
 
           // Soft time window penalties: +2 per hour of deviation, min 3 penalty points
@@ -426,21 +522,25 @@ export class CalendarService {
           // Major department prioritization
           const isMajorDept = matchesMajorDepartment(candidate, userMajor);
           const isGeCourse = candidate.type === 'GE' || Boolean(candidate.ge);
-          const majorPenalty = isMajorDept ? 0 : isGeCourse ? 5 : 15;
+          const majorPenalty = isMajorDept
+            ? 0
+            : isGeCourse
+              ? SCORING_PENALTIES.NON_MAJOR_GE
+              : SCORING_PENALTIES.NON_MAJOR_COURSE;
 
           // Standing alignment:
           // Underclassmen prioritize lower-division foundations & GEs over upper-division
           // Upperclassmen prioritize upper-division & GEs over lower-division non-GE
           let standingPenalty = 0;
           if (isUnderclassman && isUpperDivision(candidate) && !isGeCourse) {
-            standingPenalty = 10;
+            standingPenalty = SCORING_PENALTIES.UNDERCLASSMAN_UPPER_DIV;
           } else if (!isUnderclassman && isLowerDivision(candidate) && !isGeCourse) {
-            standingPenalty = 10;
+            standingPenalty = SCORING_PENALTIES.UPPERCLASSMAN_LOWER_DIV;
           }
 
           const score =
-            (collides ? 100 : 0) +
-            (causesB2B ? 10 : 0) +
+            (collides ? SCORING_PENALTIES.TIME_COLLISION : 0) +
+            (causesB2B ? SCORING_PENALTIES.EXCEEDS_BACK_TO_BACK : 0) +
             softTimePenalty +
             majorPenalty +
             standingPenalty;
@@ -499,7 +599,7 @@ export class CalendarService {
     };
   }
 
-    static getCurriculumDag(
+  static getCurriculumDag(
     userId?: string,
     completedOverride?: string[]
   ): {

@@ -73,11 +73,15 @@ describe('Progress & Calendar API Tests', () => {
     expect(res.body.data.term).toBe('Winter 2027');
     expect(res.body.data.events.length).toBeGreaterThanOrEqual(4);
 
-    const cse115a = res.body.data.events.find((e: any) => e.id === 'cse-115a-lec' || e.id === 'cse-115a-01');
+    const cse115a = res.body.data.events.find(
+      (e: any) => e.id === 'cse-115a-lec' || e.id === 'cse-115a-01'
+    );
     expect(cse115a).toBeDefined();
     expect(cse115a.color).toBe('#00B4DB'); // Triadic Teal
 
-    const art10f = res.body.data.events.find((e: any) => e.id === 'art-10f-lec' || e.id === 'art-10f-01');
+    const art10f = res.body.data.events.find(
+      (e: any) => e.id === 'art-10f-lec' || e.id === 'art-10f-01'
+    );
     expect(art10f).toBeDefined();
     expect(art10f.color).toBe('#FF6B6B'); // Triadic Magenta
 

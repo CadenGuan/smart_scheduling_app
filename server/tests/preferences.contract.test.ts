@@ -508,7 +508,9 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
       expect(cse115a.conflictBadges).toContain('Spans preferred free day');
 
       // Math 21 meets Tue/Thu, should NOT have a conflict badge
-      const nonConflicted = res.body.data.events.find((e: any) => e.id.includes('cse-130') || e.id.includes('math-21'));
+      const nonConflicted = res.body.data.events.find(
+        (e: any) => e.id.includes('cse-130') || e.id.includes('math-21')
+      );
       expect(nonConflicted?.conflictBadge).toBeUndefined();
     });
 
@@ -532,7 +534,9 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
 
       // Assert
       expect(res.status).toBe(200);
-      const earlyCourse = res.body.data.events.find((e: any) => e.startTime < '10:00' && e.type !== 'GOOGLE_CALENDAR_BUSY');
+      const earlyCourse = res.body.data.events.find(
+        (e: any) => e.startTime < '10:00' && e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
       expect(earlyCourse).toBeDefined();
       expect(earlyCourse.conflictBadge).toBe('Starts before preferred time');
       expect(earlyCourse.conflictBadges).toContain('Starts before preferred time');
@@ -557,11 +561,16 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
 
       // Assert
       expect(res.status).toBe(200);
-      const multiConflict = res.body.data.events.find((e: any) => e.startTime < '10:00' && e.days.includes('Friday') && e.type !== 'GOOGLE_CALENDAR_BUSY');
+      const multiConflict = res.body.data.events.find(
+        (e: any) =>
+          e.startTime < '10:00' && e.days.includes('Friday') && e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
       expect(multiConflict).toBeDefined();
       expect(multiConflict.conflictBadges).toContain('Spans preferred free day');
       expect(multiConflict.conflictBadges).toContain('Starts before preferred time');
-      expect(multiConflict.conflictBadge).toBe('Spans preferred free day, Starts before preferred time');
+      expect(multiConflict.conflictBadge).toBe(
+        'Spans preferred free day, Starts before preferred time'
+      );
     });
 
     it('GET /api/calendar/preview dynamically updates across terms without static persistence overrides', async () => {
@@ -597,7 +606,9 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
       expect(springRes.status).toBe(200);
       expect(springRes.body.data.term).toBe('Spring 2027');
       expect(springRes.body.data.totalCredits).toBe(20);
-      const springAcademic = springRes.body.data.events.filter((e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      const springAcademic = springRes.body.data.events.filter(
+        (e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
       expect(springAcademic).toHaveLength(4);
       springAcademic.forEach((c: any) => {
         expect(c.term).toBe('Spring 2027');
@@ -612,7 +623,9 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
       // Assert 2: Preview returns Summer 2027 courses
       expect(summerRes.status).toBe(200);
       expect(summerRes.body.data.term).toBe('Summer 2027');
-      const summerAcademic = summerRes.body.data.events.filter((e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      const summerAcademic = summerRes.body.data.events.filter(
+        (e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
       summerAcademic.forEach((c: any) => {
         expect(c.term).toBe('Summer 2027');
       });
@@ -747,7 +760,9 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
         .set('Authorization', `Bearer ${testUserToken}`);
       expect(afterRes.status).toBe(200);
 
-      const afterEvents = afterRes.body.data.events.filter((e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      const afterEvents = afterRes.body.data.events.filter(
+        (e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
       const afterCourseIds = afterEvents.map((e: any) => e.id);
 
       // Enrolled courses must NOT be deleted or replaced on soft adjustments
@@ -778,7 +793,9 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
         .set('Authorization', `Bearer ${testUserToken}`);
       expect(afterRes.status).toBe(200);
       expect(afterRes.body.data.totalCredits).toBe(10);
-      const academicEvents = afterRes.body.data.events.filter((e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      const academicEvents = afterRes.body.data.events.filter(
+        (e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
       expect(academicEvents).toHaveLength(2);
     });
 
@@ -801,8 +818,12 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
         .get('/api/calendar/preview')
         .set('Authorization', `Bearer ${testUserToken}`);
       expect(afterRes.status).toBe(200);
-      const academicEvents = afterRes.body.data.events.filter((e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY');
-      const hasArt = academicEvents.some((c: any) => c.department === 'ART' || c.id?.startsWith('art') || c.title?.startsWith('ART'));
+      const academicEvents = afterRes.body.data.events.filter(
+        (e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
+      const hasArt = academicEvents.some(
+        (c: any) => c.department === 'ART' || c.id?.startsWith('art') || c.title?.startsWith('ART')
+      );
       expect(hasArt).toBe(true);
     });
 
@@ -826,7 +847,9 @@ describe('Preferences Specification & API Contract Tests [TESTING_GOLDEN_RULES]'
         .get('/api/calendar/preview')
         .set('Authorization', `Bearer ${testUserToken}`);
       expect(afterRes.status).toBe(200);
-      const academicEvents = afterRes.body.data.events.filter((e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY');
+      const academicEvents = afterRes.body.data.events.filter(
+        (e: any) => e.type !== 'GOOGLE_CALENDAR_BUSY'
+      );
       expect(academicEvents.length).toBeGreaterThan(0);
       academicEvents.forEach((c: any) => {
         const matchNum = c.title?.match(/\d+/);
