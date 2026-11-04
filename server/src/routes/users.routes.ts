@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import { userQueries, UserRow } from '../db/queries/userQueries.js';
-import { CalendarService } from '../services/calendar.service.js';
+import { PreferenceSyncService } from '../services/preferenceSync.service.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validate.middleware.js';
@@ -91,7 +91,14 @@ router.put(
 
     const userId = req.params.id;
     const newPrefs = req.body;
-    CalendarService.handleMacroHardPivot(userId, user, undefined, undefined, newPrefs);
+    const schedulePivot = PreferenceSyncService.applyChange(
+      userId,
+      user,
+      undefined,
+      undefined,
+      newPrefs,
+      'PREFERENCES_FORM'
+    );
     userQueries.updateUserProfile(userId, {
       preferences: JSON.stringify(newPrefs),
     });
@@ -100,6 +107,7 @@ router.put(
     res.status(200).json({
       success: true,
       data: JSON.parse(updatedUser!.preferences || '{}'),
+      meta: { schedulePivot },
     });
   })
 );
@@ -120,7 +128,14 @@ router.put(
     const validatedPreferences =
       preferences !== undefined ? JSON.stringify(preferences) : undefined;
 
-    CalendarService.handleMacroHardPivot(userId, user, major, standing, preferences);
+    const schedulePivot = PreferenceSyncService.applyChange(
+      userId,
+      user,
+      major,
+      standing,
+      preferences,
+      'PREFERENCES_FORM'
+    );
 
     userQueries.updateUserProfile(userId, {
       name,
@@ -145,6 +160,7 @@ router.put(
         preferences: updated!.preferences ? JSON.parse(updated!.preferences) : {},
         updatedAt: updated!.updated_at,
       },
+      meta: { schedulePivot },
     });
   })
 );

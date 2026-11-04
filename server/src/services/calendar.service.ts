@@ -206,6 +206,21 @@ export const SCORING_PENALTIES = {
   UPPERCLASSMAN_LOWER_DIV: 10,
 } as const;
 
+export interface MacroPivotChange {
+  field: 'major' | 'standing' | 'targetTerm' | 'targetCredits';
+  from?: string | null;
+  to?: string | null;
+}
+
+export interface MacroPivotResult {
+  isMacroPivot: boolean;
+  isInitialSetup: boolean;
+  changes: MacroPivotChange[];
+  clearedPinnedCourses: boolean;
+  /** True when the schedule was cleared and only the real agent can rebuild it. */
+  requiresAgentRegeneration: boolean;
+}
+
 export class CalendarService {
   /**
    * Detects whether an incoming profile/preferences update constitutes a Macro Hard Pivot.
@@ -222,6 +237,9 @@ export class CalendarService {
    *
    * Micro Soft adjustments (preferredFreeDays, earliestStartTime, latestEndTime, maxBackToBackHours):
    * Retain persisted courses intact and re-evaluate dynamic conflict badges in place.
+   *
+   * Returns a summary so callers can notify the agent and, in real-agent mode, ask it to rebuild
+   * the schedule (the server only regenerates a baseline itself in mock mode).
    */
   static handleMacroHardPivot(
     userId: string,
@@ -229,7 +247,7 @@ export class CalendarService {
     newMajor: string | undefined,
     newStanding: string | undefined,
     newPrefs: any
-  ): void {
+  ): MacroPivotResult {
     let prevPrefs: any = {};
     if (user.preferences) {
       try {
@@ -258,12 +276,21 @@ export class CalendarService {
     const isMacroPivot =
       isInitialSetup || standingChanged || majorChanged || termChanged || creditsChanged;
 
+    const changes: MacroPivotChange[] = [];
+    if (majorChanged) changes.push({ field: 'major', from: user.major, to: newMajor });
+    if (standingChanged) changes.push({ field: 'standing', from: user.standing, to: newStanding });
+    if (termChanged) changes.push({ field: 'targetTerm', from: oldTerm, to: newTerm });
+    if (creditsChanged)
+      changes.push({ field: 'targetCredits', from: String(oldCredits), to: String(newCredits) });
+    const hadPinnedCourses = existingEvents.some((e) => Boolean(e.pinned));
+    const isMock = isUsingMockAgent();
+
     if (isMacroPivot) {
       // 1. Invalidate and clear all persisted schedule events and reset pinned courses (clean slate)
       calendarQueries.deleteUserCalendarEvents(userId);
 
       // 2. In mock / offline mode, immediately generate fresh baseline schedule matching the new macro parameters
-      if (isUsingMockAgent()) {
+      if (isMock) {
         const mergedPrefs = { ...(prevPrefs || {}), ...(newPrefs || {}) };
         const freshPreview = CalendarService.getPreview(userId, {
           ...mergedPrefs,
@@ -277,6 +304,14 @@ export class CalendarService {
         }
       }
     }
+
+    return {
+      isMacroPivot,
+      isInitialSetup,
+      changes,
+      clearedPinnedCourses: isMacroPivot && hadPinnedCourses,
+      requiresAgentRegeneration: isMacroPivot && !isMock,
+    };
   }
 
   static getPreview(

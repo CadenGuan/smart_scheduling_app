@@ -264,14 +264,19 @@ def audit_degree_progress_tool(query: str = "") -> str:
 
 @tool
 def update_schedule_preferences(
-    target_credits: int = 15,
-    preferred_free_days: List[str] = None,
-    earliest_start_time: str = None,
-    latest_end_time: str = None,
-    max_back_to_back_hours: int = None,
+    target_credits: Optional[int] = None,
+    target_term: Optional[str] = None,
+    preferred_free_days: Optional[List[str]] = None,
+    earliest_start_time: Optional[str] = None,
+    latest_end_time: Optional[str] = None,
+    max_back_to_back_hours: Optional[int] = None,
 ) -> str:
-    """Action tool that modifies the student's weekly scheduling constraints and target credits, updating their calendar preview."""
-    updates: Dict[str, Any] = {'targetCredits': target_credits}
+    """Action tool that modifies the student's scheduling preferences. Pass ONLY the fields the student asked to change; omitted fields are left as they are. Changing target_credits or target_term (e.g. "Spring 2027") clears the current schedule, so propose replacement courses in the same reply."""
+    updates: Dict[str, Any] = {}
+    if target_credits is not None:
+        updates['targetCredits'] = target_credits
+    if target_term is not None:
+        updates['targetTerm'] = target_term
     if preferred_free_days is not None:
         updates['preferredFreeDays'] = preferred_free_days
     if earliest_start_time is not None:
@@ -282,7 +287,7 @@ def update_schedule_preferences(
         updates['maxBackToBackHours'] = max_back_to_back_hours
 
     return json.dumps({
-        'status': 'PREFERENCES_UPDATED',
+        'status': 'PREFERENCES_UPDATED' if updates else 'NO_CHANGES',
         'action': 'UPDATE_PREFERENCES',
         'updates': updates,
     })

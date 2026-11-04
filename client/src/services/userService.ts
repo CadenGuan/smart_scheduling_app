@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient';
-import { UserProfile, UserPreferences } from 'shared';
+import { UserProfile, UserPreferences, SchedulePivot } from 'shared';
 
 export class UserService {
   static async getProfile(userId: string): Promise<
@@ -22,6 +22,22 @@ export class UserService {
       updates
     );
     return res.data;
+  }
+
+  /**
+   * Same as updateProfile, but also returns the server's schedule pivot summary so the caller can
+   * ask the agent to rebuild the schedule when term/credits/major/standing changed.
+   */
+  static async updateProfileWithSync(
+    userId: string,
+    updates: Partial<UserProfile & { preferences: Partial<UserPreferences> }>
+  ): Promise<{ profile: UserProfile; schedulePivot?: SchedulePivot }> {
+    const res = await apiClient.put<{
+      success: boolean;
+      data: UserProfile;
+      meta?: { schedulePivot?: SchedulePivot };
+    }>(`/api/users/${userId}`, updates);
+    return { profile: res.data, schedulePivot: res.meta?.schedulePivot };
   }
 
   static async getPreferences(userId: string): Promise<UserPreferences> {

@@ -23,6 +23,8 @@ interface DashboardState {
 }
 
 export class DashboardPageComponent extends BaseComponent<WithRouterProps, DashboardState> {
+  private agentWorkspaceRef = React.createRef<AgentWorkspace>();
+
   constructor(props: WithRouterProps) {
     super(props);
     this.state = {
@@ -123,7 +125,10 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
     const { user } = this.state;
     if (!user?.userId) return;
 
-    const updatedUser = await UserService.updateProfile(user.userId, updates);
+    const { profile: updatedUser, schedulePivot } = await UserService.updateProfileWithSync(
+      user.userId,
+      updates
+    );
 
     // Re-fetch dynamically recalculated schedule
     const res = await apiClient.get<{
@@ -143,6 +148,16 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
       totalCredits: res.data.totalCredits,
       isPreferencesOpen: false,
     });
+
+    // Stitch preference changes into the agent conversation
+    const workspace = this.agentWorkspaceRef.current;
+    if (schedulePivot?.requiresAgentRegeneration) {
+      // Real agent: the schedule was cleared, so ask the agent to rebuild it now
+      void workspace?.requestScheduleRebuild(schedulePivot);
+    } else if (schedulePivot?.isMacroPivot) {
+      // Mock mode rebuilt a baseline server-side; just surface the SYSTEM notice
+      void workspace?.reloadMessages();
+    }
   };
 
   handleLogout = async (): Promise<void> => {
@@ -183,6 +198,7 @@ export class DashboardPageComponent extends BaseComponent<WithRouterProps, Dashb
             className="lg:col-span-5 h-[calc(100vh-112px)] min-h-[600px]"
           >
             <AgentWorkspace
+              ref={this.agentWorkspaceRef}
               user={user}
               onScheduleUpdated={this.handleRefreshSchedule}
               onCalendarUpdate={this.handleCalendarUpdate}

@@ -86,6 +86,11 @@ def format_history_messages(history: List[Dict[str, Any]]) -> List[Dict[str, str
     for msg in history:
         sender = msg.get('sender', 'USER').upper()
         content = msg.get('content', '')
+        if sender == 'SYSTEM':
+            # App-generated notices (e.g. a preference change cleared the schedule). Present them
+            # as context from the app, not as something the assistant said.
+            formatted.append({'role': 'user', 'content': f'[App notice, not written by the student] {content}'})
+            continue
         role = 'user' if sender == 'USER' else 'assistant'
         formatted.append({'role': role, 'content': content})
     return formatted

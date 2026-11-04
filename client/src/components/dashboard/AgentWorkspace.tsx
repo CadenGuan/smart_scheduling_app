@@ -1,6 +1,6 @@
 import React from 'react';
 import { BaseComponent } from '../base/BaseComponent';
-import { UserProfile, AgentMessage, CalendarEvent } from 'shared';
+import { UserProfile, AgentMessage, CalendarEvent, SchedulePivot } from 'shared';
 import { AgentService } from '../../services/agentService';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
@@ -14,6 +14,25 @@ interface AgentWorkspaceProps {
   }) => void;
 }
 
+const PIVOT_FIELD_LABELS: Record<string, string> = {
+  major: 'major',
+  standing: 'standing',
+  targetTerm: 'term',
+  targetCredits: 'target credits',
+};
+
+/** Prompt sent on the user's behalf after a preference change clears their schedule. */
+export function buildRebuildPrompt(pivot?: Pick<SchedulePivot, 'changes'>): string {
+  const changes = pivot?.changes ?? [];
+  if (changes.length === 0) {
+    return 'Please build me a schedule that fits my current preferences.';
+  }
+  const summary = changes
+    .map((c) => `${PIVOT_FIELD_LABELS[c.field] ?? c.field} to ${c.to ?? 'unset'}`)
+    .join(', ');
+  return `I just changed my ${summary}. Please build me a new schedule that fits my updated preferences.`;
+}
+
 interface AgentWorkspaceState {
   messages: AgentMessage[];
   inputPrompt: string;
@@ -25,6 +44,7 @@ interface AgentWorkspaceState {
 
 export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWorkspaceState> {
   private chatScrollRef = React.createRef<HTMLDivElement>();
+  private pendingRebuildPrompt: string | null = null;
 
   constructor(props: AgentWorkspaceProps) {
     super(props);
@@ -40,13 +60,33 @@ export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWork
 
   async componentDidMount(): Promise<void> {
     super.componentDidMount();
+    await this.reloadMessages();
+  }
+
+  /** Re-fetches history, e.g. to show a SYSTEM notice recorded by a preference change. */
+  reloadMessages = async (): Promise<void> => {
     try {
       const messages = await AgentService.getMessages();
       this.safeSetState({ messages }, () => this.scrollToBottom());
     } catch {
       // Graceful load failure
     }
-  }
+  };
+
+  /**
+   * Called after Edit Preferences cleared the schedule in real-agent mode: shows the server's
+   * notice, then asks the agent to build a schedule for the new preferences. If a message is
+   * already in flight, the rebuild runs as soon as it finishes.
+   */
+  requestScheduleRebuild = async (pivot?: Pick<SchedulePivot, 'changes'>): Promise<void> => {
+    const prompt = buildRebuildPrompt(pivot);
+    if (this.state.isProcessing) {
+      this.pendingRebuildPrompt = prompt;
+      return;
+    }
+    await this.reloadMessages();
+    await this.sendPrompt(prompt, true);
+  };
 
   componentDidUpdate(prevProps: AgentWorkspaceProps, prevState: AgentWorkspaceState): void {
     if (
@@ -84,6 +124,15 @@ export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWork
   private handleSendMessage = async (): Promise<void> => {
     const prompt = this.state.inputPrompt.trim();
     if (!prompt || this.state.isProcessing) return;
+    await this.sendPrompt(prompt, false);
+  };
+
+  /**
+   * @param isAutomatedRebuild true when the prompt was sent on the user's behalf after a pivot;
+   *   such turns never trigger a further automatic rebuild, so there's no loop.
+   */
+  private sendPrompt = async (prompt: string, isAutomatedRebuild: boolean): Promise<void> => {
+    if (this.state.isProcessing) return;
 
     // Optimistic user message for instant UI responsiveness
     const optimisticUserMsg: AgentMessage = {
@@ -117,11 +166,26 @@ export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWork
       } else if (result.agentMessage.toolCalls && result.agentMessage.toolCalls.length > 0) {
         this.props.onScheduleUpdated?.();
       }
+
+      if (result.schedulePivot) {
+        // The agent changed term/credits; pull in the SYSTEM notice the server recorded
+        await this.reloadMessages();
+      }
+      if (result.requiresAgentRegeneration && !isAutomatedRebuild && !this.pendingRebuildPrompt) {
+        this.pendingRebuildPrompt = buildRebuildPrompt(result.schedulePivot);
+      }
     } catch (err: any) {
       this.safeSetState({
         isProcessing: false,
         error: err.response?.data?.message || err.message || 'Failed to send message to agent',
       });
+    }
+
+    const pending = this.pendingRebuildPrompt;
+    this.pendingRebuildPrompt = null;
+    if (pending) {
+      await this.reloadMessages();
+      await this.sendPrompt(pending, true);
     }
   };
 
@@ -230,6 +294,19 @@ export class AgentWorkspace extends BaseComponent<AgentWorkspaceProps, AgentWork
             </div>
           ) : (
             messages.map((msg) => {
+              if (msg.sender === 'SYSTEM') {
+                return (
+                  <div
+                    key={msg.messageId}
+                    className="flex justify-center"
+                    data-testid="system-notice"
+                  >
+                    <div className="max-w-[90%] rounded-xl px-3 py-2 text-[11px] text-slate-500 bg-slate-100 border border-slate-200 text-center leading-relaxed">
+                      ⚙️ {msg.content}
+                    </div>
+                  </div>
+                );
+              }
               const isUser = msg.sender === 'USER';
               return (
                 <div
