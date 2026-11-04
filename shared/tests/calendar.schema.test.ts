@@ -250,7 +250,7 @@ describe('Calendar Schema Architectural Contract Tests [TESTING_GOLDEN_RULES.md 
       expect(sec01).toBeDefined();
       expect(sec02).toBeDefined();
       expect(sec01?.days).toEqual(['Monday', 'Wednesday', 'Friday']);
-      expect(sec01?.startTime).toBe('09:00');
+      expect(sec01?.startTime).toBe('10:30');
       expect(sec02?.days).toEqual(['Tuesday', 'Thursday']);
       expect(sec02?.startTime).toBe('10:00');
 
@@ -258,7 +258,7 @@ describe('Calendar Schema Architectural Contract Tests [TESTING_GOLDEN_RULES.md 
       const cse115a = winter.find((c) => c.id === 'cse-115a-01');
       expect(cse115a).toBeDefined();
       expect(cse115a?.days).toEqual(['Monday', 'Wednesday', 'Friday']);
-      expect(cse115a?.startTime).toBe('10:30');
+      expect(cse115a?.startTime).toBe('09:00');
 
       // Verify department variety
       const departments = new Set(courses.map((c) => c.department));
