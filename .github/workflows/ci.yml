@@ -17,8 +17,11 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      # Report every Node version's result instead of cancelling the others on first failure
+      fail-fast: false
       matrix:
-        node-version: [ 20.x, 22.x ]
+        # The server uses the built-in node:sqlite module (unflagged from Node 22.13), so Node 20 can't run it
+        node-version: [ 22.x, 24.x ]
 
     steps:
       - name: Checkout repository
@@ -54,6 +57,17 @@ jobs:
       - name: Typecheck TypeScript workspaces
         run: npm run typecheck
 
+      - name: Start mock agent service
+        # server/tests/agent.test.ts calls the Django agent on port 8000
+        run: |
+          cd agent_service
+          USE_MOCK_AGENT=true AGENT_MODE=mock nohup .venv/bin/python manage.py runserver 8000 --noreload > "$RUNNER_TEMP/agent.log" 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null http://127.0.0.1:8000/api/agent/process/; then exit 0; fi
+            sleep 1
+          done
+          echo "Agent service did not start:"; cat "$RUNNER_TEMP/agent.log"; exit 1
+
       - name: Run TypeScript test suites
         run: npm run test
 
@@ -73,10 +87,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js 20.x
+      - name: Set up Node.js 22.x
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: 22.x
           cache: 'npm'
 
       - name: Install dependencies
