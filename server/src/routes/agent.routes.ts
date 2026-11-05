@@ -9,7 +9,8 @@ import { userQueries } from '../db/queries/userQueries.js';
 import { calendarQueries } from '../db/queries/calendarQueries.js';
 import { ContextService } from '../services/context.service.js';
 import { AgentService } from '../services/agent.service.js';
-import { CalendarService } from '../services/calendar.service.js';
+import { CalendarService, MacroPivotResult } from '../services/calendar.service.js';
+import { PreferenceSyncService } from '../services/preferenceSync.service.js';
 
 const router = Router();
 
@@ -40,6 +41,7 @@ router.post(
     const agentResult = await AgentService.queryAgent(prompt, context);
 
     // 3.5 Execute server-side actions triggered by agent tool calls
+    let schedulePivot: MacroPivotResult | undefined;
     if (agentResult.toolCalls && Array.isArray(agentResult.toolCalls)) {
       for (const tc of agentResult.toolCalls) {
         if (tc.tool === 'update_schedule_preferences') {
@@ -47,6 +49,7 @@ router.post(
             const output = typeof tc.output === 'string' ? JSON.parse(tc.output) : tc.output;
             if (output && output.action === 'UPDATE_PREFERENCES' && output.updates) {
               const existingUser = userQueries.findUserById(userId);
+              if (!existingUser) continue;
               let currentPrefs: any = {};
               if (existingUser?.preferences) {
                 try {
@@ -56,6 +59,16 @@ router.post(
                 }
               }
               const updatedPrefs = { ...currentPrefs, ...output.updates };
+              // Same pivot rules as Edit Preferences: a term/credit change clears the old schedule
+              const pivot = PreferenceSyncService.applyChange(
+                userId,
+                existingUser,
+                undefined,
+                undefined,
+                updatedPrefs,
+                'AGENT'
+              );
+              if (pivot.isMacroPivot) schedulePivot = pivot;
               userQueries.updateUserProfile(userId, {
                 preferences: JSON.stringify(updatedPrefs),
               });
@@ -111,6 +124,11 @@ router.post(
         },
         proposedCourses: agentResult.proposedCourses,
         preview,
+        schedulePivot,
+        // The agent changed term/credits but didn't propose replacement courses this turn
+        requiresAgentRegeneration: Boolean(
+          schedulePivot?.requiresAgentRegeneration && !agentResult.proposedCourses?.length
+        ),
       },
     });
   })

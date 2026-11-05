@@ -140,6 +140,29 @@ class AgentApiTests(TestCase):
         pref_json = json.loads(update_schedule_preferences.invoke({'target_credits': 12}))
         self.assertEqual(pref_json['updates']['targetCredits'], 12)
 
+    def test_update_schedule_preferences_only_sends_requested_fields(self):
+        # Changing free days alone must not reset credits (that would wipe the schedule)
+        free_days = json.loads(update_schedule_preferences.invoke({'preferred_free_days': ['Friday']}))
+        self.assertEqual(free_days['updates'], {'preferredFreeDays': ['Friday']})
+
+        term = json.loads(update_schedule_preferences.invoke({'target_term': 'Spring 2027'}))
+        self.assertEqual(term['updates'], {'targetTerm': 'Spring 2027'})
+        self.assertEqual(term['status'], 'PREFERENCES_UPDATED')
+
+        empty = json.loads(update_schedule_preferences.invoke({}))
+        self.assertEqual(empty['updates'], {})
+        self.assertEqual(empty['status'], 'NO_CHANGES')
+
+    def test_history_presents_system_notices_as_app_context(self):
+        formatted = format_history_messages([
+            {'sender': 'USER', 'content': 'hi'},
+            {'sender': 'SYSTEM', 'content': 'Preferences updated: target term Winter 2027 → Spring 2027.'},
+            {'sender': 'AGENT', 'content': 'hello'},
+        ])
+        self.assertEqual([m['role'] for m in formatted], ['user', 'user', 'assistant'])
+        self.assertTrue(formatted[1]['content'].startswith('[App notice, not written by the student]'))
+        self.assertIn('Spring 2027', formatted[1]['content'])
+
     def test_why_prompt_returns_rationale_explanation(self):
         payload = {
             'prompt': 'Why do you recommend CSE 101?',

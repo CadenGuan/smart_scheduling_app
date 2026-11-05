@@ -24,6 +24,23 @@ export const AgentMessageSchema = z.object({
 });
 export type AgentMessage = z.infer<typeof AgentMessageSchema>;
 
+export const SchedulePivotChangeSchema = z.object({
+  field: z.enum(['major', 'standing', 'targetTerm', 'targetCredits']),
+  from: z.string().nullable().optional(),
+  to: z.string().nullable().optional(),
+});
+export type SchedulePivotChange = z.infer<typeof SchedulePivotChangeSchema>;
+
+/** Returned whenever preferences change, from the Edit Preferences form or an agent tool. */
+export const SchedulePivotSchema = z.object({
+  isMacroPivot: z.boolean(),
+  isInitialSetup: z.boolean(),
+  changes: z.array(SchedulePivotChangeSchema),
+  clearedPinnedCourses: z.boolean(),
+  requiresAgentRegeneration: z.boolean(),
+});
+export type SchedulePivot = z.infer<typeof SchedulePivotSchema>;
+
 export const AgentChatResponseSchema = z.object({
   success: z.boolean(),
   data: z.object({
@@ -31,6 +48,8 @@ export const AgentChatResponseSchema = z.object({
     agentMessage: AgentMessageSchema,
     proposedCourses: z.array(CalendarEventSchema).optional(),
     preview: CalendarPreviewResponseSchema.shape.data.optional(),
+    schedulePivot: SchedulePivotSchema.optional(),
+    requiresAgentRegeneration: z.boolean().optional(),
   }),
 });
 export type AgentChatResponse = z.infer<typeof AgentChatResponseSchema>;

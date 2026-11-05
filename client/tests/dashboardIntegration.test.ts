@@ -175,7 +175,7 @@ describe('Dashboard Integration Test Suite (Ticket 05)', () => {
         },
       ];
 
-      vi.spyOn(UserService, 'updateProfile').mockResolvedValue(updatedUser);
+      vi.spyOn(UserService, 'updateProfileWithSync').mockResolvedValue({ profile: updatedUser });
       vi.spyOn(apiClient, 'get').mockResolvedValue({
         success: true,
         data: {
@@ -211,8 +211,11 @@ describe('Dashboard Integration Test Suite (Ticket 05)', () => {
 
       await dashboard.handleSavePreferences(updatePayload);
 
-      // 1. Verify updateProfile was called with user ID and payload
-      expect(UserService.updateProfile).toHaveBeenCalledWith(mockUser.userId, updatePayload);
+      // 1. Verify the profile update was called with user ID and payload
+      expect(UserService.updateProfileWithSync).toHaveBeenCalledWith(
+        mockUser.userId,
+        updatePayload
+      );
 
       // 2. Verify immediate re-fetch of preview
       expect(apiClient.get).toHaveBeenCalledWith('/api/calendar/preview');
@@ -228,7 +231,7 @@ describe('Dashboard Integration Test Suite (Ticket 05)', () => {
     });
 
     it('returns without action if user has no userId', async () => {
-      const updateProfileSpy = vi.spyOn(UserService, 'updateProfile');
+      const updateProfileSpy = vi.spyOn(UserService, 'updateProfileWithSync');
       const getSpy = vi.spyOn(apiClient, 'get');
 
       const dashboard = new DashboardPageComponent({
@@ -246,6 +249,89 @@ describe('Dashboard Integration Test Suite (Ticket 05)', () => {
 
       expect(updateProfileSpy).not.toHaveBeenCalled();
       expect(getSpy).not.toHaveBeenCalled();
+    });
+
+    describe('agent hand-off after saving preferences', () => {
+      const preview = {
+        success: true,
+        data: { term: 'Spring 2027', totalCredits: 0, events: [] },
+      } as any;
+
+      function makeDashboardWithWorkspace() {
+        const dashboard = new DashboardPageComponent({
+          navigate: navigateMock,
+          location: { pathname: '/dashboard' } as any,
+          params: {},
+        });
+        dashboard.state = { ...dashboard.state, user: mockUser };
+        const workspace = {
+          requestScheduleRebuild: vi.fn().mockResolvedValue(undefined),
+          reloadMessages: vi.fn().mockResolvedValue(undefined),
+        };
+        (dashboard as any).agentWorkspaceRef = { current: workspace };
+        return { dashboard, workspace };
+      }
+
+      const pivot = (overrides: object) => ({
+        isMacroPivot: true,
+        isInitialSetup: false,
+        changes: [{ field: 'targetTerm' as const, from: 'Winter 2027', to: 'Spring 2027' }],
+        clearedPinnedCourses: false,
+        requiresAgentRegeneration: false,
+        ...overrides,
+      });
+
+      it('asks the agent to rebuild when the server says the schedule needs regenerating', async () => {
+        // Arrange
+        const { dashboard, workspace } = makeDashboardWithWorkspace();
+        const schedulePivot = pivot({ requiresAgentRegeneration: true });
+        vi.spyOn(UserService, 'updateProfileWithSync').mockResolvedValue({
+          profile: mockUser,
+          schedulePivot,
+        });
+        vi.spyOn(apiClient, 'get').mockResolvedValue(preview);
+
+        // Act
+        await dashboard.handleSavePreferences({ preferences: { targetTerm: 'Spring 2027' } });
+
+        // Assert
+        expect(workspace.requestScheduleRebuild).toHaveBeenCalledWith(schedulePivot);
+        expect(workspace.reloadMessages).not.toHaveBeenCalled();
+      });
+
+      it('only refreshes chat history when the server already rebuilt the schedule (mock mode)', async () => {
+        // Arrange
+        const { dashboard, workspace } = makeDashboardWithWorkspace();
+        vi.spyOn(UserService, 'updateProfileWithSync').mockResolvedValue({
+          profile: mockUser,
+          schedulePivot: pivot({}),
+        });
+        vi.spyOn(apiClient, 'get').mockResolvedValue(preview);
+
+        // Act
+        await dashboard.handleSavePreferences({ preferences: { targetTerm: 'Spring 2027' } });
+
+        // Assert
+        expect(workspace.reloadMessages).toHaveBeenCalled();
+        expect(workspace.requestScheduleRebuild).not.toHaveBeenCalled();
+      });
+
+      it('leaves the agent alone for soft adjustments', async () => {
+        // Arrange
+        const { dashboard, workspace } = makeDashboardWithWorkspace();
+        vi.spyOn(UserService, 'updateProfileWithSync').mockResolvedValue({
+          profile: mockUser,
+          schedulePivot: pivot({ isMacroPivot: false, changes: [] }),
+        });
+        vi.spyOn(apiClient, 'get').mockResolvedValue(preview);
+
+        // Act
+        await dashboard.handleSavePreferences({ preferences: { preferredFreeDays: ['Friday'] } });
+
+        // Assert
+        expect(workspace.reloadMessages).not.toHaveBeenCalled();
+        expect(workspace.requestScheduleRebuild).not.toHaveBeenCalled();
+      });
     });
   });
 

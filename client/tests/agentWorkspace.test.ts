@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
-import { AgentWorkspace } from '../src/components/dashboard/AgentWorkspace';
+import { AgentWorkspace, buildRebuildPrompt } from '../src/components/dashboard/AgentWorkspace';
 import { MarkdownRenderer } from '../src/components/dashboard/MarkdownRenderer';
 import { AgentService } from '../src/services/agentService';
 import { UserProfile, AgentMessage } from 'shared';
@@ -183,6 +183,120 @@ describe('AgentWorkspace Component Suite', () => {
       expect(clearSpy).toHaveBeenCalled();
       expect(workspace.state.messages).toHaveLength(0);
       expect(workspace.state.isClearConfirming).toBe(false);
+    });
+  });
+
+  describe('Preference change hand-off', () => {
+    const termPivot = {
+      changes: [{ field: 'targetTerm' as const, from: 'Winter 2027', to: 'Spring 2027' }],
+    };
+
+    function chatReply(content: string, extra: object = {}) {
+      return {
+        userMessage: {
+          messageId: `u-${content}`,
+          userId: mockUser.userId,
+          sender: 'USER' as const,
+          content,
+          createdAt: new Date().toISOString(),
+        },
+        agentMessage: {
+          messageId: `a-${content}`,
+          userId: mockUser.userId,
+          sender: 'AGENT' as const,
+          content: `reply to ${content}`,
+          createdAt: new Date().toISOString(),
+        },
+        ...extra,
+      };
+    }
+
+    it('buildRebuildPrompt names the changed fields', () => {
+      expect(buildRebuildPrompt(termPivot)).toBe(
+        'I just changed my term to Spring 2027. Please build me a new schedule that fits my updated preferences.'
+      );
+      expect(buildRebuildPrompt(undefined)).toContain('current preferences');
+    });
+
+    it('requestScheduleRebuild reloads history then sends the rebuild prompt', async () => {
+      // Arrange
+      const getSpy = vi.spyOn(AgentService, 'getMessages').mockResolvedValue([]);
+      const sendSpy = vi
+        .spyOn(AgentService, 'sendMessage')
+        .mockResolvedValue(chatReply('rebuild') as any);
+      const workspace = new AgentWorkspace({ user: mockUser });
+      await workspace.componentDidMount();
+      getSpy.mockClear();
+
+      // Act
+      await workspace.requestScheduleRebuild(termPivot);
+
+      // Assert
+      expect(getSpy).toHaveBeenCalledTimes(1);
+      expect(sendSpy).toHaveBeenCalledWith(buildRebuildPrompt(termPivot));
+    });
+
+    it('queues a rebuild requested while a message is in flight', async () => {
+      // Arrange
+      vi.spyOn(AgentService, 'getMessages').mockResolvedValue([]);
+      const sendSpy = vi
+        .spyOn(AgentService, 'sendMessage')
+        .mockResolvedValue(chatReply('x') as any);
+      const workspace = new AgentWorkspace({ user: mockUser });
+      await workspace.componentDidMount();
+      workspace.state = { ...workspace.state, isProcessing: true };
+
+      // Act
+      await workspace.requestScheduleRebuild(termPivot);
+
+      // Assert
+      expect(sendSpy).not.toHaveBeenCalled();
+      expect((workspace as any).pendingRebuildPrompt).toBe(buildRebuildPrompt(termPivot));
+    });
+
+    it('follows up exactly once when the agent itself cleared the schedule', async () => {
+      // Arrange
+      vi.spyOn(AgentService, 'getMessages').mockResolvedValue([]);
+      const pivotReply = { schedulePivot: termPivot, requiresAgentRegeneration: true };
+      const sendSpy = vi
+        .spyOn(AgentService, 'sendMessage')
+        .mockResolvedValueOnce(chatReply('Plan for spring', pivotReply) as any)
+        // Even if the automated turn also reports a rebuild is needed, don't loop
+        .mockResolvedValueOnce(chatReply('rebuild', pivotReply) as any);
+      const workspace = new AgentWorkspace({ user: mockUser });
+      await workspace.componentDidMount();
+
+      // Act
+      (workspace as any).handleInputChange({ target: { value: 'Plan for spring' } });
+      await (workspace as any).handleSendMessage();
+
+      // Assert
+      expect(sendSpy).toHaveBeenCalledTimes(2);
+      expect(sendSpy).toHaveBeenNthCalledWith(2, buildRebuildPrompt(termPivot));
+    });
+
+    it('renders SYSTEM messages as a notice, not an agent bubble', async () => {
+      // Arrange
+      vi.spyOn(AgentService, 'getMessages').mockResolvedValue([
+        {
+          messageId: 's1',
+          userId: mockUser.userId,
+          sender: 'SYSTEM',
+          content:
+            'Preferences updated from Edit Preferences: target term Winter 2027 → Spring 2027.',
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+      const workspace = new AgentWorkspace({ user: mockUser });
+      await workspace.componentDidMount();
+
+      // Act
+      const html = cleanHtml(renderToString(workspace.render()));
+
+      // Assert
+      expect(html).toContain('data-testid="system-notice"');
+      expect(html).toContain('target term Winter 2027 → Spring 2027');
+      expect(html).not.toContain('border-l-[#F9CA24]');
     });
   });
 });

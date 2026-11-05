@@ -37,7 +37,7 @@ export const conversationQueries = {
     const stmt = db.prepare(`
       SELECT * FROM conversations
       WHERE user_id = ?
-      ORDER BY created_at ASC
+      ORDER BY created_at ASC, rowid ASC
       LIMIT ?
     `);
     return stmt.all(userId, limit) as ConversationRow[];
@@ -45,13 +45,13 @@ export const conversationQueries = {
 
   getSlidingWindowMessages: (userId: string, limit: number = 10): ConversationRow[] => {
     const stmt = db.prepare(`
-      SELECT * FROM (
-        SELECT * FROM conversations
+      SELECT message_id, user_id, sender, content, tool_calls, metadata, created_at FROM (
+        SELECT *, rowid AS seq FROM conversations
         WHERE user_id = ?
-        ORDER BY created_at DESC
+        ORDER BY created_at DESC, rowid DESC
         LIMIT ?
       ) sub
-      ORDER BY created_at ASC
+      ORDER BY created_at ASC, seq ASC
     `);
     return stmt.all(userId, limit) as ConversationRow[];
   },
