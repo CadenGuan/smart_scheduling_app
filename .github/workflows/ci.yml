@@ -51,11 +51,16 @@ jobs:
 
       - name: Lint and formatting checks
         run: |
-          npm run lint
+          npm run lint:all
           npm run format:check
 
-      - name: Typecheck TypeScript workspaces
-        run: npm run typecheck
+      - name: Typecheck TypeScript & Python workspaces
+        run: npm run typecheck:all
+
+      - name: Static analysis (dead code & duplication checks)
+        run: |
+          npm run check:deadcode
+          npm run check:duplicates
 
       - name: Start mock agent service
         # server/tests/agent.test.ts calls the Django agent on port 8000
@@ -68,11 +73,11 @@ jobs:
           done
           echo "Agent service did not start:"; cat "$RUNNER_TEMP/agent.log"; exit 1
 
-      - name: Run TypeScript test suites
-        run: npm run test
+      - name: Run TypeScript test suites with coverage
+        run: npm run test:coverage
 
-      - name: Run Python agent test suite
-        run: npm run test:agent
+      - name: Run Python agent test suite with coverage
+        run: npm run test:coverage:agent
 
       - name: Build production bundles
         run: npm run build

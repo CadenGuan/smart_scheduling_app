@@ -1,14 +1,16 @@
 import re
-from typing import Dict, Any, List
-from .dag_solver import get_prerequisite_chain, get_downstream_impact, audit_degree_progress
+from typing import Any, Dict, List
+
+from .dag_solver import get_downstream_impact, get_prerequisite_chain
 from .tools import find_courses, get_course_catalog, is_course_requested_or_pinned
+
 
 def run_mock_agent(
     prompt: str,
     student: Dict[str, Any],
     preferences: Dict[str, Any],
     schedule: List[Dict[str, Any]],
-    history: List[Dict[str, Any]]
+    history: List[Dict[str, Any]],
 ) -> Dict[str, Any]:
     """
     Deterministic mock agent for offline development and automated testing.
@@ -17,20 +19,22 @@ def run_mock_agent(
     conversational preference updating, and calendar export instructions.
     """
     prompt_lower = prompt.lower()
-    name = student.get('name', 'Slug')
-    major = student.get('major', 'Computer Science B.S.')
-    standing = student.get('standing', 'Junior')
+    name = student.get("name", "Slug")
+    major = student.get("major", "Computer Science B.S.")
+    standing = student.get("standing", "Junior")
 
-    ge_status = preferences.get('geStatus', {})
-    remaining_ges = ge_status.get('remaining', []) if isinstance(ge_status, dict) else []
-    completed_major = preferences.get('majorRequirementsTaken', [])
-    target_credits = preferences.get('targetCredits', 15)
+    ge_status = preferences.get("geStatus", {})
+    remaining_ges = ge_status.get("remaining", []) if isinstance(ge_status, dict) else []
+    completed_major = preferences.get("majorRequirementsTaken", [])
+    target_credits = preferences.get("targetCredits", 15)
 
     tool_calls_simulated = []
     proposed_courses = []
 
-    term_match = re.search(r'\b(Winter|Spring|Summer|Fall)\s+\d{4}\b', prompt, re.IGNORECASE)
-    term = term_match.group(0).title() if term_match else preferences.get('targetTerm', 'Winter 2027')
+    term_match = re.search(r"\b(Winter|Spring|Summer|Fall)\s+\d{4}\b", prompt, re.IGNORECASE)
+    term = (
+        term_match.group(0).title() if term_match else preferences.get("targetTerm", "Winter 2027")
+    )
 
     catalog = get_course_catalog()
 
@@ -39,7 +43,7 @@ def run_mock_agent(
     for c in catalog:
         if is_course_requested_or_pinned(prompt, c):
             c_copy = dict(c)
-            c_copy['pinned'] = True
+            c_copy["pinned"] = True
             pinned_courses.append(c_copy)
 
     # Scenario 0: Explicit Course Addition / Pinning / Replacement Request
@@ -49,35 +53,46 @@ def run_mock_agent(
         # Check if any course is specifically being replaced / swapped out
         replaced_codes = []
         for c in catalog:
-            c_code = (c.get('code') or '').lower()
-            c_num = c_code.split()[-1] if c_code else ''
-            if c_code and re.search(r'\b(replace|swap|switch|substitute)\s+(?:my\s+)?\b' + re.escape(c_code) + r'\b', prompt_lower):
-                if c.get('code') not in replaced_codes:
-                    replaced_codes.append(c.get('code'))
-            elif c_num and re.search(r'\b(replace|swap|switch|substitute)\s+(?:my\s+)?\b' + re.escape(c_num) + r'\b', prompt_lower):
-                if c.get('code') not in replaced_codes:
-                    replaced_codes.append(c.get('code'))
+            c_code = (c.get("code") or "").lower()
+            c_num = c_code.split()[-1] if c_code else ""
+            if c_code and re.search(
+                r"\b(replace|swap|switch|substitute)\s+(?:my\s+)?\b" + re.escape(c_code) + r"\b",
+                prompt_lower,
+            ):
+                if c.get("code") not in replaced_codes:
+                    replaced_codes.append(c.get("code"))
+            elif c_num and re.search(
+                r"\b(replace|swap|switch|substitute)\s+(?:my\s+)?\b" + re.escape(c_num) + r"\b",
+                prompt_lower,
+            ):
+                if c.get("code") not in replaced_codes:
+                    replaced_codes.append(c.get("code"))
 
         complementary = []
-        for default_code in ['CSE 115A', 'CSE 101', 'CSE 130', 'ART 10F', 'PHIL 11']:
-            if not any(pc.get('code') == default_code for pc in pinned_courses) and default_code not in replaced_codes:
+        for default_code in ["CSE 115A", "CSE 101", "CSE 130", "ART 10F", "PHIL 11"]:
+            if (
+                not any(pc.get("code") == default_code for pc in pinned_courses)
+                and default_code not in replaced_codes
+            ):
                 matches = find_courses(query=default_code, term=term)
                 if matches:
                     comp = dict(matches[0])
-                    comp['pinned'] = False
+                    comp["pinned"] = False
                     complementary.append(comp)
 
         proposed_courses = list(pinned_courses) + complementary[:4]
 
-        tool_calls_simulated.append({
-            'tool': 'search_course_catalog',
-            'args': {'query': pinned_courses[0].get('code', ''), 'term': term},
-            'output': [c['id'] for c in proposed_courses],
-        })
+        tool_calls_simulated.append(
+            {
+                "tool": "search_course_catalog",
+                "args": {"query": pinned_courses[0].get("code", ""), "term": term},
+                "output": [c["id"] for c in proposed_courses],
+            }
+        )
 
         details_list = []
         for pc in pinned_courses:
-            days_str = ", ".join(pc.get('days', []))
+            days_str = ", ".join(pc.get("days", []))
             details_list.append(
                 f"- **`{pc.get('code')}` ({pc.get('title')})**: {days_str} {pc.get('startTime')}-{pc.get('endTime')} ({pc.get('credits')} credits) in {pc.get('location')}"
             )
@@ -98,52 +113,77 @@ def run_mock_agent(
         )
 
     # Scenario 1: Calendar Export (Sprint 4 Priority 5 User Story)
-    elif 'export' in prompt_lower or 'download schedule' in prompt_lower or '.ics' in prompt_lower or 'google calendar' in prompt_lower or 'apple calendar' in prompt_lower:
+    elif (
+        "export" in prompt_lower
+        or "download schedule" in prompt_lower
+        or ".ics" in prompt_lower
+        or "google calendar" in prompt_lower
+        or "apple calendar" in prompt_lower
+    ):
         response = (
-            f"You can easily export your planned schedule into standard RFC 5545 `.ics` format! 🗓️\n\n"
-            f"### How to Export Your Calendar:\n"
-            f"1. Click the **'📥 Export .ics'** button in the header bar of your Weekly Schedule Preview.\n"
-            f"2. Your browser will download `slug-schedule-winter-2027.ics` directly.\n"
-            f"3. Open your preferred app (Google Calendar, Apple Calendar, or Outlook) and import the downloaded `.ics` file.\n\n"
-            f"💡 **Built-In Alerts:** All class meetings include **15-minute reminders**, and academic milestones (like Add/Drop and Finals) come with **1-day advance alarms**!"
+            "You can easily export your planned schedule into standard RFC 5545 `.ics` format! 🗓️\n\n"
+            "### How to Export Your Calendar:\n"
+            "1. Click the **'📥 Export .ics'** button in the header bar of your Weekly Schedule Preview.\n"
+            "2. Your browser will download `slug-schedule-winter-2027.ics` directly.\n"
+            "3. Open your preferred app (Google Calendar, Apple Calendar, or Outlook) and import the downloaded `.ics` file.\n\n"
+            "💡 **Built-In Alerts:** All class meetings include **15-minute reminders**, and academic milestones (like Add/Drop and Finals) come with **1-day advance alarms**!"
         )
 
     # Scenario 1.5: Research & Academic Conference Deadlines (Product Backlog Item 2)
-    elif any(k in prompt_lower for k in ['conference', 'research', 'deadline', 'symposium', 'publish', 'call for papers', 'cfp']):
-        tool_calls_simulated.append({
-            'tool': 'query_conference_deadlines',
-            'output': {
-                'recommendedVenues': ['UCSC URS', 'ICSE SRC', 'SIGCSE', 'OSDI', 'NeurIPS'],
-                'targetAudience': 'UCSC CS Undergraduates & Researchers',
+    elif any(
+        k in prompt_lower
+        for k in [
+            "conference",
+            "research",
+            "deadline",
+            "symposium",
+            "publish",
+            "call for papers",
+            "cfp",
+        ]
+    ):
+        tool_calls_simulated.append(
+            {
+                "tool": "query_conference_deadlines",
+                "output": {
+                    "recommendedVenues": ["UCSC URS", "ICSE SRC", "SIGCSE", "OSDI", "NeurIPS"],
+                    "targetAudience": "UCSC CS Undergraduates & Researchers",
+                },
             }
-        })
+        )
         response = (
-            f"Here are the key academic conference and undergraduate research deadlines to keep on your radar! 🎯\n\n"
-            f"### High-Impact Opportunities for UCSC CS Students:\n"
-            f"1. **UCSC Undergraduate Research Symposium (URS)** – *Early May 2027* (Abstracts Due April 15). Fantastic local venue to showcase capstone projects or senior theses.\n"
-            f"2. **ACM SIGCSE Technical Symposium (Student Research Track)** – *Early March 2027*. Ideal for CS education and curriculum tooling research.\n"
-            f"3. **ICSE Student Research Competition (SRC)** – *Late May 2027*. Flagship software engineering venue for student innovations.\n"
-            f"4. **USENIX OSDI & NeurIPS** – Tier-1 premier venues for systems design and machine learning.\n\n"
-            f"💡 **Sync to Your Calendar:** Click the **'🎯 Deadlines'** button in your schedule header to filter by research topic or click **'Export Deadlines .ics'** to load them into your calendar!"
+            "Here are the key academic conference and undergraduate research deadlines to keep on your radar! 🎯\n\n"
+            "### High-Impact Opportunities for UCSC CS Students:\n"
+            "1. **UCSC Undergraduate Research Symposium (URS)** – *Early May 2027* (Abstracts Due April 15). Fantastic local venue to showcase capstone projects or senior theses.\n"
+            "2. **ACM SIGCSE Technical Symposium (Student Research Track)** – *Early March 2027*. Ideal for CS education and curriculum tooling research.\n"
+            "3. **ICSE Student Research Competition (SRC)** – *Late May 2027*. Flagship software engineering venue for student innovations.\n"
+            "4. **USENIX OSDI & NeurIPS** – Tier-1 premier venues for systems design and machine learning.\n\n"
+            "💡 **Sync to Your Calendar:** Click the **'🎯 Deadlines'** button in your schedule header to filter by research topic or click **'Export Deadlines .ics'** to load them into your calendar!"
         )
 
     # Scenario 2: Dropping a Course Impact (Sprint 3 Priority 3 User Story)
-    elif 'drop' in prompt_lower or 'withdraw' in prompt_lower:
+    elif "drop" in prompt_lower or "withdraw" in prompt_lower:
         course_hint = "CSE 101"
-        for code in ['cse 101', 'cse 115a', 'cse 130', 'cse 13s', 'cse 12', 'cse 16', 'math 19b']:
+        for code in ["cse 101", "cse 115a", "cse 130", "cse 13s", "cse 12", "cse 16", "math 19b"]:
             if code in prompt_lower:
                 course_hint = code.upper()
                 break
 
         impact = get_downstream_impact(course_hint)
-        tool_calls_simulated.append({
-            'tool': 'assess_drop_impact',
-            'output': impact,
-        })
+        tool_calls_simulated.append(
+            {
+                "tool": "assess_drop_impact",
+                "output": impact,
+            }
+        )
 
-        imm_str = ", ".join([f"`{c}`" for c in impact['immediateBlocked']]) if impact['immediateBlocked'] else "none"
-        total_count = impact['totalBlockedCount']
-        
+        imm_str = (
+            ", ".join([f"`{c}`" for c in impact["immediateBlocked"]])
+            if impact["immediateBlocked"]
+            else "none"
+        )
+        total_count = impact["totalBlockedCount"]
+
         response = (
             f"Here is the downstream degree audit if you drop **`{course_hint}`**: ⚠️\n\n"
             f"- **Immediately Blocked:** {imm_str}\n"
@@ -153,29 +193,47 @@ def run_mock_agent(
         )
 
     # Scenario 3: Prerequisite Pathfinding via NetworkX DAG (Sprint 3 Priority 5 User Story)
-    elif 'prereq' in prompt_lower or 'path' in prompt_lower or 'how do i get to' in prompt_lower or 'how to take' in prompt_lower or 'unlock' in prompt_lower:
+    elif (
+        "prereq" in prompt_lower
+        or "path" in prompt_lower
+        or "how do i get to" in prompt_lower
+        or "how to take" in prompt_lower
+        or "unlock" in prompt_lower
+    ):
         target_course = "CSE 130"
-        for code in ['cse 130', 'cse 115a', 'cse 115b', 'cse 180', 'cse 101', 'cse 102', 'cse 103', 'cse 150', 'cse 185s']:
+        for code in [
+            "cse 130",
+            "cse 115a",
+            "cse 115b",
+            "cse 180",
+            "cse 101",
+            "cse 102",
+            "cse 103",
+            "cse 150",
+            "cse 185s",
+        ]:
             if code in prompt_lower:
                 target_course = code.upper()
                 break
 
         chain = get_prerequisite_chain(target_course, completed_major)
-        tool_calls_simulated.append({
-            'tool': 'find_prerequisite_path',
-            'output': chain,
-        })
+        tool_calls_simulated.append(
+            {
+                "tool": "find_prerequisite_path",
+                "output": chain,
+            }
+        )
 
-        if chain['status'] == 'READY_TO_ENROLL':
+        if chain["status"] == "READY_TO_ENROLL":
             response = (
                 f"🎉 Great news! You have already satisfied all prerequisites for **`{target_course}`**! "
                 f"You are eligible to place it on your schedule next quarter."
             )
-        elif chain['status'] == 'ALREADY_COMPLETED':
+        elif chain["status"] == "ALREADY_COMPLETED":
             response = f"You have already completed **`{target_course}`** in a prior quarter!"
         else:
-            needed = ", ".join([f"`{c}`" for c in chain['unmetPrerequisites']])
-            quarters = chain['criticalPathQuarters']
+            needed = ", ".join([f"`{c}`" for c in chain["unmetPrerequisites"]])
+            quarters = chain["criticalPathQuarters"]
             response = (
                 f"### Shortest Prerequisite Path to `{target_course}`: 🗺️\n\n"
                 f"Based on your completed coursework ({', '.join(completed_major) if completed_major else 'none yet'}), "
@@ -186,28 +244,38 @@ def run_mock_agent(
             )
 
     # Scenario 4: Workload Overload / "This is too much" (Sprint 3 Priority 3 User Story)
-    elif 'too much' in prompt_lower or 'heavy' in prompt_lower or 'lighten' in prompt_lower or 'overwhelm' in prompt_lower or 'burnout' in prompt_lower:
+    elif (
+        "too much" in prompt_lower
+        or "heavy" in prompt_lower
+        or "lighten" in prompt_lower
+        or "overwhelm" in prompt_lower
+        or "burnout" in prompt_lower
+    ):
         new_target = 10 if target_credits <= 12 else 12
-        tool_calls_simulated.append({
-            'tool': 'update_schedule_preferences',
-            'output': {
-                'action': 'UPDATE_PREFERENCES',
-                'updates': {'targetCredits': new_target},
+        tool_calls_simulated.append(
+            {
+                "tool": "update_schedule_preferences",
+                "output": {
+                    "action": "UPDATE_PREFERENCES",
+                    "updates": {"targetCredits": new_target},
+                },
             }
-        })
+        )
         light_courses = []
-        for code in ['CSE 101', 'ART 10F']:
+        for code in ["CSE 101", "ART 10F"]:
             matches = find_courses(query=code, term=term)
             if matches:
                 c_copy = dict(matches[0])
-                c_copy['pinned'] = False
+                c_copy["pinned"] = False
                 light_courses.append(c_copy)
         proposed_courses = light_courses
-        tool_calls_simulated.append({
-            'tool': 'search_course_catalog',
-            'args': {'query': 'lightened', 'term': term},
-            'output': [c['id'] for c in proposed_courses],
-        })
+        tool_calls_simulated.append(
+            {
+                "tool": "search_course_catalog",
+                "args": {"query": "lightened", "term": term},
+                "output": [c["id"] for c in proposed_courses],
+            }
+        )
         response = (
             f"I hear you! Pacing yourself is essential for maintaining strong GPA and mental well-being at UCSC. 💙\n\n"
             f"I have automatically adjusted your target credit preference from **{target_credits} credits** down to **{new_target} credits**.\n\n"
@@ -219,52 +287,73 @@ def run_mock_agent(
         )
 
     # Scenario 5: Direct Preference Updates in Chat (Sprint 3 Priority 5 User Story)
-    elif 'credit' in prompt_lower and any(w in prompt_lower for w in ['change', 'set', 'make', 'update', 'want', '10', '12', '15', '19', '20']):
-        credit_match = re.search(r'\b(10|12|14|15|16|17|18|19|20)\b', prompt)
+    elif "credit" in prompt_lower and any(
+        w in prompt_lower
+        for w in ["change", "set", "make", "update", "want", "10", "12", "15", "19", "20"]
+    ):
+        credit_match = re.search(r"\b(10|12|14|15|16|17|18|19|20)\b", prompt)
         new_credits = int(credit_match.group(1)) if credit_match else 12
-        tool_calls_simulated.append({
-            'tool': 'update_schedule_preferences',
-            'output': {
-                'action': 'UPDATE_PREFERENCES',
-                'updates': {'targetCredits': new_credits},
+        tool_calls_simulated.append(
+            {
+                "tool": "update_schedule_preferences",
+                "output": {
+                    "action": "UPDATE_PREFERENCES",
+                    "updates": {"targetCredits": new_credits},
+                },
             }
-        })
+        )
         response = (
             f"Done! ⚙️ I have updated your scheduling preferences to target **{new_credits} credits** for next quarter.\n\n"
             f"Your weekly calendar preview has been re-calculated to match your new unit cap."
         )
 
     # Scenario 6: Explaining Rationale / "Why" (Sprint 2 Priority 3 User Story)
-    elif 'why' in prompt_lower or 'reason' in prompt_lower or 'explain' in prompt_lower or 'rationale' in prompt_lower:
-        tool_calls_simulated.append({
-            'tool': 'explain_course_rationale',
-            'output': {
-                'standing': standing,
-                'major': major,
-                'targetCredits': target_credits,
+    elif (
+        "why" in prompt_lower
+        or "reason" in prompt_lower
+        or "explain" in prompt_lower
+        or "rationale" in prompt_lower
+    ):
+        tool_calls_simulated.append(
+            {
+                "tool": "explain_course_rationale",
+                "output": {
+                    "standing": standing,
+                    "major": major,
+                    "targetCredits": target_credits,
+                },
             }
-        })
+        )
 
         course_hint = "CSE 101"
-        for code in ['cse 101', 'cse 115a', 'cse 130', 'cse 12', 'cse 16', 'math 21', 'phil 9', 'art 10f']:
+        for code in [
+            "cse 101",
+            "cse 115a",
+            "cse 130",
+            "cse 12",
+            "cse 16",
+            "math 21",
+            "phil 9",
+            "art 10f",
+        ]:
             if code in prompt_lower:
                 course_hint = code.upper()
                 break
         else:
             for h in reversed(history):
-                content_lower = h.get('content', '').lower()
-                for code in ['cse 101', 'cse 115a', 'cse 130', 'phil 9', 'art 10f']:
+                content_lower = h.get("content", "").lower()
+                for code in ["cse 101", "cse 115a", "cse 130", "phil 9", "art 10f"]:
                     if code in content_lower:
                         course_hint = code.upper()
                         break
 
-        why_courses = []
-        for code in [course_hint, 'CSE 115A', 'ART 10F']:
+        why_courses: list[dict[str, Any]] = []
+        for code in [course_hint, "CSE 115A", "ART 10F"]:
             matches = find_courses(query=code, term=term)
             if matches:
                 c_copy = dict(matches[0])
-                c_copy['pinned'] = False
-                if not any(wc['id'] == c_copy['id'] for wc in why_courses):
+                c_copy["pinned"] = False
+                if not any(wc["id"] == c_copy["id"] for wc in why_courses):
                     why_courses.append(c_copy)
         proposed_courses = why_courses
 
@@ -276,8 +365,23 @@ def run_mock_agent(
         )
 
     # Scenario 7: Multi-turn Follow-up / Recall (Sprint 2 Priority 8 User Story)
-    elif any(phrase in prompt_lower for phrase in ['tell me more', 'elaborate', 'what else', 'as i said', 'earlier', 'previous']) and len(history) > 0:
-        last_agent_msg = next((h.get('content', '') for h in reversed(history) if h.get('sender') == 'AGENT'), None)
+    elif (
+        any(
+            phrase in prompt_lower
+            for phrase in [
+                "tell me more",
+                "elaborate",
+                "what else",
+                "as i said",
+                "earlier",
+                "previous",
+            ]
+        )
+        and len(history) > 0
+    ):
+        last_agent_msg = next(
+            (h.get("content", "") for h in reversed(history) if h.get("sender") == "AGENT"), None
+        )
         topic_context = "our previous degree planning topic"
         if last_agent_msg:
             if "GE" in last_agent_msg or "General Education" in last_agent_msg:
@@ -294,7 +398,10 @@ def run_mock_agent(
         )
 
     # Scenario 8: Greetings & Conversation Starter
-    elif any(re.search(r'\b' + re.escape(g) + r'\b', prompt_lower) for g in ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'howdy', 'yo']):
+    elif any(
+        re.search(r"\b" + re.escape(g) + r"\b", prompt_lower)
+        for g in ["hello", "hi", "hey", "good morning", "good afternoon", "howdy", "yo"]
+    ):
         if len(history) > 1:
             response = (
                 f"Welcome back, {name}! 🐌 Great to see you again.\n\n"
@@ -314,36 +421,40 @@ def run_mock_agent(
             )
 
     # Scenario 9: Inquiring about GE requirements
-    elif 'ge' in prompt_lower or 'general ed' in prompt_lower or 'requirement' in prompt_lower:
-        tool_calls_simulated.append({
-            'tool': 'query_degree_ge_requirements',
-            'output': {'remaining': remaining_ges}
-        })
-        ge_candidates = []
-        target_ges = remaining_ges if remaining_ges else ['CC', 'ER', 'PR-C']
+    elif "ge" in prompt_lower or "general ed" in prompt_lower or "requirement" in prompt_lower:
+        tool_calls_simulated.append(
+            {"tool": "query_degree_ge_requirements", "output": {"remaining": remaining_ges}}
+        )
+        ge_candidates: list[dict[str, Any]] = []
+        target_ges = remaining_ges if remaining_ges else ["CC", "ER", "PR-C"]
         for g in target_ges:
             matches = find_courses(ge_type=g, term=term)
             if matches:
                 m_copy = dict(matches[0])
-                m_copy['pinned'] = False
-                if not any(gc['id'] == m_copy['id'] for gc in ge_candidates):
+                m_copy["pinned"] = False
+                if not any(gc["id"] == m_copy["id"] for gc in ge_candidates):
                     ge_candidates.append(m_copy)
 
-        for m_code in ['CSE 115A', 'CSE 101']:
+        for m_code in ["CSE 115A", "CSE 101"]:
             m_matches = find_courses(query=m_code, term=term)
             if m_matches:
                 m_copy = dict(m_matches[0])
-                m_copy['pinned'] = False
-                if not any(gc['id'] == m_copy['id'] for gc in ge_candidates):
+                m_copy["pinned"] = False
+                if not any(gc["id"] == m_copy["id"] for gc in ge_candidates):
                     ge_candidates.append(m_copy)
 
         proposed_courses = ge_candidates
 
-        tool_calls_simulated.append({
-            'tool': 'search_course_catalog',
-            'args': {'term': term, 'ge_type': ', '.join(remaining_ges) if remaining_ges else 'GE'},
-            'output': [c['id'] for c in proposed_courses],
-        })
+        tool_calls_simulated.append(
+            {
+                "tool": "search_course_catalog",
+                "args": {
+                    "term": term,
+                    "ge_type": ", ".join(remaining_ges) if remaining_ges else "GE",
+                },
+                "output": [c["id"] for c in proposed_courses],
+            }
+        )
 
         if remaining_ges:
             ge_list = ", ".join([f"`{g}`" for g in remaining_ges])
@@ -362,14 +473,24 @@ def run_mock_agent(
             )
 
     # Scenario 10: Course recommendations
-    elif 'cse' in prompt_lower or 'course' in prompt_lower or 'class' in prompt_lower or 'recommend' in prompt_lower or 'major' in prompt_lower or 'schedule' in prompt_lower or any(d in prompt_lower for d in ['math', 'ece', 'film', 'art', 'phil', 'his', 'econ', 'musc', 'astr', 'havc']):
-        tool_calls_simulated.append({
-            'tool': 'inspect_student_profile',
-            'output': {'standing': standing, 'major': major}
-        })
+    elif (
+        "cse" in prompt_lower
+        or "course" in prompt_lower
+        or "class" in prompt_lower
+        or "recommend" in prompt_lower
+        or "major" in prompt_lower
+        or "schedule" in prompt_lower
+        or any(
+            d in prompt_lower
+            for d in ["math", "ece", "film", "art", "phil", "his", "econ", "musc", "astr", "havc"]
+        )
+    ):
+        tool_calls_simulated.append(
+            {"tool": "inspect_student_profile", "output": {"standing": standing, "major": major}}
+        )
 
         queried_dept = None
-        for d in ['MATH', 'ECE', 'FILM', 'ART', 'PHIL', 'HIS', 'ECON', 'MUSC', 'ASTR', 'HAVC']:
+        for d in ["MATH", "ECE", "FILM", "ART", "PHIL", "HIS", "ECON", "MUSC", "ASTR", "HAVC"]:
             if d.lower() in prompt_lower:
                 queried_dept = d
                 break
@@ -377,39 +498,43 @@ def run_mock_agent(
         if queried_dept:
             dept_matches = find_courses(department=queried_dept, term=term)
             proposed_courses = [dict(c, pinned=False) for c in dept_matches]
-            tool_calls_simulated.append({
-                'tool': 'search_course_catalog',
-                'args': {'department': queried_dept, 'term': term},
-                'output': [c['id'] for c in proposed_courses],
-            })
+            tool_calls_simulated.append(
+                {
+                    "tool": "search_course_catalog",
+                    "args": {"department": queried_dept, "term": term},
+                    "output": [c["id"] for c in proposed_courses],
+                }
+            )
             offerings = []
             for c in proposed_courses:
-                days_str = ", ".join(c.get('days', []))
+                days_str = ", ".join(c.get("days", []))
                 offerings.append(
                     f"- **`{c.get('code')}` ({c.get('title')})**: {days_str} {c.get('startTime')}-{c.get('endTime')} ({c.get('credits')} credits) in {c.get('location')}"
                 )
             response = (
                 f"Here are the active **{queried_dept}** courses available for **{term}**: 📚\n\n"
                 f"### Matching Course Offerings:\n"
-                + "\n".join(offerings) +
-                f"\n\nLet me know which ones you would like to incorporate into your schedule!"
+                + "\n".join(offerings)
+                + "\n\nLet me know which ones you would like to incorporate into your schedule!"
             )
         else:
             recs = []
-            for code in ['CSE 115A', 'CSE 130', 'CSE 101', 'ART 10F', 'PHIL 11']:
+            for code in ["CSE 115A", "CSE 130", "CSE 101", "ART 10F", "PHIL 11"]:
                 matches = find_courses(query=code, term=term)
                 if matches:
                     c_copy = dict(matches[0])
-                    c_copy['pinned'] = False
+                    c_copy["pinned"] = False
                     recs.append(c_copy)
 
             proposed_courses = recs
 
-            tool_calls_simulated.append({
-                'tool': 'search_course_catalog',
-                'args': {'department': 'CSE', 'term': term},
-                'output': [c['id'] for c in proposed_courses],
-            })
+            tool_calls_simulated.append(
+                {
+                    "tool": "search_course_catalog",
+                    "args": {"department": "CSE", "term": term},
+                    "output": [c["id"] for c in proposed_courses],
+                }
+            )
 
             response = (
                 f"Here is Sammy's recommended plan for a **{standing}** in `{major}`: 📚\n\n"
@@ -421,15 +546,28 @@ def run_mock_agent(
             )
 
     # Scenario 11: Calendar, schedule, conflicts, or breaks
-    elif 'calendar' in prompt_lower or 'schedule' in prompt_lower or 'time' in prompt_lower or 'break' in prompt_lower or 'conflict' in prompt_lower:
-        tool_calls_simulated.append({
-            'tool': 'inspect_calendar_schedule',
-            'output': {'eventCount': len(schedule)}
-        })
-        enrolled_titles = [f"`{e.get('title', 'Class')}`" for e in schedule if e.get('type') != 'GOOGLE_CALENDAR_BUSY']
-        busy_blocks = [e for e in schedule if e.get('type') == 'GOOGLE_CALENDAR_BUSY']
+    elif (
+        "calendar" in prompt_lower
+        or "schedule" in prompt_lower
+        or "time" in prompt_lower
+        or "break" in prompt_lower
+        or "conflict" in prompt_lower
+    ):
+        tool_calls_simulated.append(
+            {"tool": "inspect_calendar_schedule", "output": {"eventCount": len(schedule)}}
+        )
+        enrolled_titles = [
+            f"`{e.get('title', 'Class')}`"
+            for e in schedule
+            if e.get("type") != "GOOGLE_CALENDAR_BUSY"
+        ]
+        busy_blocks = [e for e in schedule if e.get("type") == "GOOGLE_CALENDAR_BUSY"]
 
-        busy_info = f"You also have **{len(busy_blocks)} Google Calendar commitment(s)** (such as work shifts) mapped out." if busy_blocks else "No external calendar conflicts detected."
+        busy_info = (
+            f"You also have **{len(busy_blocks)} Google Calendar commitment(s)** (such as work shifts) mapped out."
+            if busy_blocks
+            else "No external calendar conflicts detected."
+        )
 
         response = (
             f"I reviewed your current weekly schedule grid! 🗓️\n\n"
@@ -447,8 +585,8 @@ def run_mock_agent(
         )
 
     return {
-        'response': response,
-        'proposedCourses': proposed_courses,
-        'toolCalls': tool_calls_simulated,
-        'model': 'mock-slug-advisor-v1',
+        "response": response,
+        "proposedCourses": proposed_courses,
+        "toolCalls": tool_calls_simulated,
+        "model": "mock-slug-advisor-v1",
     }

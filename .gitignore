@@ -5,6 +5,11 @@ node_modules/
 
 # Testing and Coverage
 coverage/
+.coverage
+.coverage.*
+*.coverage
+.mypy_cache/
+.ruff_cache/
 
 # Build artifacts
 dist/

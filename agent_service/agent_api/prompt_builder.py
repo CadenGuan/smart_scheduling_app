@@ -1,26 +1,29 @@
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
-def build_system_prompt(student: Dict[str, Any], preferences: Dict[str, Any], current_schedule: List[Dict[str, Any]]) -> str:
+
+def build_system_prompt(
+    student: Dict[str, Any], preferences: Dict[str, Any], current_schedule: List[Dict[str, Any]]
+) -> str:
     """
     Constructs a rich system prompt that equips the agent with student degree context,
     onboarding preferences, and current calendar commitments.
     """
-    name = student.get('name', 'UCSC Student')
-    major = student.get('major', 'Computer Science B.S.')
-    standing = student.get('standing', 'Junior')
-    minor = student.get('minor') or 'None'
+    name = student.get("name", "UCSC Student")
+    major = student.get("major", "Computer Science B.S.")
+    standing = student.get("standing", "Junior")
+    minor = student.get("minor") or "None"
 
-    target_credits = preferences.get('targetCredits', 15)
-    ge_status = preferences.get('geStatus', {})
-    remaining_ges = ge_status.get('remaining', []) if isinstance(ge_status, dict) else []
-    ge_source = ge_status.get('source', 'UCSC') if isinstance(ge_status, dict) else 'UCSC'
-    major_reqs_taken = preferences.get('majorRequirementsTaken', [])
-    breaks = preferences.get('breaksPreference', [])
+    target_credits = preferences.get("targetCredits", 15)
+    ge_status = preferences.get("geStatus", {})
+    remaining_ges = ge_status.get("remaining", []) if isinstance(ge_status, dict) else []
+    ge_source = ge_status.get("source", "UCSC") if isinstance(ge_status, dict) else "UCSC"
+    major_reqs_taken = preferences.get("majorRequirementsTaken", [])
+    breaks = preferences.get("breaksPreference", [])
 
-    preferred_free_days = preferences.get('preferredFreeDays', [])
-    earliest_start = preferences.get('earliestStartTime')
-    latest_end = preferences.get('latestEndTime')
-    max_b2b = preferences.get('maxBackToBackHours')
+    preferred_free_days = preferences.get("preferredFreeDays", [])
+    earliest_start = preferences.get("earliestStartTime")
+    latest_end = preferences.get("latestEndTime")
+    max_b2b = preferences.get("maxBackToBackHours")
 
     time_constraints = []
     if preferred_free_days:
@@ -34,14 +37,18 @@ def build_system_prompt(student: Dict[str, Any], preferences: Dict[str, Any], cu
 
     courses_summary = []
     for event in current_schedule:
-        title = event.get('title', 'Unknown Course')
-        days = ", ".join(event.get('days', []))
-        start = event.get('startTime', '')
-        end = event.get('endTime', '')
-        etype = event.get('type', 'COURSE')
+        title = event.get("title", "Unknown Course")
+        days = ", ".join(event.get("days", []))
+        start = event.get("startTime", "")
+        end = event.get("endTime", "")
+        etype = event.get("type", "COURSE")
         courses_summary.append(f"- {title} ({days} {start}-{end}) [{etype}]")
 
-    courses_text = "\n".join(courses_summary) if courses_summary else "No courses currently placed on schedule."
+    courses_text = (
+        "\n".join(courses_summary)
+        if courses_summary
+        else "No courses currently placed on schedule."
+    )
 
     system_prompt = f"""You are **Sammy the Slug Scheduling Advisor**, an autonomous academic planning assistant for University of California, Santa Cruz (UCSC) students.
 You specialize in UCSC degree requirements, Baskin School of Engineering major paths, General Education (GE) fulfillment, and weekly schedule optimization.
@@ -55,8 +62,8 @@ You specialize in UCSC degree requirements, Baskin School of Engineering major p
 
 ### Onboarding & Degree Constraints:
 - **GE Completion Source:** {ge_source}
-- **Remaining / Unmet GE Categories:** {', '.join(remaining_ges) if remaining_ges else 'All GEs satisfied or none specified'}
-- **Major Requirements Completed:** {', '.join(major_reqs_taken) if major_reqs_taken else 'None marked yet'}
+- **Remaining / Unmet GE Categories:** {", ".join(remaining_ges) if remaining_ges else "All GEs satisfied or none specified"}
+- **Major Requirements Completed:** {", ".join(major_reqs_taken) if major_reqs_taken else "None marked yet"}
 - **Scheduled Time Breaks / Work Commitments:** {len(breaks)} registered break window(s)
 {f"- **Schedule Preferences:** {'; '.join(time_constraints)}" if time_constraints else ""}
 
@@ -78,19 +85,22 @@ You specialize in UCSC degree requirements, Baskin School of Engineering major p
 """
     return system_prompt.strip()
 
+
 def format_history_messages(history: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     """
     Normalizes historical messages into a list of {role, content} objects.
     """
     formatted = []
     for msg in history:
-        sender = msg.get('sender', 'USER').upper()
-        content = msg.get('content', '')
-        if sender == 'SYSTEM':
+        sender = msg.get("sender", "USER").upper()
+        content = msg.get("content", "")
+        if sender == "SYSTEM":
             # App-generated notices (e.g. a preference change cleared the schedule). Present them
             # as context from the app, not as something the assistant said.
-            formatted.append({'role': 'user', 'content': f'[App notice, not written by the student] {content}'})
+            formatted.append(
+                {"role": "user", "content": f"[App notice, not written by the student] {content}"}
+            )
             continue
-        role = 'user' if sender == 'USER' else 'assistant'
-        formatted.append({'role': role, 'content': content})
+        role = "user" if sender == "USER" else "assistant"
+        formatted.append({"role": role, "content": content})
     return formatted

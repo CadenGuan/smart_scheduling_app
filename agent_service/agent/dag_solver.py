@@ -1,34 +1,57 @@
+from typing import Any, Dict, List
+
 import networkx as nx
-from typing import List, Dict, Any, Set
 
 # Node metadata mapping course codes to titles, units, and levels
 UCSC_COURSE_CATALOG: Dict[str, Dict[str, Any]] = {
     # Mathematics & Foundational
-    "MATH 19A": {"title": "Calculus for Science, Engineering, and Mathematics", "credits": 5, "level": "LOWER"},
-    "MATH 19B": {"title": "Calculus for Science, Engineering, and Mathematics", "credits": 5, "level": "LOWER"},
+    "MATH 19A": {
+        "title": "Calculus for Science, Engineering, and Mathematics",
+        "credits": 5,
+        "level": "LOWER",
+    },
+    "MATH 19B": {
+        "title": "Calculus for Science, Engineering, and Mathematics",
+        "credits": 5,
+        "level": "LOWER",
+    },
     "MATH 21": {"title": "Linear Algebra", "credits": 5, "level": "LOWER"},
     "CSE 16": {"title": "Applied Discrete Mathematics", "credits": 5, "level": "LOWER"},
-    
     # Lower Division Programming & Systems
     "CSE 20": {"title": "Beginning Programming in Python", "credits": 5, "level": "LOWER"},
     "CSE 30": {"title": "Programming Abstractions in Python", "credits": 5, "level": "LOWER"},
     "CSE 12": {"title": "Computer Systems and Assembly Language", "credits": 5, "level": "LOWER"},
     "CSE 13S": {"title": "Computer Systems and C Programming", "credits": 5, "level": "LOWER"},
-
     # Upper Division Core
-    "CSE 101": {"title": "Introduction to Data Structures and Algorithms", "credits": 5, "level": "UPPER"},
+    "CSE 101": {
+        "title": "Introduction to Data Structures and Algorithms",
+        "credits": 5,
+        "level": "UPPER",
+    },
     "CSE 102": {"title": "Introduction to Analysis of Algorithms", "credits": 5, "level": "UPPER"},
     "CSE 103": {"title": "Computational Models", "credits": 5, "level": "UPPER"},
-    "CSE 107": {"title": "Probability and Statistics for Engineers", "credits": 5, "level": "UPPER"},
+    "CSE 107": {
+        "title": "Probability and Statistics for Engineers",
+        "credits": 5,
+        "level": "UPPER",
+    },
     "CSE 115A": {"title": "Introduction to Software Engineering", "credits": 5, "level": "UPPER"},
     "CSE 130": {"title": "Principles of Computer Systems Design", "credits": 5, "level": "UPPER"},
     "CSE 180": {"title": "Database Systems I", "credits": 5, "level": "UPPER"},
     "CSE 150": {"title": "Introduction to Computer Networks", "credits": 5, "level": "UPPER"},
-
     # Capstones & Advanced Electives
-    "CSE 115B": {"title": "Software Design Project (Senior Capstone)", "credits": 5, "level": "CAPSTONE"},
-    "CSE 185S": {"title": "Technical Writing for Computer Engineers", "credits": 5, "level": "UPPER"},
+    "CSE 115B": {
+        "title": "Software Design Project (Senior Capstone)",
+        "credits": 5,
+        "level": "CAPSTONE",
+    },
+    "CSE 185S": {
+        "title": "Technical Writing for Computer Engineers",
+        "credits": 5,
+        "level": "UPPER",
+    },
 }
+
 
 def build_ucsc_cs_dag() -> nx.DiGraph:
     """
@@ -47,16 +70,13 @@ def build_ucsc_cs_dag() -> nx.DiGraph:
         ("MATH 19A", "MATH 19B"),
         ("MATH 19B", "MATH 21"),
         ("MATH 19B", "CSE 16"),
-        
         # Lower division programming sequences
         ("CSE 20", "CSE 30"),
         ("CSE 30", "CSE 13S"),
         ("CSE 12", "CSE 13S"),
-        
         # CSE 101 Gatekeeper
         ("CSE 13S", "CSE 101"),
         ("CSE 16", "CSE 101"),
-        
         # Post-CSE 101 Upper Division
         ("CSE 101", "CSE 102"),
         ("CSE 101", "CSE 103"),
@@ -64,12 +84,10 @@ def build_ucsc_cs_dag() -> nx.DiGraph:
         ("CSE 101", "CSE 115A"),
         ("CSE 101", "CSE 180"),
         ("CSE 101", "CSE 185S"),
-        
         # Systems branch (needs both 101 and 12)
         ("CSE 101", "CSE 130"),
         ("CSE 12", "CSE 130"),
         ("CSE 130", "CSE 150"),
-        
         # Software engineering capstone sequence
         ("CSE 115A", "CSE 115B"),
     ]
@@ -77,7 +95,9 @@ def build_ucsc_cs_dag() -> nx.DiGraph:
     dag.add_edges_from(edges)
     return dag
 
+
 _DAG_INSTANCE = build_ucsc_cs_dag()
+
 
 def get_prerequisite_chain(target_course: str, completed_courses: List[str]) -> Dict[str, Any]:
     """
@@ -135,10 +155,15 @@ def get_prerequisite_chain(target_course: str, completed_courses: List[str]) -> 
         "unmetPrerequisites": ordered_sequence,
         "criticalPathQuarters": critical_path_length,
         "courseDetails": [
-            {"code": c, "title": UCSC_COURSE_CATALOG[c]["title"], "credits": UCSC_COURSE_CATALOG[c]["credits"]}
+            {
+                "code": c,
+                "title": UCSC_COURSE_CATALOG[c]["title"],
+                "credits": UCSC_COURSE_CATALOG[c]["credits"],
+            }
             for c in ordered_sequence
         ],
     }
+
 
 def get_downstream_impact(dropped_course: str) -> Dict[str, Any]:
     """
@@ -171,6 +196,7 @@ def get_downstream_impact(dropped_course: str) -> Dict[str, Any]:
             f"and delays access to {len(all_downstream)} future requirement(s) in your major."
         ),
     }
+
 
 def audit_degree_progress(completed_courses: List[str]) -> Dict[str, Any]:
     """
