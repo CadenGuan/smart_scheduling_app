@@ -1,0 +1,22 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "workspaces": {
+    "client": {
+      "ignoreDependencies": ["lucide-react", "@fullcalendar/core", "@fullcalendar/timegrid"]
+    },
+    "server": {
+      "entry": ["src/db/seed.ts"]
+    },
+    "shared": {
+      "entry": ["src/schemas/*.ts"]
+    }
+  },
+  "ignore": [".agents/**", "scripts/**"],
+  "ignoreBinaries": ["husky"],
+  "ignoreDependencies": ["husky", "lint-staged"],
+  "rules": {
+    "exports": "off",
+    "types": "off",
+    "duplicates": "off"
+  }
+}

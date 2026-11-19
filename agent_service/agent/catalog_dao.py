@@ -1,11 +1,9 @@
 import os
 import sqlite3
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-DEFAULT_DB_PATH = os.path.join(
-    Path(__file__).resolve().parents[1], "data", "academic_catalog.db"
-)
+DEFAULT_DB_PATH = os.path.join(Path(__file__).resolve().parents[1], "data", "academic_catalog.db")
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS courses (
@@ -197,7 +195,9 @@ def get_course_time(
         conn.close()
 
 
-def execute_safe_query(sql: str, params: tuple = (), db_path: Optional[str] = None) -> List[Dict[str, Any]]:
+def execute_safe_query(
+    sql: str, params: tuple = (), db_path: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """
     Safely executes an arbitrary SELECT query with parameter binding,
     catching and returning structured errors on invalid SQL.

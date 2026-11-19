@@ -1,0 +1,21 @@
+{
+  "threshold": 10,
+  "minLines": 5,
+  "minTokens": 60,
+  "reporters": ["console"],
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.scratch/**",
+    "**/coverage/**",
+    "**/build/**",
+    "**/.venv/**",
+    "**/*.json",
+    "package-lock.json",
+    "**/schema.sql",
+    "**/*.d.ts",
+    "**/tests/**",
+    "**/test/**",
+    "Dockerfile"
+  ]
+}

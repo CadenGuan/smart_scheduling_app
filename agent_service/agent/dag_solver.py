@@ -1,15 +1,15 @@
-import os
 import json
+import os
 from pathlib import Path
-import networkx as nx
-from typing import List, Dict, Any, Set, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
-DEFAULT_DAG_JSON_PATH = os.path.join(
-    Path(__file__).resolve().parents[1], "data", "course_dag.json"
-)
+import networkx as nx
+
+DEFAULT_DAG_JSON_PATH = os.path.join(Path(__file__).resolve().parents[1], "data", "course_dag.json")
 
 # Active DAG loaded from JSON
 _ACTIVE_COURSE_DAG: Dict[str, Any] = {}
+
 
 def load_course_dag(json_path: Optional[str] = None) -> Dict[str, Any]:
     """Loads the prerequisite logic tree DAG from JSON file."""
@@ -24,10 +24,12 @@ def load_course_dag(json_path: Optional[str] = None) -> Dict[str, Any]:
             pass
     return _ACTIVE_COURSE_DAG
 
+
 def set_active_dag(dag_dict: Dict[str, Any]) -> None:
     """Sets or overrides the in-memory active DAG (useful for testing)."""
     global _ACTIVE_COURSE_DAG
     _ACTIVE_COURSE_DAG = dag_dict
+
 
 def is_eligible(node: Any, completed_courses: Union[Set[str], List[str]]) -> bool:
     """
@@ -67,6 +69,7 @@ def is_eligible(node: Any, completed_courses: Union[Set[str], List[str]]) -> boo
 
     return False
 
+
 def format_node_requirements(node: Any) -> str:
     """Produces human-readable description of prerequisite requirement node."""
     if not node:
@@ -85,6 +88,7 @@ def format_node_requirements(node: Any) -> str:
             return " OR ".join(f"{format_node_requirements(o)}" for o in options)
     return str(node)
 
+
 def evaluate_course_eligibility(target_course: str, completed_courses: List[str]) -> Dict[str, Any]:
     """
     Checks if a student is eligible to take a course based on active course_dag.json.
@@ -99,7 +103,9 @@ def evaluate_course_eligibility(target_course: str, completed_courses: List[str]
             return {
                 "course_code": target,
                 "is_eligible": chain.get("status") in ("READY_TO_ENROLL", "ALREADY_COMPLETED"),
-                "status": "ELIGIBLE" if chain.get("status") in ("READY_TO_ENROLL", "ALREADY_COMPLETED") else "NOT_ELIGIBLE",
+                "status": "ELIGIBLE"
+                if chain.get("status") in ("READY_TO_ENROLL", "ALREADY_COMPLETED")
+                else "NOT_ELIGIBLE",
                 "message": chain.get("message", ""),
                 "unmetPrerequisites": chain.get("unmetPrerequisites", []),
             }
@@ -142,25 +148,50 @@ def evaluate_course_eligibility(target_course: str, completed_courses: List[str]
 # =========================================================================
 
 UCSC_COURSE_CATALOG: Dict[str, Dict[str, Any]] = {
-    "MATH 19A": {"title": "Calculus for Science, Engineering, and Mathematics", "credits": 5, "level": "LOWER"},
-    "MATH 19B": {"title": "Calculus for Science, Engineering, and Mathematics", "credits": 5, "level": "LOWER"},
+    "MATH 19A": {
+        "title": "Calculus for Science, Engineering, and Mathematics",
+        "credits": 5,
+        "level": "LOWER",
+    },
+    "MATH 19B": {
+        "title": "Calculus for Science, Engineering, and Mathematics",
+        "credits": 5,
+        "level": "LOWER",
+    },
     "MATH 21": {"title": "Linear Algebra", "credits": 5, "level": "LOWER"},
     "CSE 16": {"title": "Applied Discrete Mathematics", "credits": 5, "level": "LOWER"},
     "CSE 20": {"title": "Beginning Programming in Python", "credits": 5, "level": "LOWER"},
     "CSE 30": {"title": "Programming Abstractions in Python", "credits": 5, "level": "LOWER"},
     "CSE 12": {"title": "Computer Systems and Assembly Language", "credits": 5, "level": "LOWER"},
     "CSE 13S": {"title": "Computer Systems and C Programming", "credits": 5, "level": "LOWER"},
-    "CSE 101": {"title": "Introduction to Data Structures and Algorithms", "credits": 5, "level": "UPPER"},
+    "CSE 101": {
+        "title": "Introduction to Data Structures and Algorithms",
+        "credits": 5,
+        "level": "UPPER",
+    },
     "CSE 102": {"title": "Introduction to Analysis of Algorithms", "credits": 5, "level": "UPPER"},
     "CSE 103": {"title": "Computational Models", "credits": 5, "level": "UPPER"},
-    "CSE 107": {"title": "Probability and Statistics for Engineers", "credits": 5, "level": "UPPER"},
+    "CSE 107": {
+        "title": "Probability and Statistics for Engineers",
+        "credits": 5,
+        "level": "UPPER",
+    },
     "CSE 115A": {"title": "Introduction to Software Engineering", "credits": 5, "level": "UPPER"},
     "CSE 130": {"title": "Principles of Computer Systems Design", "credits": 5, "level": "UPPER"},
     "CSE 180": {"title": "Database Systems I", "credits": 5, "level": "UPPER"},
     "CSE 150": {"title": "Introduction to Computer Networks", "credits": 5, "level": "UPPER"},
-    "CSE 115B": {"title": "Software Design Project (Senior Capstone)", "credits": 5, "level": "CAPSTONE"},
-    "CSE 185S": {"title": "Technical Writing for Computer Engineers", "credits": 5, "level": "UPPER"},
+    "CSE 115B": {
+        "title": "Software Design Project (Senior Capstone)",
+        "credits": 5,
+        "level": "CAPSTONE",
+    },
+    "CSE 185S": {
+        "title": "Technical Writing for Computer Engineers",
+        "credits": 5,
+        "level": "UPPER",
+    },
 }
+
 
 def build_ucsc_cs_dag() -> nx.DiGraph:
     dag = nx.DiGraph()
@@ -190,7 +221,9 @@ def build_ucsc_cs_dag() -> nx.DiGraph:
     dag.add_edges_from(edges)
     return dag
 
+
 _DAG_INSTANCE = build_ucsc_cs_dag()
+
 
 def get_prerequisite_chain(target_course: str, completed_courses: List[str]) -> Dict[str, Any]:
     target = target_course.strip().upper()
@@ -241,10 +274,15 @@ def get_prerequisite_chain(target_course: str, completed_courses: List[str]) -> 
         "unmetPrerequisites": ordered_sequence,
         "criticalPathQuarters": critical_path_length,
         "courseDetails": [
-            {"code": c, "title": UCSC_COURSE_CATALOG[c]["title"], "credits": UCSC_COURSE_CATALOG[c]["credits"]}
+            {
+                "code": c,
+                "title": UCSC_COURSE_CATALOG[c]["title"],
+                "credits": UCSC_COURSE_CATALOG[c]["credits"],
+            }
             for c in ordered_sequence
         ],
     }
+
 
 def get_downstream_impact(dropped_course: str) -> Dict[str, Any]:
     course = dropped_course.strip().upper()
@@ -272,6 +310,7 @@ def get_downstream_impact(dropped_course: str) -> Dict[str, Any]:
             f"and delays access to {len(all_downstream)} future requirement(s) in your major."
         ),
     }
+
 
 def audit_degree_progress(completed_courses: List[str]) -> Dict[str, Any]:
     completed_set = {c.strip().upper() for c in completed_courses}

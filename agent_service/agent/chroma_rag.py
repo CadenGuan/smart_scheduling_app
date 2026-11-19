@@ -1,11 +1,9 @@
-import os
 import hashlib
+import os
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
-DEFAULT_CHROMA_PATH = os.path.join(
-    Path(__file__).resolve().parents[1], "data", "chroma_db"
-)
+DEFAULT_CHROMA_PATH = os.path.join(Path(__file__).resolve().parents[1], "data", "chroma_db")
 COLLECTION_NAME = "degree_requirements"
 EMBEDDING_MODEL_NAME = "BAAI/bge-small-en-v1.5"
 VECTOR_DIM = 384
@@ -16,6 +14,7 @@ class MockEmbeddingFunction:
     Deterministic pseudo-embedding function for fast, offline testing.
     Produces normalized 384-dimensional vectors based on word hashes.
     """
+
     def __init__(self, dim: int = VECTOR_DIM):
         self.dim = dim
 
@@ -59,6 +58,7 @@ def get_embedding_function(force_mock: bool = False):
 
     try:
         from chromadb.utils import embedding_functions
+
         return embedding_functions.SentenceTransformerEmbeddingFunction(
             model_name=EMBEDDING_MODEL_NAME
         )
@@ -70,6 +70,7 @@ def get_embedding_function(force_mock: bool = False):
 def get_chroma_client(db_path: Optional[str] = None):
     """Initializes and returns a persistent ChromaDB client."""
     import chromadb
+
     path = db_path or DEFAULT_CHROMA_PATH
     os.makedirs(path, exist_ok=True)
     return chromadb.PersistentClient(path=path)
@@ -100,7 +101,7 @@ def add_degree_chunks(
         return 0
 
     col = collection or get_or_create_collection(db_path=db_path, force_mock=force_mock)
-    
+
     ids = []
     documents = []
     metadatas = []
@@ -166,10 +167,12 @@ def query_degree_chunks(
     dists = results.get("distances", [[]])[0] if "distances" in results else [0.0] * len(docs)
 
     for i in range(len(docs)):
-        formatted.append({
-            "id": ids[i],
-            "document": docs[i],
-            "metadata": metas[i] if i < len(metas) else {},
-            "distance": dists[i] if i < len(dists) else 0.0,
-        })
+        formatted.append(
+            {
+                "id": ids[i],
+                "document": docs[i],
+                "metadata": metas[i] if i < len(metas) else {},
+                "distance": dists[i] if i < len(dists) else 0.0,
+            }
+        )
     return formatted
