@@ -1,9 +1,9 @@
 import re
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
-from typing import List, Dict, Any, Optional
+
 from bs4 import BeautifulSoup
-import requests
 
 PISA_SEARCH_URL = "https://pisa.ucsc.edu/class_search/index.php"
 BASE_PISA_URL = "https://pisa.ucsc.edu/class_search/"
@@ -57,11 +57,13 @@ def parse_pisa_results_page(html: str, base_url: str = BASE_PISA_URL) -> List[Di
 
         if detail_url not in seen_urls:
             seen_urls.add(detail_url)
-            results.append({
-                "class_number": class_number.strip(),
-                "detail_url": detail_url,
-                "text": a.get_text(strip=True),
-            })
+            results.append(
+                {
+                    "class_number": class_number.strip(),
+                    "detail_url": detail_url,
+                    "text": a.get_text(strip=True),
+                }
+            )
     return results
 
 

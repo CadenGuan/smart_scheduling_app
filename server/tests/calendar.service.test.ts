@@ -1141,6 +1141,7 @@ describe('CalendarService Domain Service Test Suite', () => {
           endTime: '10:10',
           credits: 5,
           term: 'Spring 2027',
+          color: 'red',
         },
       ];
 

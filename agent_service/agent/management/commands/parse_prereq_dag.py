@@ -1,5 +1,7 @@
 import os
+
 from django.core.management.base import BaseCommand
+
 from agent.catalog_dao import DEFAULT_DB_PATH
 from agent.prereq_parser import DEFAULT_OUTPUT_JSON, parse_prerequisites_from_db
 

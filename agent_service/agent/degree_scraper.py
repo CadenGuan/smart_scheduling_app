@@ -1,8 +1,8 @@
 import re
+from typing import Any, Dict, List
 from urllib.parse import urljoin
-from typing import List, Dict, Any, Optional
+
 from bs4 import BeautifulSoup, Tag
-import requests
 
 DEFAULT_DEGREES_INDEX_URL = (
     "https://catalog.ucsc.edu/en/current/general-catalog/academic-programs/bachelors-degrees"
@@ -11,7 +11,9 @@ MAX_WORDS = 350
 OVERLAP = 50
 
 
-def extract_degree_links(html: str, base_url: str = "https://catalog.ucsc.edu") -> List[Dict[str, str]]:
+def extract_degree_links(
+    html: str, base_url: str = "https://catalog.ucsc.edu"
+) -> List[Dict[str, str]]:
     """
     Parses hyperlinks from the Bachelor's Degrees index page.
     Returns list of {'title': str, 'url': str}.
@@ -27,14 +29,19 @@ def extract_degree_links(html: str, base_url: str = "https://catalog.ucsc.edu") 
         if not href or not title:
             continue
 
-        if any(kw in href.lower() for kw in ["academic-units", "bachelors-degrees", "computer-science", "engineering"]):
+        if any(
+            kw in href.lower()
+            for kw in ["academic-units", "bachelors-degrees", "computer-science", "engineering"]
+        ):
             full_url = urljoin(base_url, href)
             if full_url not in seen_urls:
                 seen_urls.add(full_url)
-                degrees.append({
-                    "title": title,
-                    "url": full_url,
-                })
+                degrees.append(
+                    {
+                        "title": title,
+                        "url": full_url,
+                    }
+                )
 
     return degrees
 
@@ -73,10 +80,12 @@ def extract_degree_chunks_from_html(
             h_text = heading_el.get_text(strip=True) if heading_el else "Requirements Section"
             body_text = elem.get_text(separator="\n", strip=True)
             if body_text:
-                sections.append({
-                    "heading": h_text,
-                    "text": body_text,
-                })
+                sections.append(
+                    {
+                        "heading": h_text,
+                        "text": body_text,
+                    }
+                )
 
     # If no .expand blocks found, fall back to heading-based sectioning
     if not sections:
@@ -92,19 +101,23 @@ def extract_degree_chunks_from_html(
                     if txt:
                         content_lines.append(txt)
             if content_lines:
-                sections.append({
-                    "heading": h_text,
-                    "text": "\n".join(content_lines),
-                })
+                sections.append(
+                    {
+                        "heading": h_text,
+                        "text": "\n".join(content_lines),
+                    }
+                )
 
     # Fallback if neither produced sections
     if not sections:
         raw_text = degree_root.get_text(separator="\n", strip=True)
         if raw_text:
-            sections.append({
-                "heading": "General Requirements",
-                "text": raw_text,
-            })
+            sections.append(
+                {
+                    "heading": "General Requirements",
+                    "text": raw_text,
+                }
+            )
 
     # Chunk each section with sliding window
     chunks: List[Dict[str, Any]] = []
@@ -124,15 +137,17 @@ def extract_degree_chunks_from_html(
             chunk_id = f"{re.sub(r'[^a-zA-Z0-9]+', '_', degree_title.lower())}_{re.sub(r'[^a-zA-Z0-9]+', '_', concentration.lower())}_{chunk_index}"
             full_text = f"Degree: {degree_title} | Concentration: {concentration} | Section: {heading}\n{content}"
 
-            chunks.append({
-                "id": chunk_id,
-                "text": full_text,
-                "degree_title": degree_title,
-                "concentration": concentration,
-                "section_heading": heading,
-                "url": url,
-                "chunk_index": chunk_index,
-            })
+            chunks.append(
+                {
+                    "id": chunk_id,
+                    "text": full_text,
+                    "degree_title": degree_title,
+                    "concentration": concentration,
+                    "section_heading": heading,
+                    "url": url,
+                    "chunk_index": chunk_index,
+                }
+            )
             chunk_index += 1
 
             if end >= len(words):

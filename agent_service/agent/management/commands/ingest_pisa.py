@@ -1,13 +1,15 @@
 import os
+
 import requests
 from django.core.management.base import BaseCommand
+
+from agent.catalog_dao import DEFAULT_DB_PATH, bulk_insert_courses, init_db
 from agent.pisa_scraper import (
-    PISA_SEARCH_URL,
     HEADERS,
-    parse_pisa_results_page,
+    PISA_SEARCH_URL,
     parse_pisa_detail_page,
+    parse_pisa_results_page,
 )
-from agent.catalog_dao import DEFAULT_DB_PATH, init_db, bulk_insert_courses
 
 
 class Command(BaseCommand):
@@ -64,20 +66,26 @@ class Command(BaseCommand):
         all_courses = []
 
         if detail_fixture and os.path.exists(detail_fixture):
-            self.stdout.write(self.style.NOTICE(f"[*] Reading detail fixture from {detail_fixture}..."))
+            self.stdout.write(
+                self.style.NOTICE(f"[*] Reading detail fixture from {detail_fixture}...")
+            )
             with open(detail_fixture, "r", encoding="utf-8") as f:
                 html = f.read()
             records = parse_pisa_detail_page(html)
             all_courses.extend(records)
         elif results_fixture and os.path.exists(results_fixture):
-            self.stdout.write(self.style.NOTICE(f"[*] Reading results fixture from {results_fixture}..."))
+            self.stdout.write(
+                self.style.NOTICE(f"[*] Reading results fixture from {results_fixture}...")
+            )
             with open(results_fixture, "r", encoding="utf-8") as f:
                 html = f.read()
             classes = parse_pisa_results_page(html)
             self.stdout.write(f"    Found {len(classes)} classes in fixture.")
         else:
             self.stdout.write(
-                self.style.NOTICE(f"[*] Querying PISA for term '{term}' (binds[:subject]='{subject}')...")
+                self.style.NOTICE(
+                    f"[*] Querying PISA for term '{term}' (binds[:subject]='{subject}')..."
+                )
             )
             payload = {
                 "action": "results",

@@ -1,14 +1,13 @@
+import json
 import os
 import re
-import json
 import sqlite3
-from typing import Dict, Any, List, Optional
 from pathlib import Path
-from .prereq_models import CourseOption, OrGroup, AndGroup, Prerequisite
+from typing import Any, Dict, List
 
-DEFAULT_OUTPUT_JSON = os.path.join(
-    Path(__file__).resolve().parents[1], "data", "course_dag.json"
-)
+from .prereq_models import Prerequisite
+
+DEFAULT_OUTPUT_JSON = os.path.join(Path(__file__).resolve().parents[1], "data", "course_dag.json")
 
 
 def parse_prerequisite_text_rules(raw_text: str) -> Dict[str, Any]:
@@ -66,22 +65,29 @@ def parse_prerequisite_text_llm(raw_text: str) -> Dict[str, Any]:
         return parse_prerequisite_text_rules(raw_text)
 
     try:
-        from langchain_google_genai import ChatGoogleGenerativeAI
         from langchain_core.prompts import ChatPromptTemplate
+        from langchain_google_genai import ChatGoogleGenerativeAI
 
-        llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=api_key, temperature=0)
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash", google_api_key=api_key, temperature=0
+        )
         structured_llm = llm.with_structured_output(Prerequisite)
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are a strict JSON parser for university prerequisites.
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    """You are a strict JSON parser for university prerequisites.
 Convert the text into a nested logic tree matching the Prerequisite schema.
 RULES FOR SEMICOLONS:
 1. Semicolons separate major clauses. 'A; and B or C' means A AND (B OR C).
 2. 'A or B' -> OR group with options.
 3. 'A and B' -> AND group with courses.
-Return ONLY valid structured output."""),
-            ("human", "Parse this prerequisite text: {text}")
-        ])
+Return ONLY valid structured output.""",
+                ),
+                ("human", "Parse this prerequisite text: {text}"),
+            ]
+        )
 
         chain = prompt | structured_llm
         result = chain.invoke({"text": raw_text})
@@ -104,7 +110,9 @@ def parse_prerequisites_from_db(
 
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT course_code, raw_prereqs FROM courses WHERE course_code IS NOT NULL")
+    cursor.execute(
+        "SELECT DISTINCT course_code, raw_prereqs FROM courses WHERE course_code IS NOT NULL"
+    )
     rows = cursor.fetchall()
     conn.close()
 

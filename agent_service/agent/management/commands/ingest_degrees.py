@@ -1,15 +1,17 @@
 import os
+
 import requests
 from django.core.management.base import BaseCommand
-from agent.degree_scraper import (
-    DEFAULT_DEGREES_INDEX_URL,
-    extract_degree_links,
-    extract_degree_chunks_from_html,
-)
+
 from agent.chroma_rag import (
     DEFAULT_CHROMA_PATH,
-    get_or_create_collection,
     add_degree_chunks,
+    get_or_create_collection,
+)
+from agent.degree_scraper import (
+    DEFAULT_DEGREES_INDEX_URL,
+    extract_degree_chunks_from_html,
+    extract_degree_links,
 )
 
 
@@ -59,7 +61,9 @@ class Command(BaseCommand):
         all_chunks = []
 
         if fixture_path and os.path.exists(fixture_path):
-            self.stdout.write(self.style.NOTICE(f"[*] Reading degree fixture from {fixture_path}..."))
+            self.stdout.write(
+                self.style.NOTICE(f"[*] Reading degree fixture from {fixture_path}...")
+            )
             with open(fixture_path, "r", encoding="utf-8") as f:
                 html = f.read()
             chunks = extract_degree_chunks_from_html(
@@ -79,10 +83,14 @@ class Command(BaseCommand):
                 if limit:
                     links = links[:limit]
 
-                self.stdout.write(self.style.NOTICE(f"[*] Found {len(links)} degree programs to index..."))
+                self.stdout.write(
+                    self.style.NOTICE(f"[*] Found {len(links)} degree programs to index...")
+                )
                 for item in links:
                     self.stdout.write(f"    - Scraping {item['title']}...")
-                    deg_resp = requests.get(item["url"], timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+                    deg_resp = requests.get(
+                        item["url"], timeout=15, headers={"User-Agent": "Mozilla/5.0"}
+                    )
                     if deg_resp.status_code == 200:
                         chunks = extract_degree_chunks_from_html(
                             html=deg_resp.text,
