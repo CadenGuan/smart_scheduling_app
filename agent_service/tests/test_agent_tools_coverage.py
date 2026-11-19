@@ -2,22 +2,21 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+
+from agent.catalog_dao import execute_safe_query, init_db, insert_course
+from agent.degree_scraper import extract_degree_chunks_from_html, extract_degree_links
+from agent.prereq_parser import (
+    parse_prerequisite_text_llm,
+    parse_prerequisite_text_rules,
+    parse_prerequisites_from_db,
+)
 from agent.tools import (
-    set_tool_context,
-    query_degree_requirements,
+    check_course_prerequisites,
     get_course_details,
     get_course_sections,
     get_course_time,
-    check_course_prerequisites,
-    search_course_catalog,
+    set_tool_context,
 )
-from agent.prereq_parser import (
-    parse_prerequisite_text_rules,
-    parse_prerequisite_text_llm,
-    parse_prerequisites_from_db,
-)
-from agent.degree_scraper import extract_degree_links, extract_degree_chunks_from_html
-from agent.catalog_dao import init_db, insert_course, execute_safe_query
 
 FIXTURES_DIR = os.path.join(Path(__file__).resolve().parent, "fixtures")
 
@@ -97,6 +96,7 @@ class TestAgentToolsAndParserCoverage(unittest.TestCase):
     def test_tools_edge_cases(self):
         # Tools with empty/not found results
         from agent import catalog_dao
+
         old_path = catalog_dao.DEFAULT_DB_PATH
         catalog_dao.DEFAULT_DB_PATH = self.db_path
         try:

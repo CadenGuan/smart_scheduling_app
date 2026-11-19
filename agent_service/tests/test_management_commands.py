@@ -1,17 +1,19 @@
-import os
 import json
+import os
 import sqlite3
 import tempfile
 import unittest
 from io import StringIO
 from pathlib import Path
+
 import django
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "agent_service.settings")
 django.setup()
 
-from django.core.management import call_command
-from agent.catalog_dao import init_db, insert_course
+from django.core.management import call_command  # noqa: E402
+
+from agent.catalog_dao import init_db, insert_course  # noqa: E402
 
 FIXTURES_DIR = os.path.join(Path(__file__).resolve().parent, "fixtures")
 
@@ -107,4 +109,5 @@ class TestManagementCommands(unittest.TestCase):
 
 if __name__ == "__main__":
     import unittest
+
     unittest.main()

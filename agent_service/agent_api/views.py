@@ -1,5 +1,6 @@
 import json
 import re
+from typing import Any
 
 import requests
 from django.http import HttpRequest, JsonResponse
@@ -170,7 +171,7 @@ def push_event_to_google(request: HttpRequest) -> JsonResponse:
         else:
             recurrence.append(f"RRULE:FREQ=WEEKLY;BYDAY={byday_str}")
 
-    google_payload = {
+    google_payload: dict[str, Any] = {
         "summary": summary,
         "description": event_desc,
         "start": {

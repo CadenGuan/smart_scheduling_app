@@ -1,14 +1,15 @@
 import os
 import tempfile
 import unittest
+
 from agent.catalog_dao import (
-    init_db,
-    insert_course,
     bulk_insert_courses,
+    execute_safe_query,
     get_course_details,
     get_course_sections,
     get_course_time,
-    execute_safe_query,
+    init_db,
+    insert_course,
     sanitize_value,
 )
 

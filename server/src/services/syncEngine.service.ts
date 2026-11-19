@@ -15,7 +15,9 @@ export class SyncEngineService {
    * Refreshes the Google OAuth access token using stored refresh_token.
    */
   static async refreshGoogleToken(userId: string): Promise<string | null> {
-    const tokenRow = db.prepare('SELECT refresh_token FROM oauth_tokens WHERE user_id = ?').get(userId) as any;
+    const tokenRow = db
+      .prepare('SELECT refresh_token FROM oauth_tokens WHERE user_id = ?')
+      .get(userId) as any;
     if (!tokenRow?.refresh_token) {
       return null;
     }
@@ -40,11 +42,13 @@ export class SyncEngineService {
       const newAccessToken = data.access_token;
       const expiresAt = new Date(Date.now() + (data.expires_in || 3600) * 1000).toISOString();
 
-      db.prepare(`
+      db.prepare(
+        `
         UPDATE oauth_tokens
         SET access_token = ?, expires_at = ?, updated_at = CURRENT_TIMESTAMP
         WHERE user_id = ?
-      `).run(newAccessToken, expiresAt, userId);
+      `
+      ).run(newAccessToken, expiresAt, userId);
 
       return newAccessToken;
     } catch (err) {
@@ -56,7 +60,10 @@ export class SyncEngineService {
   /**
    * Pushes a single schedule event to Google Calendar via Django agent service.
    */
-  static async pushEventToDjango(event: any, googleToken: string): Promise<{ success: boolean; googleEventId?: string; status?: number }> {
+  static async pushEventToDjango(
+    event: any,
+    googleToken: string
+  ): Promise<{ success: boolean; googleEventId?: string; status?: number }> {
     const djangoUrl = `${config.DJANGO_AGENT_URL || 'http://localhost:8000'}/api/sync/push/`;
     try {
       const response = await fetch(djangoUrl, {
@@ -109,7 +116,9 @@ export class SyncEngineService {
       };
     }
 
-    let tokenRow = db.prepare('SELECT access_token, expires_at FROM oauth_tokens WHERE user_id = ?').get(userId) as any;
+    let tokenRow = db
+      .prepare('SELECT access_token, expires_at FROM oauth_tokens WHERE user_id = ?')
+      .get(userId) as any;
     if (!tokenRow?.access_token) {
       // Mark failed
       for (const ev of pendingEvents) {

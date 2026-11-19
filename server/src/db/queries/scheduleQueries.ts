@@ -1,6 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../database.js';
-import { UserScheduleItem, SyncStatus, CreateScheduleEventDTO, UpdateScheduleEventDTO } from 'shared';
+import {
+  UserScheduleItem,
+  SyncStatus,
+  CreateScheduleEventDTO,
+  UpdateScheduleEventDTO,
+} from 'shared';
 
 function mapRow(row: any): UserScheduleItem {
   return {
@@ -85,7 +90,11 @@ export const scheduleQueries = {
     return this.getScheduleEventById(id)!;
   },
 
-  updateScheduleEvent(id: string, userId: string, data: UpdateScheduleEventDTO): UserScheduleItem | null {
+  updateScheduleEvent(
+    id: string,
+    userId: string,
+    data: UpdateScheduleEventDTO
+  ): UserScheduleItem | null {
     const existing = this.getScheduleEventById(id, userId);
     if (!existing) return null;
 

@@ -147,7 +147,7 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
         code: item.courseCode,
         title: item.title,
         type: item.isImported ? 'GOOGLE_CALENDAR_BUSY' : 'MAJOR',
-        days: item.days.split(',').map((d) => {
+        days: item.days.split(',').map((d: string) => {
           const map: Record<string, any> = {
             M: 'Monday',
             Tu: 'Tuesday',
@@ -194,8 +194,8 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
                 syncStatus === 'synced'
                   ? 'bg-emerald-600/30 text-emerald-100'
                   : syncStatus === 'failed'
-                  ? 'bg-rose-600/40 text-rose-100'
-                  : 'bg-amber-600/30 text-amber-100'
+                    ? 'bg-rose-600/40 text-rose-100'
+                    : 'bg-amber-600/30 text-amber-100'
               }`}
             >
               {syncStatus}
@@ -287,8 +287,8 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
                 {isSyncing
                   ? '⏳ Syncing...'
                   : !this.state.isConnectedToGoogle
-                  ? '📅 Sync to Google Calendar'
-                  : '🔄 Sync Now'}
+                    ? '📅 Sync to Google Calendar'
+                    : '🔄 Sync Now'}
               </span>
             </button>
 
@@ -347,7 +347,9 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
         {(syncError || hasFailedEvents) && (
           <div className="bg-rose-50 border-b border-rose-200 px-4 py-2 text-xs text-rose-800 flex justify-between items-center">
             <span>
-              ⚠️ {syncError || 'Some events failed to sync with Google Calendar. Click Sync Now to retry.'}
+              ⚠️{' '}
+              {syncError ||
+                'Some events failed to sync with Google Calendar. Click Sync Now to retry.'}
             </span>
             <button
               onClick={this.handleTriggerSync}

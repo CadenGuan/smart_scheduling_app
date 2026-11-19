@@ -66,3 +66,16 @@ export {
   ConferenceDeadlineSchema,
   DeadlinesResponseSchema,
 } from './deadline.schema.js';
+
+export {
+  SyncStatusEnum,
+  type SyncStatus,
+  UserScheduleItemSchema,
+  type UserScheduleItem,
+  UserSettingsSchema,
+  type UserSettings,
+  CreateScheduleEventRequestSchema,
+  type CreateScheduleEventDTO,
+  UpdateScheduleEventRequestSchema,
+  type UpdateScheduleEventDTO,
+} from './schedule.schema.js';
