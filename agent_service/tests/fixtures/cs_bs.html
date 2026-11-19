@@ -1,0 +1,779 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xml:lang="en" xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head><meta http-equiv="Cache-Control" content="no-cache" /><title>
+	University of California Santa CruzÂ -Â Computer Science B.S.
+</title><meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><script type="text/javascript">window.NREUM||(NREUM={});NREUM.info = {"beacon":"bam.nr-data.net","errorBeacon":"bam.nr-data.net","licenseKey":"NRJS-8e849bdf63c6884f6ef","applicationID":"1359705662","transactionName":"Y1NQZhdQC0cHU0ZfCVoZc2E1HglVH19HQhUbWlNLCkQRR0lFXF8QUURBWxFIRVsAEFFXCl1QXUALWAQUFVFcQgcUVUBHHx4WVQhEU1UUQUxBRgRfAVUUVEJXAVEYU0EVSQ==","queueTime":0,"applicationTime":204,"agent":"","atts":""}</script><script type="text/javascript">(window.NREUM||(NREUM={})).init={privacy:{cookies_enabled:true},ajax:{deny_list:["bam.nr-data.net"]},distributed_tracing:{enabled:true}};(window.NREUM||(NREUM={})).loader_config={agentID:"1359996610",accountID:"3058884",trustKey:"3028485",xpid:"VwYCWV5bDBABV1RbAAECUFID",licenseKey:"NRJS-8e849bdf63c6884f6ef",applicationID:"1359705662",browserID:"1359996610"};window.NREUM||(NREUM={}),__nr_require=function(t,e,n){function r(n){if(!e[n]){var o=e[n]={exports:{}};t[n][0].call(o.exports,function(e){var o=t[n][1][e];return r(o||e)},o,o.exports)}return e[n].exports}if("function"==typeof __nr_require)return __nr_require;for(var o=0;o<n.length;o++)r(n[o]);return r}({1:[function(t,e,n){function r(t){try{s.console&&console.log(t)}catch(e){}}var o,i=t("ee"),a=t(31),s={};try{o=localStorage.getItem("__nr_flags").split(","),console&&"function"==typeof console.log&&(s.console=!0,o.indexOf("dev")!==-1&&(s.dev=!0),o.indexOf("nr_dev")!==-1&&(s.nrDev=!0))}catch(c){}s.nrDev&&i.on("internal-error",function(t){r(t.stack)}),s.dev&&i.on("fn-err",function(t,e,n){r(n.stack)}),s.dev&&(r("NR AGENT IN DEVELOPMENT MODE"),r("flags: "+a(s,function(t,e){return t}).join(", ")))},{}],2:[function(t,e,n){function r(t,e,n,r,s){try{l?l-=1:o(s||new UncaughtException(t,e,n),!0)}catch(f){try{i("ierr",[f,c.now(),!0])}catch(d){}}return"function"==typeof u&&u.apply(this,a(arguments))}function UncaughtException(t,e,n){this.message=t||"Uncaught error with no additional information",this.sourceURL=e,this.line=n}function o(t,e){var n=e?null:c.now();i("err",[t,n])}var i=t("handle"),a=t(32),s=t("ee"),c=t("loader"),f=t("gos"),u=window.onerror,d=!1,p="nr@seenError";if(!c.disabled){var l=0;c.features.err=!0,t(1),window.onerror=r;try{throw new Error}catch(h){"stack"in h&&(t(14),t(13),"addEventListener"in window&&t(7),c.xhrWrappable&&t(15),d=!0)}s.on("fn-start",function(t,e,n){d&&(l+=1)}),s.on("fn-err",function(t,e,n){d&&!n[p]&&(f(n,p,function(){return!0}),this.thrown=!0,o(n))}),s.on("fn-end",function(){d&&!this.thrown&&l>0&&(l-=1)}),s.on("internal-error",function(t){i("ierr",[t,c.now(),!0])})}},{}],3:[function(t,e,n){var r=t("loader");r.disabled||(r.features.ins=!0)},{}],4:[function(t,e,n){function r(){U++,L=g.hash,this[u]=y.now()}function o(){U--,g.hash!==L&&i(0,!0);var t=y.now();this[h]=~~this[h]+t-this[u],this[d]=t}function i(t,e){E.emit("newURL",[""+g,e])}function a(t,e){t.on(e,function(){this[e]=y.now()})}var s="-start",c="-end",f="-body",u="fn"+s,d="fn"+c,p="cb"+s,l="cb"+c,h="jsTime",m="fetch",v="addEventListener",w=window,g=w.location,y=t("loader");if(w[v]&&y.xhrWrappable&&!y.disabled){var x=t(11),b=t(12),E=t(9),R=t(7),O=t(14),T=t(8),S=t(15),P=t(10),M=t("ee"),C=M.get("tracer"),N=t(23);t(17),y.features.spa=!0;var L,U=0;M.on(u,r),b.on(p,r),P.on(p,r),M.on(d,o),b.on(l,o),P.on(l,o),M.buffer([u,d,"xhr-resolved"]),R.buffer([u]),O.buffer(["setTimeout"+c,"clearTimeout"+s,u]),S.buffer([u,"new-xhr","send-xhr"+s]),T.buffer([m+s,m+"-done",m+f+s,m+f+c]),E.buffer(["newURL"]),x.buffer([u]),b.buffer(["propagate",p,l,"executor-err","resolve"+s]),C.buffer([u,"no-"+u]),P.buffer(["new-jsonp","cb-start","jsonp-error","jsonp-end"]),a(T,m+s),a(T,m+"-done"),a(P,"new-jsonp"),a(P,"jsonp-end"),a(P,"cb-start"),E.on("pushState-end",i),E.on("replaceState-end",i),w[v]("hashchange",i,N(!0)),w[v]("load",i,N(!0)),w[v]("popstate",function(){i(0,U>1)},N(!0))}},{}],5:[function(t,e,n){function r(){var t=new PerformanceObserver(function(t,e){var n=t.getEntries();s(v,[n])});try{t.observe({entryTypes:["resource"]})}catch(e){}}function o(t){if(s(v,[window.performance.getEntriesByType(w)]),window.performance["c"+p])try{window.performance[h](m,o,!1)}catch(t){}else try{window.performance[h]("webkit"+m,o,!1)}catch(t){}}function i(t){}if(window.performance&&window.performance.timing&&window.performance.getEntriesByType){var a=t("ee"),s=t("handle"),c=t(14),f=t(13),u=t(6),d=t(23),p="learResourceTimings",l="addEventListener",h="removeEventListener",m="resourcetimingbufferfull",v="bstResource",w="resource",g="-start",y="-end",x="fn"+g,b="fn"+y,E="bstTimer",R="pushState",O=t("loader");if(!O.disabled){O.features.stn=!0,t(9),"addEventListener"in window&&t(7);var T=NREUM.o.EV;a.on(x,function(t,e){var n=t[0];n instanceof T&&(this.bstStart=O.now())}),a.on(b,function(t,e){var n=t[0];n instanceof T&&s("bst",[n,e,this.bstStart,O.now()])}),c.on(x,function(t,e,n){this.bstStart=O.now(),this.bstType=n}),c.on(b,function(t,e){s(E,[e,this.bstStart,O.now(),this.bstType])}),f.on(x,function(){this.bstStart=O.now()}),f.on(b,function(t,e){s(E,[e,this.bstStart,O.now(),"requestAnimationFrame"])}),a.on(R+g,function(t){this.time=O.now(),this.startPath=location.pathname+location.hash}),a.on(R+y,function(t){s("bstHist",[location.pathname+location.hash,this.startPath,this.time])}),u()?(s(v,[window.performance.getEntriesByType("resource")]),r()):l in window.performance&&(window.performance["c"+p]?window.performance[l](m,o,d(!1)):window.performance[l]("webkit"+m,o,d(!1))),document[l]("scroll",i,d(!1)),document[l]("keypress",i,d(!1)),document[l]("click",i,d(!1))}}},{}],6:[function(t,e,n){e.exports=function(){return"PerformanceObserver"in window&&"function"==typeof window.PerformanceObserver}},{}],7:[function(t,e,n){function r(t){for(var e=t;e&&!e.hasOwnProperty(u);)e=Object.getPrototypeOf(e);e&&o(e)}function o(t){s.inPlace(t,[u,d],"-",i)}function i(t,e){return t[1]}var a=t("ee").get("events"),s=t("wrap-function")(a,!0),c=t("gos"),f=XMLHttpRequest,u="addEventListener",d="removeEventListener";e.exports=a,"getPrototypeOf"in Object?(r(document),r(window),r(f.prototype)):f.prototype.hasOwnProperty(u)&&(o(window),o(f.prototype)),a.on(u+"-start",function(t,e){var n=t[1];if(null!==n&&("function"==typeof n||"object"==typeof n)){var r=c(n,"nr@wrapped",function(){function t(){if("function"==typeof n.handleEvent)return n.handleEvent.apply(n,arguments)}var e={object:t,"function":n}[typeof n];return e?s(e,"fn-",null,e.name||"anonymous"):n});this.wrapped=t[1]=r}}),a.on(d+"-start",function(t){t[1]=this.wrapped||t[1]})},{}],8:[function(t,e,n){function r(t,e,n){var r=t[e];"function"==typeof r&&(t[e]=function(){var t=i(arguments),e={};o.emit(n+"before-start",[t],e);var a;e[m]&&e[m].dt&&(a=e[m].dt);var s=r.apply(this,t);return o.emit(n+"start",[t,a],s),s.then(function(t){return o.emit(n+"end",[null,t],s),t},function(t){throw o.emit(n+"end",[t],s),t})})}var o=t("ee").get("fetch"),i=t(32),a=t(31);e.exports=o;var s=window,c="fetch-",f=c+"body-",u=["arrayBuffer","blob","json","text","formData"],d=s.Request,p=s.Response,l=s.fetch,h="prototype",m="nr@context";d&&p&&l&&(a(u,function(t,e){r(d[h],e,f),r(p[h],e,f)}),r(s,"fetch",c),o.on(c+"end",function(t,e){var n=this;if(e){var r=e.headers.get("content-length");null!==r&&(n.rxSize=r),o.emit(c+"done",[null,e],n)}else o.emit(c+"done",[t],n)}))},{}],9:[function(t,e,n){var r=t("ee").get("history"),o=t("wrap-function")(r);e.exports=r;var i=window.history&&window.history.constructor&&window.history.constructor.prototype,a=window.history;i&&i.pushState&&i.replaceState&&(a=i),o.inPlace(a,["pushState","replaceState"],"-")},{}],10:[function(t,e,n){function r(t){function e(){f.emit("jsonp-end",[],l),t.removeEventListener("load",e,c(!1)),t.removeEventListener("error",n,c(!1))}function n(){f.emit("jsonp-error",[],l),f.emit("jsonp-end",[],l),t.removeEventListener("load",e,c(!1)),t.removeEventListener("error",n,c(!1))}var r=t&&"string"==typeof t.nodeName&&"script"===t.nodeName.toLowerCase();if(r){var o="function"==typeof t.addEventListener;if(o){var a=i(t.src);if(a){var d=s(a),p="function"==typeof d.parent[d.key];if(p){var l={};u.inPlace(d.parent,[d.key],"cb-",l),t.addEventListener("load",e,c(!1)),t.addEventListener("error",n,c(!1)),f.emit("new-jsonp",[t.src],l)}}}}}function o(){return"addEventListener"in window}function i(t){var e=t.match(d);return e?e[1]:null}function a(t,e){var n=t.match(l),r=n[1],o=n[3];return o?a(o,e[r]):e[r]}function s(t){var e=t.match(p);return e&&e.length>=3?{key:e[2],parent:a(e[1],window)}:{key:t,parent:window}}var c=t(23),f=t("ee").get("jsonp"),u=t("wrap-function")(f);if(e.exports=f,o()){var d=/[?&](?:callback|cb)=([^&#]+)/,p=/(.*)\.([^.]+)/,l=/^(\w+)(\.|$)(.*)$/,h=["appendChild","insertBefore","replaceChild"];Node&&Node.prototype&&Node.prototype.appendChild?u.inPlace(Node.prototype,h,"dom-"):(u.inPlace(HTMLElement.prototype,h,"dom-"),u.inPlace(HTMLHeadElement.prototype,h,"dom-"),u.inPlace(HTMLBodyElement.prototype,h,"dom-")),f.on("dom-start",function(t){r(t[0])})}},{}],11:[function(t,e,n){var r=t("ee").get("mutation"),o=t("wrap-function")(r),i=NREUM.o.MO;e.exports=r,i&&(window.MutationObserver=function(t){return this instanceof i?new i(o(t,"fn-")):i.apply(this,arguments)},MutationObserver.prototype=i.prototype)},{}],12:[function(t,e,n){function r(t){var e=i.context(),n=s(t,"executor-",e,null,!1),r=new f(n);return i.context(r).getCtx=function(){return e},r}var o=t("wrap-function"),i=t("ee").get("promise"),a=t("ee").getOrSetContext,s=o(i),c=t(31),f=NREUM.o.PR;e.exports=i,f&&(window.Promise=r,["all","race"].forEach(function(t){var e=f[t];f[t]=function(n){function r(t){return function(){i.emit("propagate",[null,!o],a,!1,!1),o=o||!t}}var o=!1;c(n,function(e,n){Promise.resolve(n).then(r("all"===t),r(!1))});var a=e.apply(f,arguments),s=f.resolve(a);return s}}),["resolve","reject"].forEach(function(t){var e=f[t];f[t]=function(t){var n=e.apply(f,arguments);return t!==n&&i.emit("propagate",[t,!0],n,!1,!1),n}}),f.prototype["catch"]=function(t){return this.then(null,t)},f.prototype=Object.create(f.prototype,{constructor:{value:r}}),c(Object.getOwnPropertyNames(f),function(t,e){try{r[e]=f[e]}catch(n){}}),o.wrapInPlace(f.prototype,"then",function(t){return function(){var e=this,n=o.argsToArray.apply(this,arguments),r=a(e);r.promise=e,n[0]=s(n[0],"cb-",r,null,!1),n[1]=s(n[1],"cb-",r,null,!1);var c=t.apply(this,n);return r.nextPromise=c,i.emit("propagate",[e,!0],c,!1,!1),c}}),i.on("executor-start",function(t){t[0]=s(t[0],"resolve-",this,null,!1),t[1]=s(t[1],"resolve-",this,null,!1)}),i.on("executor-err",function(t,e,n){t[1](n)}),i.on("cb-end",function(t,e,n){i.emit("propagate",[n,!0],this.nextPromise,!1,!1)}),i.on("propagate",function(t,e,n){this.getCtx&&!e||(this.getCtx=function(){if(t instanceof Promise)var e=i.context(t);return e&&e.getCtx?e.getCtx():this})}),r.toString=function(){return""+f})},{}],13:[function(t,e,n){var r=t("ee").get("raf"),o=t("wrap-function")(r),i="equestAnimationFrame";e.exports=r,o.inPlace(window,["r"+i,"mozR"+i,"webkitR"+i,"msR"+i],"raf-"),r.on("raf-start",function(t){t[0]=o(t[0],"fn-")})},{}],14:[function(t,e,n){function r(t,e,n){t[0]=a(t[0],"fn-",null,n)}function o(t,e,n){this.method=n,this.timerDuration=isNaN(t[1])?0:+t[1],t[0]=a(t[0],"fn-",this,n)}var i=t("ee").get("timer"),a=t("wrap-function")(i),s="setTimeout",c="setInterval",f="clearTimeout",u="-start",d="-";e.exports=i,a.inPlace(window,[s,"setImmediate"],s+d),a.inPlace(window,[c],c+d),a.inPlace(window,[f,"clearImmediate"],f+d),i.on(c+u,r),i.on(s+u,o)},{}],15:[function(t,e,n){function r(t,e){d.inPlace(e,["onreadystatechange"],"fn-",s)}function o(){var t=this,e=u.context(t);t.readyState>3&&!e.resolved&&(e.resolved=!0,u.emit("xhr-resolved",[],t)),d.inPlace(t,y,"fn-",s)}function i(t){x.push(t),m&&(E?E.then(a):w?w(a):(R=-R,O.data=R))}function a(){for(var t=0;t<x.length;t++)r([],x[t]);x.length&&(x=[])}function s(t,e){return e}function c(t,e){for(var n in t)e[n]=t[n];return e}t(7);var f=t("ee"),u=f.get("xhr"),d=t("wrap-function")(u),p=t(23),l=NREUM.o,h=l.XHR,m=l.MO,v=l.PR,w=l.SI,g="readystatechange",y=["onload","onerror","onabort","onloadstart","onloadend","onprogress","ontimeout"],x=[];e.exports=u;var b=window.XMLHttpRequest=function(t){var e=new h(t);try{u.emit("new-xhr",[e],e),e.addEventListener(g,o,p(!1))}catch(n){try{u.emit("internal-error",[n])}catch(r){}}return e};if(c(h,b),b.prototype=h.prototype,d.inPlace(b.prototype,["open","send"],"-xhr-",s),u.on("send-xhr-start",function(t,e){r(t,e),i(e)}),u.on("open-xhr-start",r),m){var E=v&&v.resolve();if(!w&&!v){var R=1,O=document.createTextNode(R);new m(a).observe(O,{characterData:!0})}}else f.on("fn-end",function(t){t[0]&&t[0].type===g||a()})},{}],16:[function(t,e,n){function r(t){if(!s(t))return null;var e=window.NREUM;if(!e.loader_config)return null;var n=(e.loader_config.accountID||"").toString()||null,r=(e.loader_config.agentID||"").toString()||null,f=(e.loader_config.trustKey||"").toString()||null;if(!n||!r)return null;var h=l.generateSpanId(),m=l.generateTraceId(),v=Date.now(),w={spanId:h,traceId:m,timestamp:v};return(t.sameOrigin||c(t)&&p())&&(w.traceContextParentHeader=o(h,m),w.traceContextStateHeader=i(h,v,n,r,f)),(t.sameOrigin&&!u()||!t.sameOrigin&&c(t)&&d())&&(w.newrelicHeader=a(h,m,v,n,r,f)),w}function o(t,e){return"00-"+e+"-"+t+"-01"}function i(t,e,n,r,o){var i=0,a="",s=1,c="",f="";return o+"@nr="+i+"-"+s+"-"+n+"-"+r+"-"+t+"-"+a+"-"+c+"-"+f+"-"+e}function a(t,e,n,r,o,i){var a="btoa"in window&&"function"==typeof window.btoa;if(!a)return null;var s={v:[0,1],d:{ty:"Browser",ac:r,ap:o,id:t,tr:e,ti:n}};return i&&r!==i&&(s.d.tk=i),btoa(JSON.stringify(s))}function s(t){return f()&&c(t)}function c(t){var e=!1,n={};if("init"in NREUM&&"distributed_tracing"in NREUM.init&&(n=NREUM.init.distributed_tracing),t.sameOrigin)e=!0;else if(n.allowed_origins instanceof Array)for(var r=0;r<n.allowed_origins.length;r++){var o=h(n.allowed_origins[r]);if(t.hostname===o.hostname&&t.protocol===o.protocol&&t.port===o.port){e=!0;break}}return e}function f(){return"init"in NREUM&&"distributed_tracing"in NREUM.init&&!!NREUM.init.distributed_tracing.enabled}function u(){return"init"in NREUM&&"distributed_tracing"in NREUM.init&&!!NREUM.init.distributed_tracing.exclude_newrelic_header}function d(){return"init"in NREUM&&"distributed_tracing"in NREUM.init&&NREUM.init.distributed_tracing.cors_use_newrelic_header!==!1}function p(){return"init"in NREUM&&"distributed_tracing"in NREUM.init&&!!NREUM.init.distributed_tracing.cors_use_tracecontext_headers}var l=t(28),h=t(18);e.exports={generateTracePayload:r,shouldGenerateTrace:s}},{}],17:[function(t,e,n){function r(t){var e=this.params,n=this.metrics;if(!this.ended){this.ended=!0;for(var r=0;r<p;r++)t.removeEventListener(d[r],this.listener,!1);return e.protocol&&"data"===e.protocol?void g("Ajax/DataUrl/Excluded"):void(e.aborted||(n.duration=a.now()-this.startTime,this.loadCaptureCalled||4!==t.readyState?null==e.status&&(e.status=0):i(this,t),n.cbTime=this.cbTime,s("xhr",[e,n,this.startTime,this.endTime,"xhr"],this)))}}function o(t,e){var n=c(e),r=t.params;r.hostname=n.hostname,r.port=n.port,r.protocol=n.protocol,r.host=n.hostname+":"+n.port,r.pathname=n.pathname,t.parsedOrigin=n,t.sameOrigin=n.sameOrigin}function i(t,e){t.params.status=e.status;var n=v(e,t.lastSize);if(n&&(t.metrics.rxSize=n),t.sameOrigin){var r=e.getResponseHeader("X-NewRelic-App-Data");r&&(t.params.cat=r.split(", ").pop())}t.loadCaptureCalled=!0}var a=t("loader");if(a.xhrWrappable&&!a.disabled){var s=t("handle"),c=t(18),f=t(16).generateTracePayload,u=t("ee"),d=["load","error","abort","timeout"],p=d.length,l=t("id"),h=t(24),m=t(22),v=t(19),w=t(23),g=t(25).recordSupportability,y=NREUM.o.REQ,x=window.XMLHttpRequest;a.features.xhr=!0,t(15),t(8),u.on("new-xhr",function(t){var e=this;e.totalCbs=0,e.called=0,e.cbTime=0,e.end=r,e.ended=!1,e.xhrGuids={},e.lastSize=null,e.loadCaptureCalled=!1,e.params=this.params||{},e.metrics=this.metrics||{},t.addEventListener("load",function(n){i(e,t)},w(!1)),h&&(h>34||h<10)||t.addEventListener("progress",function(t){e.lastSize=t.loaded},w(!1))}),u.on("open-xhr-start",function(t){this.params={method:t[0]},o(this,t[1]),this.metrics={}}),u.on("open-xhr-end",function(t,e){"loader_config"in NREUM&&"xpid"in NREUM.loader_config&&this.sameOrigin&&e.setRequestHeader("X-NewRelic-ID",NREUM.loader_config.xpid);var n=f(this.parsedOrigin);if(n){var r=!1;n.newrelicHeader&&(e.setRequestHeader("newrelic",n.newrelicHeader),r=!0),n.traceContextParentHeader&&(e.setRequestHeader("traceparent",n.traceContextParentHeader),n.traceContextStateHeader&&e.setRequestHeader("tracestate",n.traceContextStateHeader),r=!0),r&&(this.dt=n)}}),u.on("send-xhr-start",function(t,e){var n=this.metrics,r=t[0],o=this;if(n&&r){var i=m(r);i&&(n.txSize=i)}this.startTime=a.now(),this.listener=function(t){try{"abort"!==t.type||o.loadCaptureCalled||(o.params.aborted=!0),("load"!==t.type||o.called===o.totalCbs&&(o.onloadCalled||"function"!=typeof e.onload))&&o.end(e)}catch(n){try{u.emit("internal-error",[n])}catch(r){}}};for(var s=0;s<p;s++)e.addEventListener(d[s],this.listener,w(!1))}),u.on("xhr-cb-time",function(t,e,n){this.cbTime+=t,e?this.onloadCalled=!0:this.called+=1,this.called!==this.totalCbs||!this.onloadCalled&&"function"==typeof n.onload||this.end(n)}),u.on("xhr-load-added",function(t,e){var n=""+l(t)+!!e;this.xhrGuids&&!this.xhrGuids[n]&&(this.xhrGuids[n]=!0,this.totalCbs+=1)}),u.on("xhr-load-removed",function(t,e){var n=""+l(t)+!!e;this.xhrGuids&&this.xhrGuids[n]&&(delete this.xhrGuids[n],this.totalCbs-=1)}),u.on("xhr-resolved",function(){this.endTime=a.now()}),u.on("addEventListener-end",function(t,e){e instanceof x&&"load"===t[0]&&u.emit("xhr-load-added",[t[1],t[2]],e)}),u.on("removeEventListener-end",function(t,e){e instanceof x&&"load"===t[0]&&u.emit("xhr-load-removed",[t[1],t[2]],e)}),u.on("fn-start",function(t,e,n){e instanceof x&&("onload"===n&&(this.onload=!0),("load"===(t[0]&&t[0].type)||this.onload)&&(this.xhrCbStart=a.now()))}),u.on("fn-end",function(t,e){this.xhrCbStart&&u.emit("xhr-cb-time",[a.now()-this.xhrCbStart,this.onload,e],e)}),u.on("fetch-before-start",function(t){function e(t,e){var n=!1;return e.newrelicHeader&&(t.set("newrelic",e.newrelicHeader),n=!0),e.traceContextParentHeader&&(t.set("traceparent",e.traceContextParentHeader),e.traceContextStateHeader&&t.set("tracestate",e.traceContextStateHeader),n=!0),n}var n,r=t[1]||{};"string"==typeof t[0]?n=t[0]:t[0]&&t[0].url?n=t[0].url:window.URL&&t[0]&&t[0]instanceof URL&&(n=t[0].href),n&&(this.parsedOrigin=c(n),this.sameOrigin=this.parsedOrigin.sameOrigin);var o=f(this.parsedOrigin);if(o&&(o.newrelicHeader||o.traceContextParentHeader))if("string"==typeof t[0]||window.URL&&t[0]&&t[0]instanceof URL){var i={};for(var a in r)i[a]=r[a];i.headers=new Headers(r.headers||{}),e(i.headers,o)&&(this.dt=o),t.length>1?t[1]=i:t.push(i)}else t[0]&&t[0].headers&&e(t[0].headers,o)&&(this.dt=o)}),u.on("fetch-start",function(t,e){this.params={},this.metrics={},this.startTime=a.now(),this.dt=e,t.length>=1&&(this.target=t[0]),t.length>=2&&(this.opts=t[1]);var n,r=this.opts||{},i=this.target;if("string"==typeof i?n=i:"object"==typeof i&&i instanceof y?n=i.url:window.URL&&"object"==typeof i&&i instanceof URL&&(n=i.href),o(this,n),"data"!==this.params.protocol){var s=(""+(i&&i instanceof y&&i.method||r.method||"GET")).toUpperCase();this.params.method=s,this.txSize=m(r.body)||0}}),u.on("fetch-done",function(t,e){if(this.endTime=a.now(),this.params||(this.params={}),"data"===this.params.protocol)return void g("Ajax/DataUrl/Excluded");this.params.status=e?e.status:0;var n;"string"==typeof this.rxSize&&this.rxSize.length>0&&(n=+this.rxSize);var r={txSize:this.txSize,rxSize:n,duration:a.now()-this.startTime};s("xhr",[this.params,r,this.startTime,this.endTime,"fetch"],this)})}},{}],18:[function(t,e,n){var r={};e.exports=function(t){if(t in r)return r[t];if(0===(t||"").indexOf("data:"))return{protocol:"data"};var e=document.createElement("a"),n=window.location,o={};e.href=t,o.port=e.port;var i=e.href.split("://");!o.port&&i[1]&&(o.port=i[1].split("/")[0].split("@").pop().split(":")[1]),o.port&&"0"!==o.port||(o.port="https"===i[0]?"443":"80"),o.hostname=e.hostname||n.hostname,o.pathname=e.pathname,o.protocol=i[0],"/"!==o.pathname.charAt(0)&&(o.pathname="/"+o.pathname);var a=!e.protocol||":"===e.protocol||e.protocol===n.protocol,s=e.hostname===document.domain&&e.port===n.port;return o.sameOrigin=a&&(!e.hostname||s),"/"===o.pathname&&(r[t]=o),o}},{}],19:[function(t,e,n){function r(t,e){var n=t.responseType;return"json"===n&&null!==e?e:"arraybuffer"===n||"blob"===n||"json"===n?o(t.response):"text"===n||""===n||void 0===n?o(t.responseText):void 0}var o=t(22);e.exports=r},{}],20:[function(t,e,n){function r(){}function o(t,e,n,r){return function(){return u.recordSupportability("API/"+e+"/called"),i(t+e,[f.now()].concat(s(arguments)),n?null:this,r),n?void 0:this}}var i=t("handle"),a=t(31),s=t(32),c=t("ee").get("tracer"),f=t("loader"),u=t(25),d=NREUM;"undefined"==typeof window.newrelic&&(newrelic=d);var p=["setPageViewName","setCustomAttribute","setErrorHandler","finished","addToTrace","inlineHit","addRelease"],l="api-",h=l+"ixn-";a(p,function(t,e){d[e]=o(l,e,!0,"api")}),d.addPageAction=o(l,"addPageAction",!0),d.setCurrentRouteName=o(l,"routeName",!0),e.exports=newrelic,d.interaction=function(){return(new r).get()};var m=r.prototype={createTracer:function(t,e){var n={},r=this,o="function"==typeof e;return i(h+"tracer",[f.now(),t,n],r),function(){if(c.emit((o?"":"no-")+"fn-start",[f.now(),r,o],n),o)try{return e.apply(this,arguments)}catch(t){throw c.emit("fn-err",[arguments,this,t],n),t}finally{c.emit("fn-end",[f.now()],n)}}}};a("actionText,setName,setAttribute,save,ignore,onEnd,getContext,end,get".split(","),function(t,e){m[e]=o(h,e)}),newrelic.noticeError=function(t,e){"string"==typeof t&&(t=new Error(t)),u.recordSupportability("API/noticeError/called"),i("err",[t,f.now(),!1,e])}},{}],21:[function(t,e,n){function r(t){if(NREUM.init){for(var e=NREUM.init,n=t.split("."),r=0;r<n.length-1;r++)if(e=e[n[r]],"object"!=typeof e)return;return e=e[n[n.length-1]]}}e.exports={getConfiguration:r}},{}],22:[function(t,e,n){e.exports=function(t){if("string"==typeof t&&t.length)return t.length;if("object"==typeof t){if("undefined"!=typeof ArrayBuffer&&t instanceof ArrayBuffer&&t.byteLength)return t.byteLength;if("undefined"!=typeof Blob&&t instanceof Blob&&t.size)return t.size;if(!("undefined"!=typeof FormData&&t instanceof FormData))try{return JSON.stringify(t).length}catch(e){return}}}},{}],23:[function(t,e,n){var r=!1;try{var o=Object.defineProperty({},"passive",{get:function(){r=!0}});window.addEventListener("testPassive",null,o),window.removeEventListener("testPassive",null,o)}catch(i){}e.exports=function(t){return r?{passive:!0,capture:!!t}:!!t}},{}],24:[function(t,e,n){var r=0,o=navigator.userAgent.match(/Firefox[\/\s](\d+\.\d+)/);o&&(r=+o[1]),e.exports=r},{}],25:[function(t,e,n){function r(t,e){var n=[a,t,{name:t},e];return i("storeMetric",n,null,"api"),n}function o(t,e){var n=[s,t,{name:t},e];return i("storeEventMetrics",n,null,"api"),n}var i=t("handle"),a="sm",s="cm";e.exports={constants:{SUPPORTABILITY_METRIC:a,CUSTOM_METRIC:s},recordSupportability:r,recordCustom:o}},{}],26:[function(t,e,n){function r(){return s.exists&&performance.now?Math.round(performance.now()):(i=Math.max((new Date).getTime(),i))-a}function o(){return i}var i=(new Date).getTime(),a=i,s=t(33);e.exports=r,e.exports.offset=a,e.exports.getLastTimestamp=o},{}],27:[function(t,e,n){function r(t,e){var n=t.getEntries();n.forEach(function(t){"first-paint"===t.name?l("timing",["fp",Math.floor(t.startTime)]):"first-contentful-paint"===t.name&&l("timing",["fcp",Math.floor(t.startTime)])})}function o(t,e){var n=t.getEntries();if(n.length>0){var r=n[n.length-1];if(f&&f<r.startTime)return;var o=[r],i=a({});i&&o.push(i),l("lcp",o)}}function i(t){t.getEntries().forEach(function(t){t.hadRecentInput||l("cls",[t])})}function a(t){var e=navigator.connection||navigator.mozConnection||navigator.webkitConnection;if(e)return e.type&&(t["net-type"]=e.type),e.effectiveType&&(t["net-etype"]=e.effectiveType),e.rtt&&(t["net-rtt"]=e.rtt),e.downlink&&(t["net-dlink"]=e.downlink),t}function s(t){if(t instanceof w&&!y){var e=Math.round(t.timeStamp),n={type:t.type};a(n),e<=h.now()?n.fid=h.now()-e:e>h.offset&&e<=Date.now()?(e-=h.offset,n.fid=h.now()-e):e=h.now(),y=!0,l("timing",["fi",e,n])}}function c(t){"hidden"===t&&(f=h.now(),l("pageHide",[f]))}if(!("init"in NREUM&&"page_view_timing"in NREUM.init&&"enabled"in NREUM.init.page_view_timing&&NREUM.init.page_view_timing.enabled===!1)){var f,u,d,p,l=t("handle"),h=t("loader"),m=t(30),v=t(23),w=NREUM.o.EV;if("PerformanceObserver"in window&&"function"==typeof window.PerformanceObserver){u=new PerformanceObserver(r);try{u.observe({entryTypes:["paint"]})}catch(g){}d=new PerformanceObserver(o);try{d.observe({entryTypes:["largest-contentful-paint"]})}catch(g){}p=new PerformanceObserver(i);try{p.observe({type:"layout-shift",buffered:!0})}catch(g){}}if("addEventListener"in document){var y=!1,x=["click","keydown","mousedown","pointerdown","touchstart"];x.forEach(function(t){document.addEventListener(t,s,v(!1))})}m(c)}},{}],28:[function(t,e,n){function r(){function t(){return e?15&e[n++]:16*Math.random()|0}var e=null,n=0,r=window.crypto||window.msCrypto;r&&r.getRandomValues&&(e=r.getRandomValues(new Uint8Array(31)));for(var o,i="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx",a="",s=0;s<i.length;s++)o=i[s],"x"===o?a+=t().toString(16):"y"===o?(o=3&t()|8,a+=o.toString(16)):a+=o;return a}function o(){return a(16)}function i(){return a(32)}function a(t){function e(){return n?15&n[r++]:16*Math.random()|0}var n=null,r=0,o=window.crypto||window.msCrypto;o&&o.getRandomValues&&Uint8Array&&(n=o.getRandomValues(new Uint8Array(t)));for(var i=[],a=0;a<t;a++)i.push(e().toString(16));return i.join("")}e.exports={generateUuid:r,generateSpanId:o,generateTraceId:i}},{}],29:[function(t,e,n){function r(t,e){if(!o)return!1;if(t!==o)return!1;if(!e)return!0;if(!i)return!1;for(var n=i.split("."),r=e.split("."),a=0;a<r.length;a++)if(r[a]!==n[a])return!1;return!0}var o=null,i=null,a=/Version\/(\S+)\s+Safari/;if(navigator.userAgent){var s=navigator.userAgent,c=s.match(a);c&&s.indexOf("Chrome")===-1&&s.indexOf("Chromium")===-1&&(o="Safari",i=c[1])}e.exports={agent:o,version:i,match:r}},{}],30:[function(t,e,n){function r(t){function e(){t(s&&document[s]?document[s]:document[i]?"hidden":"visible")}"addEventListener"in document&&a&&document.addEventListener(a,e,o(!1))}var o=t(23);e.exports=r;var i,a,s;"undefined"!=typeof document.hidden?(i="hidden",a="visibilitychange",s="visibilityState"):"undefined"!=typeof document.msHidden?(i="msHidden",a="msvisibilitychange"):"undefined"!=typeof document.webkitHidden&&(i="webkitHidden",a="webkitvisibilitychange",s="webkitVisibilityState")},{}],31:[function(t,e,n){function r(t,e){var n=[],r="",i=0;for(r in t)o.call(t,r)&&(n[i]=e(r,t[r]),i+=1);return n}var o=Object.prototype.hasOwnProperty;e.exports=r},{}],32:[function(t,e,n){function r(t,e,n){e||(e=0),"undefined"==typeof n&&(n=t?t.length:0);for(var r=-1,o=n-e||0,i=Array(o<0?0:o);++r<o;)i[r]=t[e+r];return i}e.exports=r},{}],33:[function(t,e,n){e.exports={exists:"undefined"!=typeof window.performance&&window.performance.timing&&"undefined"!=typeof window.performance.timing.navigationStart}},{}],ee:[function(t,e,n){function r(){}function o(t){function e(t){return t&&t instanceof r?t:t?f(t,c,a):a()}function n(n,r,o,i,a){if(a!==!1&&(a=!0),!l.aborted||i){t&&a&&t(n,r,o);for(var s=e(o),c=m(n),f=c.length,u=0;u<f;u++)c[u].apply(s,r);var p=d[y[n]];return p&&p.push([x,n,r,s]),s}}function i(t,e){g[t]=m(t).concat(e)}function h(t,e){var n=g[t];if(n)for(var r=0;r<n.length;r++)n[r]===e&&n.splice(r,1)}function m(t){return g[t]||[]}function v(t){return p[t]=p[t]||o(n)}function w(t,e){l.aborted||u(t,function(t,n){e=e||"feature",y[n]=e,e in d||(d[e]=[])})}var g={},y={},x={on:i,addEventListener:i,removeEventListener:h,emit:n,get:v,listeners:m,context:e,buffer:w,abort:s,aborted:!1};return x}function i(t){return f(t,c,a)}function a(){return new r}function s(){(d.api||d.feature)&&(l.aborted=!0,d=l.backlog={})}var c="nr@context",f=t("gos"),u=t(31),d={},p={},l=e.exports=o();e.exports.getOrSetContext=i,l.backlog=d},{}],gos:[function(t,e,n){function r(t,e,n){if(o.call(t,e))return t[e];var r=n();if(Object.defineProperty&&Object.keys)try{return Object.defineProperty(t,e,{value:r,writable:!0,enumerable:!1}),r}catch(i){}return t[e]=r,r}var o=Object.prototype.hasOwnProperty;e.exports=r},{}],handle:[function(t,e,n){function r(t,e,n,r){o.buffer([t],r),o.emit(t,e,n)}var o=t("ee").get("handle");e.exports=r,r.ee=o},{}],id:[function(t,e,n){function r(t){var e=typeof t;return!t||"object"!==e&&"function"!==e?-1:t===window?0:a(t,i,function(){return o++})}var o=1,i="nr@id",a=t("gos");e.exports=r},{}],loader:[function(t,e,n){function r(){if(!T++){var t=O.info=NREUM.info,e=m.getElementsByTagName("script")[0];if(setTimeout(f.abort,3e4),!(t&&t.licenseKey&&t.applicationID&&e))return f.abort();c(E,function(e,n){t[e]||(t[e]=n)});var n=a();s("mark",["onload",n+O.offset],null,"api"),s("timing",["load",n]);var r=m.createElement("script");0===t.agent.indexOf("http://")||0===t.agent.indexOf("https://")?r.src=t.agent:r.src=l+"://"+t.agent,e.parentNode.insertBefore(r,e)}}function o(){"complete"===m.readyState&&i()}function i(){s("mark",["domContent",a()+O.offset],null,"api")}var a=t(26),s=t("handle"),c=t(31),f=t("ee"),u=t(29),d=t(21),p=t(23),l=d.getConfiguration("ssl")===!1?"http":"https",h=window,m=h.document,v="addEventListener",w="attachEvent",g=h.XMLHttpRequest,y=g&&g.prototype,x=!1;NREUM.o={ST:setTimeout,SI:h.setImmediate,CT:clearTimeout,XHR:g,REQ:h.Request,EV:h.Event,PR:h.Promise,MO:h.MutationObserver};var b=""+location,E={beacon:"bam.nr-data.net",errorBeacon:"bam.nr-data.net",agent:"js-agent.newrelic.com/nr-spa-1216.min.js"},R=g&&y&&y[v]&&!/CriOS/.test(navigator.userAgent),O=e.exports={offset:a.getLastTimestamp(),now:a,origin:b,features:{},xhrWrappable:R,userAgent:u,disabled:x};if(!x){t(20),t(27),m[v]?(m[v]("DOMContentLoaded",i,p(!1)),h[v]("load",r,p(!1))):(m[w]("onreadystatechange",o),h[w]("onload",r)),s("mark",["firstbyte",a.getLastTimestamp()],null,"api");var T=0}},{}],"wrap-function":[function(t,e,n){function r(t,e){function n(e,n,r,c,f){function nrWrapper(){var i,a,u,p;try{a=this,i=d(arguments),u="function"==typeof r?r(i,a):r||{}}catch(l){o([l,"",[i,a,c],u],t)}s(n+"start",[i,a,c],u,f);try{return p=e.apply(a,i)}catch(h){throw s(n+"err",[i,a,h],u,f),h}finally{s(n+"end",[i,a,p],u,f)}}return a(e)?e:(n||(n=""),nrWrapper[p]=e,i(e,nrWrapper,t),nrWrapper)}function r(t,e,r,o,i){r||(r="");var s,c,f,u="-"===r.charAt(0);for(f=0;f<e.length;f++)c=e[f],s=t[c],a(s)||(t[c]=n(s,u?c+r:r,o,c,i))}function s(n,r,i,a){if(!h||e){var s=h;h=!0;try{t.emit(n,r,i,e,a)}catch(c){o([c,n,r,i],t)}h=s}}return t||(t=u),n.inPlace=r,n.flag=p,n}function o(t,e){e||(e=u);try{e.emit("internal-error",t)}catch(n){}}function i(t,e,n){if(Object.defineProperty&&Object.keys)try{var r=Object.keys(t);return r.forEach(function(n){Object.defineProperty(e,n,{get:function(){return t[n]},set:function(e){return t[n]=e,e}})}),e}catch(i){o([i],n)}for(var a in t)l.call(t,a)&&(e[a]=t[a]);return e}function a(t){return!(t&&t instanceof Function&&t.apply&&!t[p])}function s(t,e){var n=e(t);return n[p]=t,i(t,n,u),n}function c(t,e,n){var r=t[e];t[e]=s(r,n)}function f(){for(var t=arguments.length,e=new Array(t),n=0;n<t;++n)e[n]=arguments[n];return e}var u=t("ee"),d=t(32),p="nr@original",l=Object.prototype.hasOwnProperty,h=!1;e.exports=r,e.exports.wrapFunction=s,e.exports.wrapInPlace=c,e.exports.argsToArray=f},{}]},{},["loader",2,17,5,3,4]);</script><meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=no" /><meta http-equiv="cleartype" content="on" /><link rel="shortcut icon" href="/Institutions/University-of-California-Santa-Cruz/images/favicon.ico" /><link href="https://fonts.googleapis.com/css?family=EB+Garamond:400,400i,500,500i,600,600i,700,700i,800,800i|Roboto:100,100i,300,300i,400,400i,500,500i,700,700i,900,900i" rel="stylesheet" /><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" /><link href="/Institutions/University-of-California-Santa-Cruz/styles/ucsc.css" rel="stylesheet" type="text/css" /><link href="/Institutions/University-of-California-Santa-Cruz/styles/UCSCCustom.css" rel="stylesheet" type="text/css" /><link href="/Institutions/University-of-California-Santa-Cruz/styles/print.css" rel="stylesheet" type="text/css" media="print" />
+	 
+	 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
+
+     <script id="csNewRelicScript" type="text/javascript" src="/scripts/newRelicCustom.js" clientid="{916FD4FA-145E-45D2-8555-C14A515668DF}"></script>
+	 <script type="text/javascript" src="/scripts/insertHeaderFooter.js"></script>
+	 <script type="text/javascript" src="/scripts/treeListCDN.js"></script>
+	 <script type="text/javascript" src="/scripts/coursepopup.js"></script>
+	 <script type="text/javascript" src="/Institutions/University-of-California-Santa-Cruz/scripts/newscript.js"></script>
+     <link href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/smoothness/jquery-ui.css" rel="Stylesheet" type="text/css" /><script type='text/javascript'> 
+                                                (function ($) {
+                                                    $(document).ready(
+                                                        function () {
+                                                            var tabList = "<ul><li><a href='#degree-req-1'>Information and Policies</a></li><li><a href='#degree-req-2'>Requirements and Planners</a></li></ul>";
+                                                            $(tabList).insertBefore("#degree-req-1");
+                                                            
+                                                            const queryString = window.location.search;
+                                                            const urlParams = new URLSearchParams(queryString);
+                                                            if (urlParams.has('tab') && !isNaN(urlParams.get('tab')))
+                                                            {
+                                                                $("#degree-req").tabs();
+                                                                var url = '#degree-req-'.concat(urlParams.get('tab'));
+                                                                var element = $('a[href="'+url+'"]')[0];
+                                                                element.click();
+                                                            }
+                                                            else
+                                                            {
+                                                                $("#degree-req").tabs();
+                                                            }
+                                                            
+                                                            function scrollToAnchor(anchorName){
+                                                                var aTag = $("a[name='"+ anchorName +"']");
+                                                                $('html,body').animate({scrollTop: aTag.offset().top},'slow');
+                                                            }
+
+                                                            if(urlParams.has('anchor'))
+                                                            {
+                                                                scrollToAnchor(urlParams.get('anchor'));
+                                                            }
+                                                        });
+                                                    })(jQuery);
+                                                </script>
+	
+	<!-- Google Tag Manager -->
+
+	<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-5RFHNC"
+
+	height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+	<script>(function (w, d, s, l, i) {
+            w[l] = w[l] || []; w[l].push({
+                'gtm.start':
+
+                    new Date().getTime(), event: 'gtm.js'
+            }); var f = d.getElementsByTagName(s)[0],
+
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+
+                    '//www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+
+        })(window, document, 'script', 'dataLayer', 'GTM-5RFHNC');</script>
+
+	<!-- End Google Tag Manager -->
+	 
+</head>
+
+<body class="home www js" >
+	<div id="skiptocontent1"><a id="skip_link" class="skiplink" href="#middle">Skip to main content</a></div>
+		<form method="post" action="/current/general-catalog/academic-units/baskin-engineering/computer-science-and-engineering/computer-science-bs/" id="Form1">
+<div class="aspNetHidden">
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="WUUGXXedLyIYqNCYzF2xcxS1/ZcJyVNWEYZSTlK2tyekFugtVgD57Mh8NgE5JoznY2DQlnQlay8+O6SC97uBodhAxVlQtC2PEBQb6CH39XRJ3pQijhhpC4w5DPXC3P7z1RZfl9W7lT3riynh66I84G0gourwh/HY5Zv754ubYE9wdWC7bkmqvlet4+N8IV0NbvseSVrfnZ4wgMj3eHM3w1gwADyMCEqOKXoACYZMBVhKNRagBcMDPX3B44aml4Krk5Xz5t379nA9fVi/Db4owclOC0aJ4riJCbv7c6Wn0j8FMKz8LcffzrUyt2V7F3nthxJnApgDTOw6fTUFYIfcNip6V8gf3yPcJ7+1Z8hguunKsekOs0LcjCDvDhYg6CvyeZJtjK8b2jji6jKnoXTViJ8nD8SJFDrEOPEXruSpLaF9QVF3Htk93JLlvheTBEKzsIdrOCmtYAePLlG/ZK9KsxY5HR/9QSASVyjkdvV+VBBAq4iPszE/iD6njQbPuUWL4V0yhE9/3XXNKIBxWtHb2GQEfoFSEUW2DgoDI/OWny5fpMVwAknPRk7laEAQP5ByqGgWmUNUJyTjU2hTHMKrp6h6AjzyPL17IHn303D9logoJz/mLGRQRwyvLuskB2UFOa8exes6dJm1+jGbbAjpffo900puzh80RqIG/Tc2U89H1KUnDs/3WrYEl0elyMfR4ckwuDpc3UMEQuLomo9479e+7fgEdIzQFqx5Z1qte153tEPSpIj5rk4sxKnY19irOiOeCxidnRC2nx6Pt+dF+nP9a6QfSUA+bKKmAlpXi+DAqAr7kGa3SCRYjqt2ksY54gN8kniwiCrRcRcpiinzDH+NetfOPM5T2KlG4Cry6bFtXg2O97nKONGHJKyc9rhaqzQMvO+c6JTn+ork70KHNedjK9ZXR8I5iCKuYSoaF1/wRAjPZDReIncJ1VywrfKOgscgMqvbhOCl8lzt8pU6r6gWtLTzJ9uCxj/MhWugx8orPR1b8sQTGr4j9al33Tuu2ws2xZmLyisdvEU50GBEpQrgo1n07mAP1Jg0ayl4k7wde2Nu/x5zH4TS1RLO6Mz+Fus+0wMFX3rrvgQwrMmosLaWKHnZdadKDabZm04vlJrlOFUSptv22i1UQwUJoLSj7jwtDampof7LdFvEmAzgMa8W72rItGxJVRFDspdYtQO5YunoIcDSlR3mfR6G4lSe+B2fiSdKcnvKps/QR3jOI3JnWTLV0nYiTQS3+sFslMQMy269RIutN5zwEtY4qh1qRUpdtaxoWYNJMSVCQenF0Bxd1mg6BVkEXPOXsLiBK3ryASRQkAi4khfub6YQDgjfGAaKLYYoDHKnWfdtGmLfw5tVNNiH9v4yxdJTblZL4X0v5mGqV/gnTKruyeuDF5nvrtAOu1+DNi694DlhH7GekyrTENI7gqmvGFdSSC2t0uuXX9JGbgvBMy0KujZbYSHSFi/vtP1cX9Mmcw7VMlRLFd+zhzXIa06ggk+DbCxdUZFg6j/NN/MyYPlwdqBYTBZngstvFWGgcvILYxLJ7inxynyvkrM3L3UxmVK9uZHfGMegqsrMyibViPIkq3CVGIuxLhOwHq290Tc4Gzbw+2mWLTadNWLWres9DGvKy92yD4dtlQ57oJLjn5KvE6zjsI4fzOtcC7aicQyw60UjQNQwKrYhiCxPSaygqJ3dQcw26FKS3jjX2Osc/dPOo3cfggz7NXczJqK8jEP2lUNAgniK5c3MrdhUR1nUiPsEBcUa4Jx1DZlaO3j7TTwULRXPbL9P62RM3B+3knFBNhlJAs0hD8eHRu4vGEmzOv11Tt6YKt1YJWjQ5Ze26NjmXG2uQ9qZEJ/I7nok79u7zk5ndZw9nse1C4oLsOya0l+hkC2r4DtG+Za5fSdBFYEFrIAMXlXpWGd3pFRJvSejvpxNkH3Hvspq6JEg3ujFTCFAbI0HvuVGeu2/x1m1ylgbbn0F44FnMPX2UUF1Uik8ifVTJoKwyfrSFyvRzfsjA3hLZIM0tSZcHVMqObBGZHU5kvAVvhGmyzTt7wkx0DDDT/mNr93Vf1pEJPS+Y5pIsUO/iALNqKk3lACNBLDmgyS80Wzo4yVjDhfmpIKgjBvn+QH78/LXtSDzgbeXHk8sIUNEhDTendkx4zLzZYyNjSecgW3FMfblmQwJurpkt3nI0klC2d/KZYzIl2LoQwlGw+0VVkpDGpPzLwiqTTd5bsxQPLu2tH/iXgMnsT7/HpqSfKfPDKztP6H0isku8SXjXmTvwvNvlVL8zaQLUFBYqTXINnNjnQMbrDo7wpn3jrCYBtBFmoFDKZi/T3tSQxF5R6qm8nX5V2680hg7tyJlFRyRsZ/3usi9BsCtlBcuRhnGPnmaWbLg75GorMPtkpdxilzK4/foYBH6NjrMVE5l/yuj1+sucy7pcQwCeyQzNXcURom7uE6p3zdkc7FfdDYpEjopRt2rZCuRoaOoBwx71Y+QNTHdzp3OnW9vJ60UUtmoMJx/IpbXN7gqlXBSIuZp/zaQS1uwK7GG8Mo9TI41Xj3F/vVR9yMESiL3sMv3MKmwPLJpTVn8pt11aYYL+ZEo7NPt+9eUOX4YQLYGjDPQbE0zsRqm/ijoz3WaIzTakajDv4eJUPA2vaFGNbxWMU7ib5OC5fThp2H1mHiTK3KR+Sh/Hj7ulO/jF/692TQP+MnJIzr0ykfVZiaOXGk4YRSuERwieYWZCftyu04S1Al13xnzKBtpN5x6aEkDMHzytLRrSNMkYqv2zy40U60Gp+fDIqT637mXh2+GhSvQ8Uu62ziTK+/7jIUPFOKAVAVLEep3i/o7I9GjTPP5Ouu7n5T0CfCSwndvq+em7kN25spnRwMxQTZkru4eXiZVx9UD2uD1YdxtNxncumQkziQaCedJhVvTxHmG/AolMqYkBR3HXX+ThsLi1dceNaWi8XPnC19+3pj2RW/s4KjrS8x9kfTWN9L4c2L/FNgvrgCgTMV7HjWreNHDrAuJHdreVIaBzw1h9vIiDctlneeZShcB7eEU7baz/XkhFR+1GW+OkK6+Ugsyl2ygYiVTIqAUXhNV27YAc9tlKGHEi+Vg6WN9bHJYQrCR4UXSVmDlisTq4C+EAZnrPfNGhpYenYwKmgMCQHtS0fvMqrlFCgELpZ7tZKg3r2VEz094liRt48Ape0r4i4OTqsPfWepYCKmPBtgblqxelNKsoP7D9x9XRcu9h6pIfoBQNs41M5PYryv8i2YRK+Ow08gA9wyfja1G4CT9ipFIFBysQhinH6wIkJd9vfp4Q8ft8c4uy0wp4Hzns5b0QSQ2ZCPx7nAKuzYgr6wxkz/KjbQvGUIeD3Tibs5A4gR1qY/mosm/4n17hdSF633rVwzAacUPTVaS+nxMGRwDxZLpqrxHQrhgIFTjq2Ar5GRe1a9W+pbRC1N32aUFluJ4QYO+iOOaHyg55kzMo7o3uAUzgce7fOEs4r/e79SPfGlLCUYgsBJ+9cyp8FI5OFConS7gFAh4UfwQmf1Nd09UkAb+TYvcC2Q1dWZ9kLUPMfj7Diyr1Wl2HJMOxFy4C3voqzdrLE2aytPIcYUDH4jH9aqggU+7ckJgw1xY7NaxQlVIF+EM65rMM6kcW7B21yLzCxtgbxg6VLWIcqy+XVq+EyPQePmWi+k1Fuz+NxJaO+XcXSGCrsVn5VU9+aCbiIDh4VhK3B+aPuZ5n8bQUUVQHRSgmKYVlTlTchFd6gZMCVy3eVWz35DZWiLpMpF/HxyTMo3oDrAZNaUXlEsAlmcvVST6GhNVFYwuVbGXskCPUAIo25OOBi1rCW0=" />
+</div>
+
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="845114C5" />
+</div>
+			<div id="pagewrapper1">
+				<div id="pagewrapper2">
+					<!--LOGO AND HEADER LINKS CAN GO HERE-->
+					<trss-ucsc-header use-logo="true" use-search="false" style="--trss-content-width: 1080px"></trss-ucsc-header>
+					<div id="middle">			
+						<!--LEFT NAV-->
+						<div id="leftpanel">			
+					  
+<link href="/css/styles/search.css" rel="stylesheet" type="text/css" />
+<script>
+    function displayResult() {
+        $("#main, #main-content").html("<p>Loading search results...</p>");
+        var protocol = window.location.protocol;
+        var searchTerm = $("#leftcolumn_0_txtBxTerm").val();
+        var searchURL = protocol + "//iq2.smartcatalogiq.com/?sc_itemid={392F4F3E-CF4A-41A2-B85D-DAB1D220A763}&q=" + searchTerm;
+        if ($("#leftcolumn_0_drpSearchType").val() === "programs") {
+            searchURL = searchURL + "&f=programs";
+        }
+        if ($("#leftcolumn_0_drpSearchType").val() === "courses") {
+            searchURL = searchURL + "&f=courses";
+        }
+        getAndInsertResult(searchURL);
+        return false;
+    }
+
+    function getAndInsertResult(searchURL) {
+        $.get(
+            searchURL,
+            function (data) {
+                // Remove any leading whitespaces and blank lines in the search results page to allow jquery to parse it as html
+                var maincontent = $(data.replace(/^\s*[\r\n]/gm, '')).find("#main, #main-content");
+                if (!(window.location.hostname.toLowerCase().startsWith("iq"))) {
+                    maincontent.find("a").each(function (index) {
+                        var href = $(this).attr("href");
+                        // Don't alter the element if there is no href attribute
+                        if (typeof href !== 'undefined' && href !== false) {
+                            // expect search result href to be like "/Catalogs/City-University-of-Seattle/2021-2022/Catalog/Course-Descriptions/CS-Computer-Science/500/CS-570"
+                            // OR "/en/Catalogs/City-University-of-Seattle/2021-2022/Catalog/Course-Descriptions/CS-Computer-Science/500/CS-570"
+                            var instName = "University-of-California-Santa-Cruz";
+                            var pathParts = href.split("/");
+                            var instPartIndex = pathParts.findIndex(x => x.toLowerCase() === instName.toLowerCase())
+                            var replacementPath = "/" + pathParts.slice(instPartIndex + 1).join("/");
+                            $(this).attr("href", replacementPath);
+                        }
+                    });
+                }
+
+                var paginationcontent = maincontent.find(".sc-searchPagination");
+                paginationcontent.find("a").each(function (index) {
+                    var href = $(this).attr("href");
+                    if (typeof href !== 'undefined' && href !== false) {
+                        // expect search pagination hrefs to be like "/?q=test&page=2"
+                        var params = href.replace("?", "&").replace("/", "");
+                        var paginatedSearchURL = window.location.protocol + "//iq2.smartcatalogiq.com/?sc_itemid={392F4F3E-CF4A-41A2-B85D-DAB1D220A763}" + params;
+                        $(this).click(function(){
+                            getAndInsertResult(paginatedSearchURL);
+                            return false;
+                        });
+                    }
+                });
+
+                var paginationnavlinks = maincontent.find("a.sc-searchPagination-nav");
+                paginationnavlinks.each(function (index) {
+                    var href = $(this).attr("href");
+                    if (typeof href !== 'undefined' && href !== false) {
+                        // expect search pagination hrefs to be like "/?q=test&page=2"
+                        var params = href.replace("?", "&").replace("/", "");
+                        var paginatedSearchURL = window.location.protocol + "//iq2.smartcatalogiq.com/?sc_itemid={392F4F3E-CF4A-41A2-B85D-DAB1D220A763}" + params;
+                        $(this).click(function(){
+                            getAndInsertResult(paginatedSearchURL);
+                            return false;
+                        });
+                    }
+                });
+                $("#main,#main-content").html(maincontent.contents());
+            }
+        );
+    }
+
+    $(document).ready(function () {
+        $('#leftcolumn_0_txtBxTerm').keypress(function (event) {
+            var keycode = (event.keyCode ? event.keyCode : event.which);
+            if (keycode == '13') {
+                event.preventDefault();
+                displayResult();
+                return false;
+            }
+        });
+    });
+</script>
+
+<div id="leftcolumn_0_Panel1">
+	<div class="sidebox">
+		<div class="hdr">
+			<label for="leftcolumn_0_txtBxTerm" id="leftcolumn_0_searchTextLabel">Catalog Search</label>
+		</div>
+		<div class="sideboxbrdr">
+			<input aria-label="Search Catalog" name="leftcolumn_0$txtBxTerm" type="text" id="leftcolumn_0_txtBxTerm">
+			<div style="text-indent: -999em;">
+				<label for="leftcolumn_0_drpSearchType" id="leftcolumn_0_filterLabel">Search Options</label>
+			</div>
+			<select name="leftcolumn_0$drpSearchType" id="leftcolumn_0_drpSearchType">
+				<option selected="selected" value="">Entire Catalog</option>
+				<option value="programs">Programs</option>
+				<option value="courses">Courses</option>
+			</select>
+			<button type="button" name="leftcolumn_0$btnSubmit" id="leftcolumn_0_btnSubmit" onclick="displayResult()">Search</button>
+            <div style="display:none;" id="catalogBaseUrl">http://ucsc.smartcatalogiq.com/</div>
+			<div style="display:none;" id="indexId">d56383d3-4b83-4e80-9ae7-03bc644ace3a</div>
+			<div style="display:none;" id="searchUrl">https://searchproxy.smartcatalogiq.com/search</div>
+			<div style="display:none;" id="itemId">012fbda9-9f91-4b99-878d-574066771e72</div>
+			<div style="display:none;" id="category">program</div>
+
+		</div>
+	</div>
+</div>
+                <script>
+                    $(function () {
+                        if (window.location.search.includes('website_preview')) {
+                            $('#leftpanel').hide();
+                        }
+                    });
+                </script>
+                <div id='navJsonPath' style='display:none;'>/Institutions/University-of-California-Santa-Cruz/json/current/General-Catalog-local.json</div><div id='navJsonPathCDN' style='display:none;'>/Institutions/University-of-California-Santa-Cruz/json/current/General-Catalog.json</div><div class="sidebox">
+	<div class="hdr">
+		Contents
+	</div>
+</div>
+						 <div class="toc">
+							<ul id="navLocal" class="navLocal">
+	<li><a href="/en/current/general-catalog/welcome-to-uc-santa-cruz">Welcome to UC Santa Cruz</a></li><li class="hasChildren"><a href="/en/current/general-catalog/introducing-uc-santa-cruz">Introducing UC Santa Cruz</a></li><li class="hasChildren"><a href="/en/current/general-catalog/academic-programs">Academic Programs</a></li><li class="hasChildren active"><a href="/en/current/general-catalog/academic-units">Academic Units</a><ul>
+		<li class="hasChildren"><a href="/en/current/general-catalog/academic-units/arts-division">Arts Division</a></li><li class="hasChildren"><a href="/en/current/general-catalog/academic-units/humanities-division">Humanities Division</a></li><li class="hasChildren"><a href="/en/current/general-catalog/academic-units/physical-and-biological-sciences-division">Physical and Biological Sciences Division</a></li><li class="hasChildren active"><a href="/en/current/general-catalog/academic-units/baskin-engineering">Baskin Engineering</a><ul>
+			<li class="hasChildren"><a href="/en/current/general-catalog/academic-units/baskin-engineering/applied-mathematics">Applied Mathematics</a></li><li class="hasChildren"><a href="/en/current/general-catalog/academic-units/baskin-engineering/biomolecular-engineering">Biomolecular Engineering</a></li><li class="hasChildren"><a href="/en/current/general-catalog/academic-units/baskin-engineering/computational-media">Computational Media</a></li><li class="hasChildren active"><a href="/en/current/general-catalog/academic-units/baskin-engineering/computer-science-and-engineering">Computer Science and Engineering</a><ul>
+				<li><a href="/en/current/general-catalog/academic-units/baskin-engineering/computer-science-and-engineering/computer-engineering-bs">Computer Engineering B.S.</a></li><li class=" active"><a href="/en/current/general-catalog/academic-units/baskin-engineering/computer-science-and-engineering/computer-science-bs">Computer Science B.S.</a></li><li><a href="/en/current/general-catalog/academic-units/baskin-engineering/computer-science-and-engineering/computer-science-ba">Computer Science B.A.</a></li><li><a href="/en/current/general-catalog/academic-units/baskin-engineering/computer-science-and-engineering/network-and-digital-technology-ba">Network and Digital Technology B.A.</a></li><li><a href="/en/current/general-catalog/academic-units/baskin-engineering/computer-science-and-engineering/computer-engineering-minor">Computer Engineering Minor</a></li><li><a href="/en/current/general-catalog/academic-units/baskin-engineering/computer-science-and-engineering/computer-science-minor">Computer Science Minor</a></li><li><a href="/en/current/general-catalog/academic-units/baskin-engineering/computer-science-and-engineering/computer-science-and-engineering-contiguous-bachelorsmasters-pathway-computer-science-and-engineering">Computer Science and Engineering Contiguous Bachelorâs/Masterâs Pathway: Computer Science and Engineering</a></li><li><a href="/en/current/general-catalog/academic-units/baskin-engineering/computer-science-and-engineering/computer-science-and-engineering-ms">Computer Science and Engineering M.S.</a></li><li><a href="/en/current/general-catalog/academic-units/baskin-engineering/computer-science-and-engineering/computer-science-and-engineering-phd">Computer Science and Engineering Ph.D.</a></li><li><a href="/en/current/general-catalog/academic-units/baskin-engineering/computer-science-and-engineering/natural-language-processing-ms">Natural Language Processing M.S.</a></li><li><a href="/en/current/general-catalog/academic-units/baskin-engineering/computer-science-and-engineering/human-language-media-and-modeling-designated-emphasis">Human Language Media and Modeling Designated Emphasis</a></li><li><a href="/en/current/general-catalog/academic-units/baskin-engineering/computer-science-and-engineering/computer-engineering-bs-elective-course-list">Computer Engineering BS Elective Course List</a></li>
+			</ul></li><li class="hasChildren"><a href="/en/current/general-catalog/academic-units/baskin-engineering/electrical-and-computer-engineering">Electrical and Computer Engineering</a></li><li class="hasChildren"><a href="/en/current/general-catalog/academic-units/baskin-engineering/statistics">Statistics</a></li><li class="hasChildren"><a href="/en/current/general-catalog/academic-units/baskin-engineering/technology-and-information-management">Technology and Information Management</a></li>
+		</ul></li><li class="hasChildren"><a href="/en/current/general-catalog/academic-units/social-sciences-division">Social Sciences Division</a></li><li class="hasChildren"><a href="/en/current/general-catalog/academic-units/the-colleges">The Colleges</a></li><li><a href="/en/current/general-catalog/academic-units/physical-education">Physical Education</a></li>
+	</ul></li><li class="hasChildren"><a href="/en/current/general-catalog/courses">Courses</a></li><li class="hasChildren"><a href="/en/current/general-catalog/undergraduate-information">Undergraduate Information</a></li><li class="hasChildren"><a href="/en/current/general-catalog/graduate-information">Graduate Information</a></li><li class="hasChildren"><a href="/en/current/general-catalog/resources-residency-and-policies">Resources, Residency, and Policies</a></li><li class="hasChildren"><a href="/en/current/general-catalog/teaching-and-administrative-staff">Teaching and Administrative Staff</a></li><li><a href="/en/current/general-catalog/academic-calendar">Academic Calendar</a></li>
+</ul>
+					           <div class="sidebox">
+									<div class="sidebox">
+	<div class="hdr">
+		Catalog Links
+	</div><div class="sideboxbrdr">
+		<ul>
+			<li><a href="/en/current/general-catalog">Catalog Home</a></li><li><a href="/en">All Catalogs</a></li>
+		</ul>
+	</div>
+</div>
+								</div><!-- end of sidebox -->
+								
+							</div><!-- end of TOC -->
+						</div><!--end of leftpanel-->
+						<!-- Main content area -->
+						<div id="rightpanel">
+							<div id="sc-rightpanel-top">
+								<div id="sc-top-links">
+										<span class="print">
+											<a href="javascript:window.print()" title="Print this Page"><span class="printLabel">Print this page</span></a>
+										</span>
+									
+
+<script type="text/javascript">
+			document.scContextItemId = '012FBDA9-9F91-4B99-878D-574066771E72';
+            document.scCDNURL = 'https://cdn-prod.smartcatalogiq.com/';
+</script>
+<div id="catalogJsonPath" style="display:none;">/Institutions/University-of-California-Santa-Cruz/json/catalogs.json</div>
+<div id="currentCatalogID" style="display:none;">D56383D3-4B83-4E80-9AE7-03BC644ACE3A</div>
+<script type="text/javascript" src="https://cdn-prod.smartcatalogiq.com/catalog/bundle.js"></script>
+
+<div id="catalog-dropdown"></div>
+
+								</div><!--end of sc-top-links-->
+							</div><!--end sc-rightpanel-top-->
+							<div id="main">
+							<div id="breadcrumb">
+								<p id="breadcrumbs"><a href="/en/current/general-catalog">2026-2027 UCSC General Catalog</a> &gt; <a href="/en/current/general-catalog/academic-units">Academic Units</a> &gt; <a href="/en/current/general-catalog/academic-units/baskin-engineering">Baskin Engineering</a> &gt; <a href="/en/current/general-catalog/academic-units/baskin-engineering/computer-science-and-engineering">Computer Science and Engineering</a> &gt; Computer Science B.S.</p>
+							</div><!-- end of breadcrumb -->
+								<h1>
+	Computer Science B.S.
+</h1><div id="degree-req">
+	<div id="degree-req-1">
+		<h2>
+			Information and Policies
+		</h2><h3 class="sc-RequiredCoursesHeading1">
+			Introduction
+		</h3><p>The bachelor of science (B.S.) program is appropriate for students desiring a strong concentration in the core areas of computer scienceâalgorithms, programming languages, and systemsâwith more courses in computer science, computer engineering, and computational media; this program also allows for a few electives outside of science and engineering.</p>
+
+<p>Applications of computer science are found in many other areas of study, from art, music, and linguistics to social sciences, economics, business, digital, and social media, environmental and life sciences, and sciences. Thus, interdisciplinary activities are encouraged. For those students whose primary interest is in another area, a minor in computer science is offered.</p>
+<table>
+
+		</table><h3 class="sc-RequiredCoursesHeading1">
+			Program Learning Outcomes
+		</h3><p class="sc-BodyText">Recipients of a Bachelor of Science degree in Computer Science at the University of California, Santa Cruz, are expected to have the following skills and experiences:</p>
+<ol>
+    <li>
+    <p class="sc-BodyText">Demonstrate mastery of computer science in the following core knowledge areas:</p>
+    <ul>
+        <li>
+        <p class="sc-BodyText">Algorithms, data structures, and complexity</p>
+        </li>
+        <li>
+        <p class="sc-BodyText">Programming languages</p>
+        </li>
+        <li>
+        <p class="sc-BodyText">Software engineering and development</p>
+        </li>
+        <li>
+        <p class="sc-BodyText">Computer systems</p>
+        </li>
+    </ul>
+    </li>
+    <li>
+    <p class="sc-BodyText">Use problem-solving skills and computer science knowledge to address real-world challenges.</p>
+    </li>
+    <li>
+    <p class="sc-BodyText">Apply system-level perspective by thinking at multiple levels of detail and abstraction and by recognizing the context in which a computer system may function, including its interactions with people and the physical world.</p>
+    </li>
+    <li>
+    <p class="sc-BodyText">Survey a dynamic landscape of computer science tools, including artificial intelligence, algorithms, and languages; integrate these tools into systems; argue why a set of tools is or is not well suited to a particular problem.</p>
+    </li>
+    <li>
+    <p class="sc-BodyText">Understand how technological advances impact society and the social, legal, ethical and cultural ramifications of computer technology and their usage.</p>
+    </li>
+    <li>
+    <p class="sc-BodyText">Write about and orally communicate technical material about computer science and computer systems, broadly conceived.</p>
+    </li>
+</ol><table>
+
+		</table><h3 class="sc-RequiredCoursesHeading1">
+			Academic Advising for the Program
+		</h3><p>The Baskin Engineering <a rel="noopener noreferrer" href="https://undergrad.engineering.ucsc.edu/" rel="noopener noreferrer" target="_blank">undergraduate advising office</a> offers general advising for prospective and declared undergraduates majoring in Baskin Engineering programs. The office handles major declarations, transfer credits, course substitutions, articulations, and degree certifications. Undergraduate students obtain and submit all paperwork requiring departmental approval to the undergraduate advising office. Transfer students should also refer to the Transfer Information and Policy section.</p>
+<p>Baskin Engineering Building, Room 225<br />
+<a href="mailto:bsoeadvising@ucsc.edu">bsoeadvising@ucsc.edu</a><br />
+(831) 459-5840</p><table>
+
+		</table><h3 class="sc-RequiredCoursesHeading1">
+			Getting Started in the Major: Frosh
+		</h3><p>It is recommended that high school students intending to apply to the computer science major have completed four years of mathematics (through advanced algebra and trigonometry) and three years of science in high school. Comparable college mathematics and science courses completed at other institutions also serve to properly prepare a student for the computer science major.</p>
+
+<p>This major is highly course intensive and sequential; students who intend to pursue this major must begin taking classes for the major in their first quarter at UC Santa Cruz.</p>
+
+<p>Math placement is required for one or more of the foundational courses for this major. For more information, please review the <a href="https://mathplacement.ucsc.edu" rel="noopener noreferrer" target="_blank">Math Placement website</a>.</p>
+<table>
+
+		</table><div class="sc-requirementsNote">
+			<p><a id="tasp"></a></p>
+		</div><h3 class="sc-RequiredCoursesHeading1">
+			Transfer Information and Policy
+		</h3><p>Transfer students who want to pursue the computer science major, must have applied and been admitted to UC Santa Cruz as a proposed computer science major.</p>
+<table>
+
+		</table><h4 class="sc-RequiredCoursesHeading2">
+			Transfer Admission Screening Policy
+		</h4><p>Transfer students must complete the following five courses, or their articulated equivalents, by the end of the spring term prior to fall enrollment, or the end of the fall term prior to winter enrollment. Lecture-lab combinations count as one course. Three of the five courses must be completed by the end of the fall term in the academic year preceding the planned fall term and year of transfer, with a minimum GPA of 3.0 across all Computer Science B.S. transfer screening courses completed at that time.</p><p>Cumulative GPA is calculated based on all Computer Science B.S. transfer screening courses taken. Please note that while AP courses satisfy screening requirements, they do not count toward the GPA.</p><p>If you satisfy the transfer admissions screening requirements, you are not required to take additional coursework in order to declare.</p><table>
+
+		</table><h5 class="sc-RequiredCoursesHeading3">
+			All of the following
+		</h5><table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-12">CSE 12</a></td><td class="sc-coursetitle">Computer Systems and Assembly Language and Lab</td><td><p class="credits">7</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-16">CSE 16</a></td><td class="sc-coursetitle">Applied Discrete Mathematics</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-30">CSE 30</a></td><td class="sc-coursetitle">Programming Abstractions: Python</td><td><p class="credits">7</p></td>
+			</tr>
+		</table><h5 class="sc-RequiredCoursesHeading3">
+			Plus one of the following
+		</h5><table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/lower-division/math-19a">MATH 19A</a></td><td class="sc-coursetitle">Calculus for Science, Engineering, and Mathematics</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/lower-division/math-20a">MATH 20A</a></td><td class="sc-coursetitle">Honors Calculus</td><td><p class="credits">5</p></td>
+			</tr>
+		</table><h5 class="sc-RequiredCoursesHeading3">
+			Plus one of the following
+		</h5><table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/lower-division/math-19b">MATH 19B</a></td><td class="sc-coursetitle">Calculus for Science, Engineering, and Mathematics</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/lower-division/math-20b">MATH 20B</a></td><td class="sc-coursetitle">Honors Calculus</td><td><p class="credits">5</p></td>
+			</tr>
+		</table><h5 class="sc-RequiredCoursesHeading3">
+			Minimum GPA
+		</h5><p>Students must have and maintain a cumulative minimum GPA of 3.0 in screening courses. Please note that while AP courses satisfy screening requirements they do not count toward the minimum GPA.</p><table>
+
+		</table><h5 class="sc-RequiredCoursesHeading3">
+			Before you transfer: Recommendations
+		</h5><p>Transfer students are strongly recommended to complete one course out of <a class='sc-courselink' href='/en/current/general-catalog/courses/math-mathematics/lower-division/math-21'>MATH 21</a>, <a class='sc-courselink' href='/en/current/general-catalog/courses/am-applied-mathematics/lower-division/am-10'>AM 10</a>, <a class='sc-courselink' href='/en/current/general-catalog/courses/math-mathematics/lower-division/math-23a'>MATH 23A</a> or <a class='sc-courselink' href='/en/current/general-catalog/courses/am-applied-mathematics/lower-division/am-30'>AM 30</a>, and most general education requirements prior to arriving at UC Santa Cruz.</p><p>Most courses in the computer science program at UC Santa Cruz have a strong theoretical component to prepare the student for designing, as opposed to simply using, computer systems. Often, courses taken at other institutions which emphasize applications of current languages and computers do not count toward the computer science major at UCSC.</p><p>At UCSC, computer science students are first introduced to programming using the programming language Python. The core programming sequenceâcourses <a class='sc-courselink' href='/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-30'>CSE 30</a> and <a class='sc-courselink' href='/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-13s'>CSE 13S</a>âexposes students to both Python and C. Many upper-division courses that involve programming use the C and C++ programming languages.</p><p>Transfer students who are not familiar with both an object-oriented language may need to take a remedial course. Students familiar with C++ and Unix should find the transition to Python and C relatively simple.</p><table>
+
+		</table><h4 class="sc-RequiredCoursesHeading2">
+			Getting Started in the Major: Transfer Students
+		</h4><p>Transfer students should declare their major in their first quarter at UC Santa Cruz. Instructions for declaring a major in the Baskin School of Engineering are on the Baskin Engineering undergraduate advising <a href="https://undergrad.engineering.ucsc.edu/advising/declare-your-major/" rel="noopener noreferrer" target="_blank">major declaration page</a>.</p>
+<table>
+
+		</table><h3 class="sc-RequiredCoursesHeading1">
+			Major Qualification Policy and Declaration Process
+		</h3><table>
+
+		</table><h4 class="sc-RequiredCoursesHeading2">
+			Major Qualification
+		</h4><p>Transfer students should refer to the Transfer Admission Screening requirements.</p>
+
+<p>For all students, it is necessary to be listed as a proposed computer science major within Baskin Engineering before being able to declare the major. Additionally, students must satisfy the following three criteria to qualify for the CS B.S. major:</p>
+<table>
+
+		</table><h5 class="sc-RequiredCoursesHeading3">
+			Declare
+		</h5><p>Students must declare CS (Computer Science B.S. or Computer Science B.A.) as their major between studentâs second to sixth quarter.</p>
+<table>
+
+		</table><h5 class="sc-RequiredCoursesHeading3">
+			CS B.S. Major Qualification courses
+		</h5><p>Students must have completed the following CS major qualification courses to qualify for the CS B.S. major:</p>
+<table>
+
+		</table><h6 class="sc-RequiredCoursesHeading4">
+			Complete these three courses
+		</h6><table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-12">CSE 12</a></td><td class="sc-coursetitle">Computer Systems and Assembly Language and Lab</td><td><p class="credits">7</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-13s">CSE 13S</a></td><td class="sc-coursetitle">Computer Systems and C Programming</td><td><p class="credits">7</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-30">CSE 30</a></td><td class="sc-coursetitle">Programming Abstractions: Python</td><td><p class="credits">7</p></td>
+			</tr>
+		</table><h6 class="sc-RequiredCoursesHeading4">
+			Plus one of the following
+		</h6><table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/lower-division/math-19a">MATH 19A</a></td><td class="sc-coursetitle">Calculus for Science, Engineering, and Mathematics</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/lower-division/math-20a">MATH 20A</a></td><td class="sc-coursetitle">Honors Calculus</td><td><p class="credits">5</p></td>
+			</tr>
+		</table><h6 class="sc-RequiredCoursesHeading4">
+			Plus one of the following
+		</h6><table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/lower-division/math-19b">MATH 19B</a></td><td class="sc-coursetitle">Calculus for Science, Engineering, and Mathematics</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/lower-division/math-20b">MATH 20B</a></td><td class="sc-coursetitle">Honors Calculus</td><td><p class="credits">5</p></td>
+			</tr>
+		</table><h5 class="sc-RequiredCoursesHeading3">
+			Cumulative GPA
+		</h5><p>Students must also have a cumulative GPA of at least 3.0 in the CS major qualification courses attempted at UC Santa Cruz, with at most one unsuccessful attempt (grade C-, D+, D, D-, F, or NP) permitted in a CS major qualification course. Courses satisfied via exam credit are not counted in the GPA calculation.</p><table>
+
+		</table><h4 class="sc-RequiredCoursesHeading2">
+			Appeal Process
+		</h4><p>Students who are informed that they do not qualify for the major may appeal this decision by submitting a letter to the undergraduate director through the Baskin Engineering undergraduate advising office within 15 days from the date the notification was mailed. Within 15 days of receipt of the appeal, the department will notify the student, college, and Office of the Registrar of the decision.</p>
+<table>
+
+		</table><h4 class="sc-RequiredCoursesHeading2">
+			How to Declare a Major
+		</h4><p>Students interested in pursuing computer science must indicate computer science as a proposed major on their application for admission to UC Santa Cruz. Students admitted to UCSC in fall 2018 or later will be able to declare a computer science major only if they have been admitted to UCSC as proposed computer science majors.</p>
+
+<p>There are four steps to declaring a Baskin Engineering major. For a detailed guide to this process, please consult Baskin Engineering's <a href="https://undergrad.engineering.ucsc.edu/advising/declare-your-major/" rel="noopener noreferrer" target="_blank">Declare Your Major</a> website.</p>
+
+<p>Students should start the declaration of major process by completing <a href="https://undergrad.engineering.ucsc.edu/advising/declare-your-major/" rel="noopener noreferrer" target="_blank">Step One</a> on the Baskin Engineering Declare Your Major website as soon as they complete the CS major qualification courses or reach their declaration deadline quarter, whichever comes first.</p>
+
+<p>Students petitioning when the campus declaration deadline is imminent (i.e., in their sixth quarter, for students admitted as frosh), will either be approved, denied, or provided with conditions (e.g., completion of some courses with certain grades) that will be resolved within at most one more enrolled quarter, even if they have not completed all CS major qualification courses.</p>
+<table>
+
+		</table><h3 class="sc-RequiredCoursesHeading1">
+			Letter Grade Policy
+		</h3><p>All students admitted to a Baskin Engineering major, or seeking admission to a major, must take all courses required for that major for a letter grade. This policy includes courses required for these degrees that are sponsored by other departments.</p>
+<table>
+
+		</table><h3 class="sc-RequiredCoursesHeading1">
+			Course Substitution Policy
+		</h3><p>Undergraduate engineering students who wish to substitute a major course with a course from another department at UC Santa Cruz, or from another academic institution, must first seek approval through the Baskin Engineering Undergraduate Advising Office. The advising office requires a Petition for Course Substitution be approved before credit for an alternate course can be applied to any Baskin Engineering major requirement.</p>
+
+<p>Petition forms are available at the Undergraduate Advising Office and online.</p>
+
+<p>Petitions and procedures for approval must be obtained from and submitted to the Undergraduate Advising Office.</p>
+<table>
+
+		</table><h4 class="sc-RequiredCoursesHeading2">
+			Community Colleges courses once enrolled at UCSC
+		</h4><p>Once enrolled in Baskin Engineering students who wish to take a course at a California community college must first check <a href="http://www.assist.org/web-assist/welcome.html" rel="noopener noreferrer" target="_blank">Assist.org</a> to see if the course is equivalent at UC Santa Cruz. If the course is not listed on Assist.org, students must submit a course substitution petition to the BE Undergraduate Advising Office to have it reviewed for equivalency. Courses that need to be reviewed must be accompanied by a course description and syllabus. It is very helpful if students can provide further evidence of course content, such as examples of programming assignments, homework, or examinations. To guarantee equivalency, departments may sometimes require a grade of B or better.</p><p>If the course is approved for equivalency or was on Assist.org, then students with declared majors must also receive approval by their major department to take the class at the community college PRIOR to taking it. Undeclared students must receive prior approval from the CSE Department to substitute a course for <a class='sc-courselink' href='/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-13s'>CSE 13S</a>. Undeclared students do not require prior approval for other courses listed on Assist.org. Forms and procedures for approval can be obtained from and submitted to the BE Undergraduate Advising Office.</p><table>
+
+		</table><h4 class="sc-RequiredCoursesHeading2">
+			Four-Year Institutions and the UC Education Abroad Program (UCEAP)
+		</h4><p>Students who intend to take a course at a four-year institution or UC Education Abroad, must submit a Course Substitution Petition to the BE Undergraduate Advising Office to have the course reviewed for equivalency. Courses that need to be reviewed must be accompanied by a course description and syllabus. It is very helpful if students can provide further evidence of course content, such as examples of programming assignments, homework, or examinations. To guarantee equivalency, departments may sometimes require a grade of B or better.</p><table>
+
+		</table><h3 class="sc-RequiredCoursesHeading1">
+			Double Majors and Major/Minor Combinations Policy
+		</h3><p>Students may not receive both the Computer Science B.A. and Computer Science B.S. degrees.</p>
+
+<p>Students may not receive both the Network and Digital Technology B.A. and the Computer Science B.S. degrees.</p>
+<table>
+
+		</table><h3 class="sc-RequiredCoursesHeading1">
+			Honors
+		</h3><p>Honors in the major are awarded to students with a GPA of 3.50-3.79. Highest honors are awarded to students with a GPA of 3.80 and above. The GPA includes all UCSC undergraduate and graduate courses taken in all departments that fall within the Divisions of Physical and Biological Sciences and of Baskin Engineering. Baskin Engineering reserves the right to withhold honors based on other criteria, such as an incident of academic dishonesty.</p><table>
+
+		</table>
+	</div><div id="degree-req-2">
+		<h2>
+			Requirements and Planners
+		</h2><h3 class="sc-RequiredCoursesHeading1">
+			Course Requirements
+		</h3><p>This program is designed for students who wish to maximize exposure to computer science concepts and methods by taking a large selection of upper-division computer science courses, as well as courses in the sciences and mathematics. A minimum of 21 courses must be completed for the B.S. in computer science. Some courses may be satisfied via <a href="https://catalog.ucsc.edu/en/current/general-catalog/undergraduate-information/undergraduate-academic-program/exam-credit" target="_blank" rel="noopener noreferrer">exam credit</a>.</p><table>
+
+		</table><h4 class="sc-RequiredCoursesHeading2">
+			Lower-Division Courses
+		</h4><table>
+
+		</table><h5 class="sc-RequiredCoursesHeading3">
+			Computer Science and Engineering
+		</h5><table>
+
+		</table><h6 class="sc-RequiredCoursesHeading4">
+			All of the following
+		</h6><table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-12">CSE 12</a></td><td class="sc-coursetitle">Computer Systems and Assembly Language and Lab</td><td><p class="credits">7</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-13s">CSE 13S</a></td><td class="sc-coursetitle">Computer Systems and C Programming</td><td><p class="credits">7</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/ece-electrical-and-computer-engineering/lower-division/ece-30">ECE 30</a></td><td class="sc-coursetitle">Engineering Principles of Electronics</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-16">CSE 16</a></td><td class="sc-coursetitle">Applied Discrete Mathematics</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-20">CSE 20</a></td><td class="sc-coursetitle">Beginning Programming in Python</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-30">CSE 30</a></td><td class="sc-coursetitle">Programming Abstractions: Python</td><td><p class="credits">7</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-40">CSE 40</a></td><td class="sc-coursetitle">Machine Learning Basics: Data Analysis and Empirical Methods</td><td><p class="credits">5</p></td>
+			</tr>
+		</table><div class="sc-requirementsNote">
+			<p>Students with no prior programming will take <a class='sc-courselink' href='/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-20'>CSE 20</a> before <a class='sc-courselink' href='/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-30'>CSE 30</a>, and <a class='sc-courselink' href='/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-12'>CSE 12</a>. Students with a prior programming course, AP credit, or clearing the <a class='sc-courselink' href='/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-20'>CSE 20</a> â<a href="https://sites.google.com/ucsc.edu/cse-20-testout" rel="noopener noreferrer" target="_blank">Test-out</a>â bar will start with <a class='sc-courselink' href='/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-30'>CSE 30</a>, and <a class='sc-courselink' href='/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-12'>CSE 12</a>.</p><p><a class='sc-courselink' href='/en/current/general-catalog/courses/cse-computer-science-and-engineering/lower-division/cse-40'>CSE 40</a> has a test-out option which can satisfy this requirement.</p>
+		</div><h5 class="sc-RequiredCoursesHeading3">
+			Mathematics
+		</h5><p>Plus one of the following options:</p>
+<table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/narrative-courses/either-these-courses"> </a></td><td class="sc-coursetitle">Either these courses</td><td><p class="credits"></p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/lower-division/math-19a">MATH 19A</a></td><td class="sc-coursetitle">Calculus for Science, Engineering, and Mathematics</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/lower-division/math-19b">MATH 19B</a></td><td class="sc-coursetitle">Calculus for Science, Engineering, and Mathematics</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/narrative-courses/or-these-courses"> </a></td><td class="sc-coursetitle">or these courses</td><td><p class="credits"></p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/lower-division/math-20a">MATH 20A</a></td><td class="sc-coursetitle">Honors Calculus</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/lower-division/math-20b">MATH 20B</a></td><td class="sc-coursetitle">Honors Calculus</td><td><p class="credits">5</p></td>
+			</tr>
+		</table><h5 class="sc-RequiredCoursesHeading3">
+			Applied Mathematics
+		</h5><table>
+
+		</table><h6 class="sc-RequiredCoursesHeading4">
+			One of these courses
+		</h6><table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/am-applied-mathematics/lower-division/am-10">AM 10</a></td><td class="sc-coursetitle">Linear Algebra for Engineers</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/lower-division/math-21">MATH 21</a></td><td class="sc-coursetitle">Linear Algebra</td><td><p class="credits">5</p></td>
+			</tr>
+		</table><h6 class="sc-RequiredCoursesHeading4">
+			Plus one of these courses
+		</h6><table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/am-applied-mathematics/lower-division/am-30">AM 30</a></td><td class="sc-coursetitle">Multivariate Calculus for Engineers</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/lower-division/math-23a">MATH 23A</a></td><td class="sc-coursetitle">Vector Calculus</td><td><p class="credits">5</p></td>
+			</tr>
+		</table><h4 class="sc-RequiredCoursesHeading2">
+			Upper-Division Courses
+		</h4><table>
+
+		</table><h5 class="sc-RequiredCoursesHeading3">
+			Computer Science and Engineering
+		</h5><table>
+
+		</table><h6 class="sc-RequiredCoursesHeading4">
+			Take the following courses:
+		</h6><table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-101">CSE 101</a></td><td class="sc-coursetitle">Introduction to Data Structures and Algorithms</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-101m">CSE 101M</a></td><td class="sc-coursetitle">Mathematical Thinking for Computer Science</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-102">CSE 102</a></td><td class="sc-coursetitle">Introduction to Analysis of Algorithms</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-120">CSE 120</a></td><td class="sc-coursetitle">Computer Architecture</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-130">CSE 130</a></td><td class="sc-coursetitle">Principles of Computer Systems Design</td><td><p class="credits">5</p></td>
+			</tr>
+		</table><h6 class="sc-RequiredCoursesHeading4">
+			Plus one of the following
+		</h6><table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-112">CSE 112</a></td><td class="sc-coursetitle">Comparative Programming Languages</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-114a">CSE 114A</a></td><td class="sc-coursetitle">Foundations of Programming Languages</td><td><p class="credits">5</p></td>
+			</tr>
+		</table><h5 class="sc-RequiredCoursesHeading3">
+			Statistics
+		</h5><table>
+
+		</table><h6 class="sc-RequiredCoursesHeading4">
+			Take one of the following:
+		</h6><table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/stat-statistics/upper-division/stat-131">STAT 131</a></td><td class="sc-coursetitle">Introduction to Probability Theory</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-107">CSE 107</a></td><td class="sc-coursetitle">Probability and Statistics for Engineers</td><td><p class="credits">5</p></td>
+			</tr>
+		</table><h4 class="sc-RequiredCoursesHeading2">
+			Electives
+		</h4><p>Four courses must be completed from the list below . At least one course must be a computer science and engineering course. At most two courses can be from applied mathematics, statistics or mathematics, of which at most one may be substituted with two physics classes, chosen from the following list of class pairs: <a class='sc-courselink' href='/en/current/general-catalog/courses/phys-physics/lower-division/phys-6a'>PHYS 6A</a> and <a class='sc-courselink' href='/en/current/general-catalog/courses/phys-physics/lower-division/phys-6c'>PHYS 6C</a>, <a class='sc-courselink' href='/en/current/general-catalog/courses/phys-physics/lower-division/phys-6a'>PHYS 6A</a> and <a class='sc-courselink' href='/en/current/general-catalog/courses/phys-physics/lower-division/phys-6b'>PHYS 6B</a>, <a class='sc-courselink' href='/en/current/general-catalog/courses/phys-physics/lower-division/phys-5a'>PHYS 5A</a> (or <a class='sc-courselink' href='/en/current/general-catalog/courses/phys-physics/lower-division/phys-15a'>PHYS 15A</a>) and <a class='sc-courselink' href='/en/current/general-catalog/courses/phys-physics/lower-division/phys-5c'>PHYS 5C</a> (or <a class='sc-courselink' href='/en/current/general-catalog/courses/phys-physics/lower-division/phys-15c'>PHYS 15C</a>), <a class='sc-courselink' href='/en/current/general-catalog/courses/phys-physics/lower-division/phys-5a'>PHYS 5A</a> (or <a class='sc-courselink' href='/en/current/general-catalog/courses/phys-physics/lower-division/phys-15a'>PHYS 15A</a>) and <a class='sc-courselink' href='/en/current/general-catalog/courses/phys-physics/lower-division/phys-5b'>PHYS 5B</a>. <a class='sc-courselink' href='/en/current/general-catalog/courses/phys-physics/lower-division/phys-15a'>PHYS 15A</a> and <a class='sc-courselink' href='/en/current/general-catalog/courses/phys-physics/lower-division/phys-15c'>PHYS 15C</a> are honors courses and should only be taken by students who wish to take physics courses that are more challenging than <a class='sc-courselink' href='/en/current/general-catalog/courses/phys-physics/lower-division/phys-5a'>PHYS 5A</a> and <a class='sc-courselink' href='/en/current/general-catalog/courses/phys-physics/lower-division/phys-5c'>PHYS 5C</a>. Any laboratories required or recommended by the Physics Department associated with these classes are not part of the computer science B.S. major requirements.</p><table>
+
+		</table><h5 class="sc-RequiredCoursesHeading3">
+			List of B.S. electives:
+		</h5><ol>
+    <li>
+    <p class="sc-BodyText">Any 5-credit or more CSE course with a number between 100 and 189, <strong>except </strong>for the DC courses <a class='sc-courselink' href='/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-115a'>CSE 115A</a> and <a class='sc-courselink' href='/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-185e'>CSE 185E</a>/CSE 185S.</p>
+    </li>
+    <li>
+    <p class="sc-BodyText">Any 5-credit or more CSE course with a number between 201 and 279. Approval for courses with numbers 290 and above may be requested by submitting a course substitution petition to the BE Undergraduate Advising Office. Courses with numbers 280-289 are not eligible. Undergraduate students require permission from the instructor to enroll in graduate courses.</p>
+    </li>
+    <li style="list-style-type: decimal;">
+    <p class="sc-BodyText"><a class='sc-courselink' href='/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-195'>CSE 195</a> (if not used to satisfy the DC requirement).</p>
+    </li>
+    <li>
+    <p class="sc-BodyText">Any course from the following list:</p>
+    </li>
+</ol><table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/am-applied-mathematics/upper-division/am-114">AM 114</a></td><td class="sc-coursetitle">Introduction to Dynamical Systems</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/am-applied-mathematics/upper-division/am-147">AM 147</a></td><td class="sc-coursetitle">Computational Methods and Applications</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/am-applied-mathematics/upper-division/am-148">AM 148</a></td><td class="sc-coursetitle">GPU Programming for Scientific Computations</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/am-applied-mathematics/upper-division/am-160">AM 160</a></td><td class="sc-coursetitle">Introduction to Scientific Machine Learning</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cmpm-computational-media/upper-division/cmpm-120">CMPM 120</a></td><td class="sc-coursetitle">Game Development Experience</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cmpm-computational-media/upper-division/cmpm-131">CMPM 131</a></td><td class="sc-coursetitle">User Experience for Interactive Media</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cmpm-computational-media/upper-division/cmpm-146">CMPM 146</a></td><td class="sc-coursetitle">Game AI</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cmpm-computational-media/upper-division/cmpm-163">CMPM 163</a></td><td class="sc-coursetitle">Game Graphics and Real-Time Rendering</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cmpm-computational-media/upper-division/cmpm-164">CMPM 164</a></td><td class="sc-coursetitle">Game Engines</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cmpm-computational-media/upper-division/cmpm-164l">CMPM 164L</a></td><td class="sc-coursetitle">Game Engines Lab</td><td><p class="credits">2</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cmpm-computational-media/upper-division/cmpm-171">CMPM 171</a></td><td class="sc-coursetitle">Game Design Studio</td><td><p class="credits">7</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cmpm-computational-media/upper-division/cmpm-172">CMPM 172</a></td><td class="sc-coursetitle">Game Production Studio</td><td><p class="credits">7</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/upper-division/math-110">MATH 110</a></td><td class="sc-coursetitle">Introduction to Number Theory</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/upper-division/math-115">MATH 115</a></td><td class="sc-coursetitle">Graph Theory</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/upper-division/math-116">MATH 116</a></td><td class="sc-coursetitle">Combinatorics</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/upper-division/math-117">MATH 117</a></td><td class="sc-coursetitle">Advanced Linear Algebra</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/upper-division/math-118">MATH 118</a></td><td class="sc-coursetitle">Advanced Number Theory</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/upper-division/math-134">MATH 134</a></td><td class="sc-coursetitle">Cryptography</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/upper-division/math-145">MATH 145</a></td><td class="sc-coursetitle">Introductory Chaos Theory</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/upper-division/math-145l">MATH 145L</a></td><td class="sc-coursetitle">Introductory Chaos Laboratory</td><td><p class="credits">1</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/upper-division/math-148">MATH 148</a></td><td class="sc-coursetitle">Numerical Analysis</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/upper-division/math-160">MATH 160</a></td><td class="sc-coursetitle">Mathematical Logic</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/upper-division/math-161">MATH 161</a></td><td class="sc-coursetitle">Introduction to Set Theory</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/math-mathematics/upper-division/math-162">MATH 162</a></td><td class="sc-coursetitle">Introduction to Computably Enumerable Functions and Sets and their Degrees</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/stat-statistics/upper-division/stat-132">STAT 132</a></td><td class="sc-coursetitle">Classical and Bayesian Inference</td><td><p class="credits">5</p></td>
+			</tr>
+		</table><div class="sc-requirementsNote">
+			<p>Lecture/lab combinations count as one course. If a lecture has a lab offered (required or optional), the lab must be passed to count for this requirement.</p>
+		</div><h4 class="sc-RequiredCoursesHeading2">
+			Disciplinary Communication (DC) Requirement
+		</h4><p>Students of every major must satisfy that major's upper-division Disciplinary Communication (DC) requirement.</p>
+
+<p>The DC requirement in computer science B.S. is satisfied by completing an additional course from the following options.</p>
+<table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-115a">CSE 115A</a></td><td class="sc-coursetitle">Introduction to Software Engineering</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-185e">CSE 185E</a><div class="sc-crosslisted">
+					/CSE 185S
+				</div></td><td class="sc-coursetitle">Technical Writing for Computer Science and Engineering</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-195">CSE 195</a></td><td class="sc-coursetitle">Senior Thesis Research</td><td><p class="credits">5</p></td>
+			</tr>
+		</table><div class="sc-requirementsNote">
+			<p>Course <a class='sc-courselink' href='/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-195'>CSE 195</a> may be used either as an elective, or to satisfy the DC requirement, but not for both.</p>
+
+		</div><h4 class="sc-RequiredCoursesHeading2">
+			Comprehensive Requirement
+		</h4><p>In addition to the above requirements, students must satisfy one of the following two exit requirements: pass one of the capstone courses (see Capstone Courses below); or successfully complete a senior thesis. A passed capstone course also counts toward satisfying the minimum number of upper-division electives requirement.</p>
+<table>
+
+		</table><h5 class="sc-RequiredCoursesHeading3">
+			Capstone Courses
+		</h5><p>Students may choose from one of the following capstone courses to satisfy their exit requirement (lecture-lab combinations count as one course):</p>
+<table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-110b">CSE 110B</a></td><td class="sc-coursetitle">Fundamentals of Compiler Design II</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-115c">CSE 115C</a></td><td class="sc-coursetitle">Software Design Project II</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-115d">CSE 115D</a></td><td class="sc-coursetitle">Software Design Project - Accelerated</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-121">CSE 121</a></td><td class="sc-coursetitle">Embedded System Design</td><td><p class="credits">7</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-134">CSE 134</a></td><td class="sc-coursetitle">Embedded Operating Systems</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-138">CSE 138</a></td><td class="sc-coursetitle">Distributed Systems</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-140">CSE 140</a></td><td class="sc-coursetitle">Artificial Intelligence</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-143">CSE 143</a></td><td class="sc-coursetitle">Introduction to Natural Language Processing</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-144">CSE 144</a></td><td class="sc-coursetitle">Applied Machine Learning: Deep Learning</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-145">CSE 145</a></td><td class="sc-coursetitle">Introduction to Data Mining</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-156">CSE 156</a></td><td class="sc-coursetitle">Network Programming</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-156l">CSE 156L</a></td><td class="sc-coursetitle">Network Programming Laboratory</td><td><p class="credits">2</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-157">CSE 157</a></td><td class="sc-coursetitle">Internet of Things</td><td><p class="credits">7</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-160">CSE 160</a></td><td class="sc-coursetitle">Introduction to Computer Graphics</td><td><p class="credits">7</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-161">CSE 161</a></td><td class="sc-coursetitle">Introduction to Data Visualization</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-161l">CSE 161L</a></td><td class="sc-coursetitle">Data Visualization Laboratory</td><td><p class="credits">2</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-162">CSE 162</a></td><td class="sc-coursetitle">Advanced Computer Graphics and Animation</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-162l">CSE 162L</a></td><td class="sc-coursetitle">Advanced Computer Graphics and Animation Laboratory</td><td><p class="credits">2</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-163">CSE 163</a></td><td class="sc-coursetitle">Data Programming for Visualization</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-168">CSE 168</a></td><td class="sc-coursetitle">Introduction to Augmented Reality and Virtual Reality</td><td><p class="credits">7</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-181">CSE 181</a></td><td class="sc-coursetitle">Database Systems II</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-183">CSE 183</a></td><td class="sc-coursetitle">Web Applications</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-184">CSE 184</a></td><td class="sc-coursetitle">Data Wrangling and Web Scraping</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-187">CSE 187</a></td><td class="sc-coursetitle">Full Stack Web Development II</td><td><p class="credits">5</p></td>
+			</tr><tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cmpm-computational-media/upper-division/cmpm-172">CMPM 172</a></td><td class="sc-coursetitle">Game Production Studio</td><td><p class="credits">7</p></td>
+			</tr>
+		</table><p class="sc-BodyText"><p>Students taking one of the capstone courses will enroll normally. Students need to pass the capstone course to pass the exit requirement. No course may be attempted more than twice without prior approval from the chair of the department offering the course. Withdrawals count as an attempted class for this purpose.</p>
+</p><h5 class="sc-RequiredCoursesHeading3">
+			Senior Thesis
+		</h5><p>The senior thesis consists of a self-contained project within the broad scope of computer science, but one that is not available in the regular course offerings. A student wishing to complete a senior thesis must successfully complete a minimum of 5 credits in <a class='sc-courselink' href='/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-195'>CSE 195</a>, Senior Thesis Research. The supervision of a senior thesis student is always at the discretion of the faculty member.</p>
+
+<p>The student first submits a written thesis proposal and obtains approval of a faculty sponsor. Then the student submits a written draft and makes an oral presentation to a faculty examining committee. After receiving feedback from the examining committee, the student submits one or more additional drafts, until the final draft is approved by the examining committee. The total amount of writing shall be consistent with the campus Disciplinary Communication requirement. A passing grade in <a class='sc-courselink' href='/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-195'>CSE 195</a> is earned when the final thesis is approved.</p>
+<table>
+			<tr>
+				<td class="sc-coursenumber"><a class="sc-courselink" href="/en/current/general-catalog/courses/cse-computer-science-and-engineering/upper-division/cse-195">CSE 195</a></td><td class="sc-coursetitle">Senior Thesis Research</td><td><p class="credits">5</p></td>
+			</tr>
+		</table><h3 class="sc-RequiredCoursesHeading1">
+			Planners
+		</h3><p>Academic planners for this and all majors can be found at <a href="http://programmaps.ucsc.edu" target="_blank" rel="noopener noreferrer">programmaps.ucsc.edu.</a></p><table>
+
+		</table>
+	</div>
+</div><div id="csNewRelicPageTypeDiv" pagetype="Program" programname="Computer Science BS" style="display:none;">
+
+</div>
+							</div><!-- end main -->
+						</div><!--end of rightpanel-->
+						<div style="clear: both;"></div>
+					</div><!--end of middle-->				
+					<!-- Footer -->
+					<!--FOOTER LINKS AND IMAGES CAN GO HERE-->
+					<trss-ucsc-footer has-sammy="true"></trss-ucsc-footer>		
+				</div><!--end of pagwrapper2 -->
+			</div><!--end of pagewrapper1-->
+		</form>
+		<script type="text/javascript" src="/scripts/firefoxAnchorFix.js"></script>
+		
+		<!-- Script and style to include Truss components -->
+		<script type="module" src="https://truss.ucsc.edu/ucsc-trss/ucsc-trss.esm.js"></script>
+		<link rel="stylesheet" href="https://truss.ucsc.edu/ucsc-trss/ucsc-trss.css">
+	</body>
+</html>

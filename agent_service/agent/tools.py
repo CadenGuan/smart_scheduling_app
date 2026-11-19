@@ -293,6 +293,89 @@ def update_schedule_preferences(
     })
 
 @tool
+def check_course_prerequisites(course_code: str, completed_courses: Optional[List[str]] = None) -> str:
+    """
+    Checks if a student satisfies all prerequisite requirements to enroll in a target course.
+    """
+    from .dag_solver import evaluate_course_eligibility
+    if completed_courses is None:
+        prefs = _active_context.get('preferences', {}) if '_active_context' in globals() and _active_context else {}
+        completed = prefs.get('majorRequirementsTaken', [])
+    else:
+        completed = completed_courses
+    res = evaluate_course_eligibility(target_course=course_code, completed_courses=completed)
+    return res.get('message', f"Eligibility evaluated for {course_code}: {res.get('status')}")
+
+@tool
+def get_course_details(course_code: str, section: str = "") -> str:
+    """Retrieves all attributes for a specific course or course section from the academic catalog database."""
+    from .catalog_dao import get_course_details as dao_get_details
+    rows = dao_get_details(course_code=course_code, section=section if section else None)
+    if not rows:
+        return f"No course details found for '{course_code}' in the academic catalog database."
+
+    details = []
+    for r in rows:
+        details.append(
+            f"- **{r.get('course_code')}** Section {r.get('section')} ({r.get('section_type')}): "
+            f"'{r.get('title')}' | Credits: {r.get('credits', 'N/A')} | GE: {r.get('ge', 'None')} | "
+            f"Days/Time: {r.get('days', 'TBA')} {r.get('start_time', '')}-{r.get('end_time', '')} | "
+            f"Room: {r.get('room', 'TBA')} | Instructor: {r.get('instructor', 'Staff')} | "
+            f"Prereqs: {r.get('raw_prereqs', 'None')}"
+        )
+    return "\n".join(details)
+
+@tool
+def get_course_sections(course_code: str) -> str:
+    """Lists all available lecture and discussion sections for a course in the active quarter."""
+    from .catalog_dao import get_course_sections as dao_get_sections
+    rows = dao_get_sections(course_code=course_code)
+    if not rows:
+        return f"No active sections found for '{course_code}'."
+
+    lines = [f"Sections for {course_code.upper()}:"]
+    for r in rows:
+        lines.append(
+            f"- Section {r.get('section')} [{r.get('section_type')}]: {r.get('days', 'TBA')} "
+            f"{r.get('start_time', '')}-{r.get('end_time', '')} in {r.get('room', 'TBA')} "
+            f"(Status: {r.get('status', 'Open')})"
+        )
+    return "\n".join(lines)
+
+@tool
+def get_course_time(course_code: str, section: str = "01") -> str:
+    """Looks up the exact meeting days and times for a specific course section."""
+    from .catalog_dao import get_course_time as dao_get_time
+    row = dao_get_time(course_code=course_code, section=section)
+    if not row:
+        return f"No schedule found for {course_code.upper()} Section {section}."
+    return f"{row.get('course_code')} Section {row.get('section')} meets {row.get('days')} from {row.get('start_time')} to {row.get('end_time')} in {row.get('room')}."
+
+@tool
+def query_degree_requirements(query: str, major: str = "", concentration: str = "") -> str:
+    """
+    Queries official university degree requirements, concentrations, and major policies using vector search.
+    """
+    from .chroma_rag import query_degree_chunks
+    student = _active_context.get('student', {}) if '_active_context' in globals() and _active_context else {}
+    student_major = major or student.get('major', '')
+    results = query_degree_chunks(query=query, major=student_major, concentration=concentration)
+    if not results:
+        results = query_degree_chunks(query=query, n_results=3)
+    if not results:
+        return "No specific degree requirements found in the knowledge base matching your query."
+
+    formatted = []
+    for r in results:
+        meta = r.get('metadata', {})
+        heading = meta.get('section_heading', 'Requirements')
+        deg = meta.get('degree_title', '')
+        conc = meta.get('concentration', 'General')
+        doc = r.get('document', '')
+        formatted.append(f"### {deg} ({conc}) - {heading}\n{doc}")
+    return "\n\n".join(formatted)
+
+@tool
 def search_course_catalog(
     query: str = "",
     term: str = "Winter 2027",
@@ -314,4 +397,9 @@ def get_inspection_tools():
         audit_degree_progress_tool,
         update_schedule_preferences,
         search_course_catalog,
+        query_degree_requirements,
+        get_course_details,
+        get_course_sections,
+        get_course_time,
+        check_course_prerequisites,
     ]
