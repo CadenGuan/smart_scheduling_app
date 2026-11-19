@@ -78,3 +78,4 @@ The automated test suites in the pull request verifying system behavior and cove
 - `server/tests/`: 214 passing unit and API contract tests across routes, database queries, and scheduling algorithms (87.2% coverage).
 - `agent_service/tests/test_agent_api.py`: 27 passing tests covering prompt building, DAG solver, and agent tools (75.97% coverage).
 - `agent_service/tests/test_static_analysis.py`: 3 passing tests covering Python configuration and coverage thresholds.
+
