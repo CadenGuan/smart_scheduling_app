@@ -116,6 +116,32 @@ class TestAgentToolsAndParserCoverage(unittest.TestCase):
         prereq_res = check_course_prerequisites.invoke({"course_code": "CSE 101"})
         self.assertIsNotNone(prereq_res)
 
+    def test_list_google_events_and_find_free_time(self):
+        from agent.tools import find_free_time, list_google_events
+
+        # Empty schedule
+        set_tool_context({}, {}, [])
+        self.assertIn("No external Google Calendar commitments found", list_google_events.invoke({}))
+        self.assertIn("Free time windows of at least 60 minutes", find_free_time.invoke({}))
+
+        # Populated schedule with imported event
+        set_tool_context(
+            {},
+            {},
+            [
+                {
+                    "title": "Work Shift",
+                    "days": "Tuesday,Thursday",
+                    "startTime": "10:00",
+                    "endTime": "12:00",
+                    "isImported": True,
+                }
+            ],
+        )
+        events_str = list_google_events.invoke({})
+        self.assertIn("Work Shift", events_str)
+        self.assertIn("Tuesday,Thursday", events_str)
+
 
 if __name__ == "__main__":
     unittest.main()

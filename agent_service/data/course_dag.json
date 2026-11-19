@@ -1,0 +1,189 @@
+{
+  "ART 10F": {
+    "root_group": {
+      "type": "AND",
+      "courses": [
+        {
+          "type": "COURSE",
+          "course": "Studio introduction to two-dimensional composition, color theory, media experiments, and creative visual expression satisfying Practice: Creative Process (PR)."
+        }
+      ]
+    }
+  },
+  "ART 80T": {
+    "root_group": {
+      "type": "AND",
+      "courses": [
+        {
+          "type": "COURSE",
+          "course": "Digital imaging, vector graphics, multimedia design tools, and creative digital workflows."
+        }
+      ]
+    }
+  },
+  "CSE 101": {
+    "root_group": {
+      "type": "AND",
+      "courses": [
+        {
+          "type": "COURSE",
+          "course": "Data structures and algorithm design: balanced search trees, graph algorithms, asymptotic notation, greedy algorithms, and dynamic programming."
+        }
+      ]
+    }
+  },
+  "CSE 102": {
+    "root_group": {
+      "type": "AND",
+      "courses": [
+        {
+          "type": "COURSE",
+          "course": "Time and space analysis of algorithms, recurrence relations, dynamic programming, divide-and-conquer, greedy techniques, and NP-completeness."
+        }
+      ]
+    }
+  },
+  "CSE 115A": {
+    "root_group": {
+      "type": "AND",
+      "courses": [
+        {
+          "type": "COURSE",
+          "course": "Software development lifecycle, agile methodologies, team collaboration, testing, CI/CD, and project deployment."
+        }
+      ]
+    }
+  },
+  "CSE 12": {
+    "root_group": {
+      "type": "AND",
+      "courses": [
+        {
+          "type": "COURSE",
+          "course": "Introduction to computer architecture, assembly language programming, CPU control paths, registers, and memory hierarchy."
+        }
+      ]
+    }
+  },
+  "CSE 130": {
+    "root_group": {
+      "type": "AND",
+      "courses": [
+        {
+          "type": "COURSE",
+          "course": "Computer system design, operating system abstractions, multithreading, synchronization, file systems, and distributed concepts."
+        }
+      ]
+    }
+  },
+  "CSE 30": {
+    "root_group": {
+      "type": "AND",
+      "courses": [
+        {
+          "type": "OR",
+          "options": [
+            {
+              "type": "COURSE",
+              "course": "CSE 20"
+            },
+            {
+              "type": "COURSE",
+              "course": "BME 160"
+            }
+          ]
+        },
+        {
+          "type": "OR",
+          "options": [
+            {
+              "type": "COURSE",
+              "course": "MATH 19A"
+            },
+            {
+              "type": "COURSE",
+              "course": "MATH 11A"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "ECON 1": {
+    "root_group": {
+      "type": "AND",
+      "courses": [
+        {
+          "type": "COURSE",
+          "course": "Introduction to microeconomic analysis, market structures, price mechanics, elasticity, and consumer choice."
+        }
+      ]
+    }
+  },
+  "HIS 10A": {
+    "root_group": {
+      "type": "AND",
+      "courses": [
+        {
+          "type": "COURSE",
+          "course": "Survey of the Americas from early settlement through colonization, revolution, and the Civil War satisfying Ethnicity and Race (ER)."
+        }
+      ]
+    }
+  },
+  "MATH 19B": {
+    "root_group": {
+      "type": "AND",
+      "courses": [
+        {
+          "type": "COURSE",
+          "course": "Definite and indefinite integrals, techniques of integration, applications to physics and engineering."
+        }
+      ]
+    }
+  },
+  "MATH 21": {
+    "root_group": {
+      "type": "AND",
+      "courses": [
+        {
+          "type": "COURSE",
+          "course": "Systems of linear equations, matrices, determinants, vector spaces, linear transformations, eigenvalues, and eigenvectors."
+        }
+      ]
+    }
+  },
+  "MATH 23A": {
+    "root_group": {
+      "type": "AND",
+      "courses": [
+        {
+          "type": "COURSE",
+          "course": "Vectors in 3D Euclidean space, multivariable differential and integral calculus, and directional derivatives."
+        }
+      ]
+    }
+  },
+  "PHIL 11": {
+    "root_group": {
+      "type": "AND",
+      "courses": [
+        {
+          "type": "COURSE",
+          "course": "An introduction to the main problems and philosophical theories concerning knowledge, mind, ethics, and metaphysics."
+        }
+      ]
+    }
+  },
+  "STAT 131": {
+    "root_group": {
+      "type": "AND",
+      "courses": [
+        {
+          "type": "COURSE",
+          "course": "Introduction to probability theory, discrete and continuous random variables, expectation, variance, and limit theorems."
+        }
+      ]
+    }
+  }
+}
