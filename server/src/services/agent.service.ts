@@ -12,7 +12,11 @@ export interface AgentProcessResult {
 export type AgentQueryResponse = AgentProcessResult;
 
 export class AgentService {
-  static async queryAgent(prompt: string, context: AssembledContext): Promise<AgentProcessResult> {
+  static async queryAgent(
+    prompt: string,
+    context: AssembledContext,
+    sessionToken?: string
+  ): Promise<AgentProcessResult> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15-second timeout
 
@@ -23,18 +27,24 @@ export class AgentService {
       Boolean(process.env.VITEST);
 
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(useMock ? { 'X-Mock-Agent': 'true' } : {}),
+      };
+      if (sessionToken) {
+        headers['Authorization'] = `Bearer ${sessionToken}`;
+      }
+
       const response = await fetch(`${config.DJANGO_AGENT_URL}/api/agent/process/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(useMock ? { 'X-Mock-Agent': 'true' } : {}),
-        },
+        headers,
         body: JSON.stringify({
           prompt,
           student: context.student,
           preferences: context.preferences,
           currentSchedule: context.currentSchedule,
           history: context.history,
+          sessionToken,
           useMock,
         }),
         signal: controller.signal,

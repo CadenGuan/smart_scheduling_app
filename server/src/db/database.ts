@@ -75,4 +75,41 @@ export const runCalendarEventsMigration = (targetDb: any = db): void => {
 };
 runCalendarEventsMigration(db);
 
+// Runtime migration safeguard: ensure user_settings and user_schedule tables exist
+export const runUserScheduleMigration = (targetDb: any = db): void => {
+  try {
+    targetDb.exec(`
+      CREATE TABLE IF NOT EXISTS user_settings (
+        user_id TEXT PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+        sync_enabled BOOLEAN NOT NULL DEFAULT 1,
+        is_connected_to_google BOOLEAN NOT NULL DEFAULT 0,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS user_schedule (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+        course_code TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        days TEXT NOT NULL,
+        start_time TEXT NOT NULL,
+        end_time TEXT NOT NULL,
+        start_date TEXT NOT NULL,
+        end_date TEXT NOT NULL,
+        is_imported BOOLEAN NOT NULL DEFAULT 0,
+        sync_status TEXT NOT NULL CHECK (sync_status IN ('pending', 'synced', 'failed')),
+        google_event_id TEXT DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_user_schedule_user ON user_schedule(user_id);
+      CREATE INDEX IF NOT EXISTS idx_user_schedule_pending ON user_schedule(user_id, sync_status, is_imported);
+    `);
+  } catch (err) {
+    console.error('[Database] Migration error while verifying user_schedule tables:', err);
+  }
+};
+runUserScheduleMigration(db);
+
 export default db;
