@@ -1,10 +1,11 @@
-import os
 import json
+import os
 import tempfile
 import unittest
+
 from agent.dag_solver import (
-    is_eligible,
     evaluate_course_eligibility,
+    is_eligible,
     load_course_dag,
     set_active_dag,
 )
@@ -117,9 +118,9 @@ class TestDAGSolver(unittest.TestCase):
 
     def test_legacy_graph_functions(self):
         from agent.dag_solver import (
-            get_prerequisite_chain,
-            get_downstream_impact,
             audit_degree_progress,
+            get_downstream_impact,
+            get_prerequisite_chain,
         )
 
         # Unknown course
@@ -153,13 +154,15 @@ class TestDAGSolver(unittest.TestCase):
 
     def test_prereq_parser_utilities(self):
         from agent.prereq_parser import (
-            parse_prerequisite_text_rules,
             parse_prerequisite_text_llm,
+            parse_prerequisite_text_rules,
             parse_prerequisites_from_db,
         )
 
         # Test rule parser fallback branch for non-course strings
-        res = parse_prerequisite_text_rules("instructor consent or sophomore standing; and good standing")
+        res = parse_prerequisite_text_rules(
+            "instructor consent or sophomore standing; and good standing"
+        )
         self.assertIn("root_group", res)
 
         # Test parse_prerequisite_text_llm without GEMINI_API_KEY (falls back to rules)

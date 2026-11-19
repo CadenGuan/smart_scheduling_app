@@ -2,17 +2,16 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+
 from agent.chroma_rag import (
-    get_or_create_collection,
-    add_degree_chunks,
-    query_degree_chunks,
     MockEmbeddingFunction,
+    add_degree_chunks,
+    get_or_create_collection,
+    query_degree_chunks,
 )
 from agent.degree_scraper import extract_degree_chunks_from_html
 
-FIXTURE_PATH = os.path.join(
-    Path(__file__).resolve().parent, "fixtures", "cs_bs.html"
-)
+FIXTURE_PATH = os.path.join(Path(__file__).resolve().parent, "fixtures", "cs_bs.html")
 
 
 class TestChromaRAG(unittest.TestCase):

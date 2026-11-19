@@ -515,7 +515,7 @@ def create_class_event(course_code: str, section: str = "01") -> str:
     if token:
         headers["Authorization"] = f"Bearer {token}"
 
-    payload = {
+    payload: Dict[str, Any] = {
         "courseCode": clean_code,
         "title": title,
         "description": f"Section {section} - {days} {start_time}-{end_time}",

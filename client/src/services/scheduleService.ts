@@ -7,7 +7,9 @@ export class ScheduleService {
    */
   static async fetchSettings(): Promise<UserSettings | null> {
     try {
-      const res = await apiClient.get<{ success: boolean; data: UserSettings }>('/api/sync/settings');
+      const res = await apiClient.get<{ success: boolean; data: UserSettings }>(
+        '/api/sync/settings'
+      );
       return res.data;
     } catch {
       return null;
@@ -18,7 +20,9 @@ export class ScheduleService {
    * Fetches the student's scheduled class events from the local database.
    */
   static async fetchSchedule(): Promise<UserScheduleItem[]> {
-    const res = await apiClient.get<{ success: boolean; data: UserScheduleItem[] }>('/api/user_schedule');
+    const res = await apiClient.get<{ success: boolean; data: UserScheduleItem[] }>(
+      '/api/user_schedule'
+    );
     return res.data || [];
   }
 

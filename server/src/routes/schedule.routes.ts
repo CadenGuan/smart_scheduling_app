@@ -1,10 +1,7 @@
 import { Router, Response } from 'express';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validate.middleware.js';
-import {
-  CreateScheduleEventRequestSchema,
-  UpdateScheduleEventRequestSchema,
-} from 'shared';
+import { CreateScheduleEventRequestSchema, UpdateScheduleEventRequestSchema } from 'shared';
 import { scheduleQueries } from '../db/queries/scheduleQueries.js';
 import { SyncEngineService } from '../services/syncEngine.service.js';
 
@@ -65,7 +62,11 @@ router.put(
 
     const updated = scheduleQueries.updateScheduleEvent(req.params.id, userId, req.body);
     if (!updated) {
-      res.status(404).json({ success: false, error: 'EVENT_NOT_FOUND', message: 'Event not found or unauthorized' });
+      res.status(404).json({
+        success: false,
+        error: 'EVENT_NOT_FOUND',
+        message: 'Event not found or unauthorized',
+      });
       return;
     }
 
@@ -91,7 +92,11 @@ router.delete('/:id', requireAuth, (req: AuthenticatedRequest, res: Response) =>
 
   const deleted = scheduleQueries.deleteScheduleEvent(req.params.id, userId);
   if (!deleted) {
-    res.status(404).json({ success: false, error: 'EVENT_NOT_FOUND', message: 'Event not found or unauthorized' });
+    res.status(404).json({
+      success: false,
+      error: 'EVENT_NOT_FOUND',
+      message: 'Event not found or unauthorized',
+    });
     return;
   }
 

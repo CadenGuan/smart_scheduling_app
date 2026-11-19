@@ -128,11 +128,13 @@ describe('Sync Engine & Routes (/api/sync)', () => {
       });
 
       // Insert dummy oauth token
-      db.prepare(`
+      db.prepare(
+        `
         INSERT INTO oauth_tokens (user_id, provider, access_token, refresh_token, scope, expires_at)
         VALUES (?, 'google', 'mock_access_token_123', 'mock_refresh_token_123', 'scope', '2099-01-01')
         ON CONFLICT(user_id) DO UPDATE SET access_token = 'mock_access_token_123'
-      `).run(userId);
+      `
+      ).run(userId);
 
       // Mock pushEventToDjango to return success
       vi.spyOn(SyncEngineService, 'pushEventToDjango').mockResolvedValue({
@@ -174,7 +176,9 @@ describe('Sync Engine & Routes (/api/sync)', () => {
       });
 
       // Mock refreshGoogleToken to return a refreshed token
-      vi.spyOn(SyncEngineService, 'refreshGoogleToken').mockResolvedValue('new_refreshed_access_token');
+      vi.spyOn(SyncEngineService, 'refreshGoogleToken').mockResolvedValue(
+        'new_refreshed_access_token'
+      );
 
       const result = await SyncEngineService.syncUserSchedule(userId);
       expect(result.syncedCount).toBeGreaterThanOrEqual(1);

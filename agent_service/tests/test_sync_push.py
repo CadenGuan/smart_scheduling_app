@@ -1,8 +1,11 @@
 import json
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from django.test import RequestFactory
+
 from agent_api.views import push_event_to_google
+
 
 class TestSyncPushEndpoint(unittest.TestCase):
     def setUp(self):
@@ -75,6 +78,7 @@ class TestSyncPushEndpoint(unittest.TestCase):
         self.assertEqual(resp.status_code, 401)
         data = json.loads(resp.content)
         self.assertEqual(data["error"], "GOOGLE_TOKEN_EXPIRED")
+
 
 if __name__ == "__main__":
     unittest.main()

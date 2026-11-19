@@ -1,27 +1,29 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from agent.tools import (
     create_class_event,
     delete_class_event,
-    list_google_events,
     find_free_time,
-    set_tool_context,
     get_inspection_tools,
+    list_google_events,
+    set_tool_context,
 )
+
 
 class TestScheduleTools(unittest.TestCase):
     def setUp(self):
         self.student = {"userId": "usr_123", "name": "Sammy Slug", "major": "Computer Science B.S."}
         self.preferences = {"majorRequirementsTaken": ["CSE 20", "MATH 19A"]}
         self.schedule = [
-          {
-            "id": "item_1",
-            "courseCode": "CSE 30",
-            "title": "Programming Abstractions in Python",
-            "days": "M,W,F",
-            "startTime": "10:00",
-            "endTime": "11:05",
-          }
+            {
+                "id": "item_1",
+                "courseCode": "CSE 30",
+                "title": "Programming Abstractions in Python",
+                "days": "M,W,F",
+                "startTime": "10:00",
+                "endTime": "11:05",
+            }
         ]
         set_tool_context(
             student=self.student,
@@ -101,6 +103,7 @@ class TestScheduleTools(unittest.TestCase):
         self.assertNotIn("create_event", tool_names)
         self.assertNotIn("update_event", tool_names)
         self.assertNotIn("delete_event", tool_names)
+
 
 if __name__ == "__main__":
     unittest.main()

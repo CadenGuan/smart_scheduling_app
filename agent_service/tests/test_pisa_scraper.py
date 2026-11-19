@@ -1,7 +1,8 @@
 import os
 import unittest
 from pathlib import Path
-from agent.pisa_scraper import parse_time, parse_pisa_results_page, parse_pisa_detail_page
+
+from agent.pisa_scraper import parse_pisa_detail_page, parse_pisa_results_page, parse_time
 
 FIXTURES_DIR = os.path.join(Path(__file__).resolve().parent, "fixtures")
 

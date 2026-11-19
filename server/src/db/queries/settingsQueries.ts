@@ -26,7 +26,11 @@ export const settingsQueries = {
     };
   },
 
-  upsertUserSettings(userId: string, syncEnabled: boolean, isConnectedToGoogle: boolean): UserSettings {
+  upsertUserSettings(
+    userId: string,
+    syncEnabled: boolean,
+    isConnectedToGoogle: boolean
+  ): UserSettings {
     const stmt = db.prepare(`
       INSERT INTO user_settings (user_id, sync_enabled, is_connected_to_google, updated_at)
       VALUES (?, ?, ?, CURRENT_TIMESTAMP)

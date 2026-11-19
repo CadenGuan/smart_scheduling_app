@@ -1,19 +1,17 @@
 import os
-import unittest
 import tempfile
-from pathlib import Path
+import unittest
+
+from agent.catalog_dao import bulk_insert_courses, init_db
+from agent.chroma_rag import add_degree_chunks, get_or_create_collection
+from agent.dag_solver import set_active_dag
 from agent.tools import (
-    set_tool_context,
-    query_degree_requirements,
-    get_course_details,
+    check_course_prerequisites,
     get_course_sections,
     get_course_time,
-    check_course_prerequisites,
     get_inspection_tools,
+    set_tool_context,
 )
-from agent.catalog_dao import init_db, bulk_insert_courses
-from agent.chroma_rag import get_or_create_collection, add_degree_chunks
-from agent.dag_solver import set_active_dag
 
 
 class TestCompositeQueriesAndTools(unittest.TestCase):
@@ -96,26 +94,28 @@ class TestCompositeQueriesAndTools(unittest.TestCase):
         add_degree_chunks(sample_chunks, collection=self.collection, force_mock=True)
 
         # Setup sample DAG
-        set_active_dag({
-            "CSE 101": {
-                "root_group": {
-                    "type": "AND",
-                    "courses": [
-                        {"type": "COURSE", "course": "CSE 13S"},
-                        {"type": "COURSE", "course": "CSE 16"},
-                    ],
-                }
-            },
-            "CSE 13S": {
-                "root_group": {
-                    "type": "AND",
-                    "courses": [
-                        {"type": "COURSE", "course": "CSE 30"},
-                        {"type": "COURSE", "course": "CSE 12"},
-                    ],
-                }
-            },
-        })
+        set_active_dag(
+            {
+                "CSE 101": {
+                    "root_group": {
+                        "type": "AND",
+                        "courses": [
+                            {"type": "COURSE", "course": "CSE 13S"},
+                            {"type": "COURSE", "course": "CSE 16"},
+                        ],
+                    }
+                },
+                "CSE 13S": {
+                    "root_group": {
+                        "type": "AND",
+                        "courses": [
+                            {"type": "COURSE", "course": "CSE 30"},
+                            {"type": "COURSE", "course": "CSE 12"},
+                        ],
+                    }
+                },
+            }
+        )
 
         # Set student context
         self.student = {
@@ -135,6 +135,7 @@ class TestCompositeQueriesAndTools(unittest.TestCase):
     def test_component_query_what_sections_for_cse_30(self):
         # Patch default DB path temporarily in catalog_dao
         from agent import catalog_dao
+
         old_path = catalog_dao.DEFAULT_DB_PATH
         catalog_dao.DEFAULT_DB_PATH = self.db_path
         try:
@@ -147,6 +148,7 @@ class TestCompositeQueriesAndTools(unittest.TestCase):
 
     def test_component_query_what_time_is_cse_30_01(self):
         from agent import catalog_dao
+
         old_path = catalog_dao.DEFAULT_DB_PATH
         catalog_dao.DEFAULT_DB_PATH = self.db_path
         try:
@@ -173,7 +175,9 @@ class TestCompositeQueriesAndTools(unittest.TestCase):
         Step 4: get_course_sections for CSE 13S -> retrieves available offerings
         """
         # Step 1: Query degree requirements
-        deg_res = self.collection.query(query_texts=["CSE 101 Data Structures upper-division requirement"], n_results=1)
+        deg_res = self.collection.query(
+            query_texts=["CSE 101 Data Structures upper-division requirement"], n_results=1
+        )
         self.assertIn("CSE 101", deg_res["documents"][0][0])
 
         # Step 2: Check CSE 101 eligibility

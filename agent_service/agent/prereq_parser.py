@@ -91,7 +91,7 @@ Return ONLY valid structured output.""",
 
         chain = prompt | structured_llm
         result = chain.invoke({"text": raw_text})
-        return result.model_dump()
+        return result.model_dump() if hasattr(result, "model_dump") else dict(result)
     except Exception:
         return parse_prerequisite_text_rules(raw_text)
 

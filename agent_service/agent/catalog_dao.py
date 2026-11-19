@@ -90,7 +90,7 @@ def insert_course(course: Dict[str, Any], db_path: Optional[str] = None) -> int:
                     sanitize_value(course.get("status")),
                 ),
             )
-            return cursor.lastrowid
+            return cursor.lastrowid or 0
     finally:
         conn.close()
 
