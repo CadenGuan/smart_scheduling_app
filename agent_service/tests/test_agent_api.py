@@ -707,3 +707,79 @@ class AgentApiTests(TestCase):
                 os.environ["GEMINI_API_KEY"] = old_gemini
             if old_google is not None:
                 os.environ["GOOGLE_API_KEY"] = old_google
+
+    def test_query_specific_course_cse30_sections_winter_quarter(self):
+        payload = {
+            "prompt": "when are the cse 30 sections this upcoming winter quarter",
+            "student": {
+                "name": "Sammy Slug",
+                "major": "Computer Science B.S.",
+                "standing": "Junior",
+            },
+            "preferences": {
+                "targetTerm": "Winter 2027",
+                "targetCredits": 15,
+            },
+            "currentSchedule": [],
+            "history": [],
+        }
+        res = self.client.post("/api/agent/process/", data=json.dumps(payload), content_type="application/json")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        response_text = data["data"]["response"]
+        # Must NOT confuse "quarter" with "ART" department
+        self.assertNotIn("active **ART** courses", response_text)
+        self.assertNotIn("ART 10F", response_text)
+        # Must accurately describe CSE 30 status and Spring 2027 offering
+        self.assertIn("CSE 30", response_text)
+        self.assertIn("Spring 2027", response_text)
+        self.assertIn("Luca de Alfaro", response_text)
+
+    def test_query_standalone_cse30_no_default_fallback(self):
+        payload = {
+            "prompt": "cse 30",
+            "student": {
+                "name": "Sammy Slug",
+                "major": "Computer Science B.S.",
+                "standing": "Junior",
+            },
+            "preferences": {
+                "targetTerm": "Winter 2027",
+                "targetCredits": 15,
+            },
+            "currentSchedule": [],
+            "history": [],
+        }
+        res = self.client.post("/api/agent/process/", data=json.dumps(payload), content_type="application/json")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        response_text = data["data"]["response"]
+        # Must address CSE 30 directly instead of falling back to default plan
+        self.assertIn("CSE 30", response_text)
+        self.assertNotIn("Sammy's recommended plan for a **Junior** in `Computer Science B.S.`", response_text)
+
+    def test_query_specific_course_cse101_sections_in_term(self):
+        payload = {
+            "prompt": "when are the cse 101 sections this upcoming winter quarter",
+            "student": {
+                "name": "Sammy Slug",
+                "major": "Computer Science B.S.",
+                "standing": "Junior",
+            },
+            "preferences": {
+                "targetTerm": "Winter 2027",
+                "targetCredits": 15,
+            },
+            "currentSchedule": [],
+            "history": [],
+        }
+        res = self.client.post("/api/agent/process/", data=json.dumps(payload), content_type="application/json")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        response_text = data["data"]["response"]
+        self.assertIn("CSE 101", response_text)
+        self.assertIn("Patrick Tantalo", response_text)
+        self.assertIn("Suresh Lodha", response_text)

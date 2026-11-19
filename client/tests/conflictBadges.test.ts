@@ -2,7 +2,11 @@ import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { CourseCard } from '../src/components/dashboard/CourseCard';
-import { CalendarPreview } from '../src/components/dashboard/CalendarPreview';
+import {
+  CalendarPreview,
+  getInitialDateForTerm,
+  getTermDates,
+} from '../src/components/dashboard/CalendarPreview';
 import { CourseDetailsModal } from '../src/components/dashboard/CourseDetailsModal';
 import { CalendarEvent } from 'shared';
 
@@ -214,6 +218,18 @@ describe('CalendarPreview Test Suite', () => {
 
     preview.handleCloseModal();
     expect(preview.state.selectedEvent).toBeNull();
+  });
+
+  it('computes initial dates and term boundaries accurately for FullCalendar', () => {
+    expect(getInitialDateForTerm('Winter 2027')).toBe('2027-01-05');
+    expect(getInitialDateForTerm('Spring 2027')).toBe('2027-03-30');
+    expect(getInitialDateForTerm('Fall 2026')).toBe('2026-09-29');
+    expect(getInitialDateForTerm('Summer 2027')).toBe('2027-06-22');
+
+    expect(getTermDates('Winter 2027')).toEqual({ startDate: '2027-01-04', endDate: '2027-03-19' });
+    expect(getTermDates('Spring 2027')).toEqual({ startDate: '2027-03-29', endDate: '2027-06-11' });
+    expect(getTermDates('Fall 2026')).toEqual({ startDate: '2026-09-24', endDate: '2026-12-11' });
+    expect(getTermDates('Summer 2027')).toEqual({ startDate: '2027-06-21', endDate: '2027-08-27' });
   });
 });
 

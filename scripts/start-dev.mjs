@@ -10,7 +10,7 @@ const rl = readline.createInterface({
 });
 
 function updateEnvFiles(isMock) {
-  const rootDir = path.dirname(fileURLToPath(import.meta.url));
+  const rootDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
   const val = isMock ? 'mock' : 'live';
   const boolVal = isMock ? 'true' : 'false';
 

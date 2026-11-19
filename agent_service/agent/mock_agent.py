@@ -472,7 +472,7 @@ def run_mock_agent(
                 f"You can focus your elective space entirely on upper-division `{major}` electives or exploratory minor coursework."
             )
 
-    # Scenario 10: Course recommendations
+    # Scenario 10: Course recommendations & Catalog Inquiries
     elif (
         "cse" in prompt_lower
         or "course" in prompt_lower
@@ -480,70 +480,152 @@ def run_mock_agent(
         or "recommend" in prompt_lower
         or "major" in prompt_lower
         or "schedule" in prompt_lower
+        or "section" in prompt_lower
         or any(
-            d in prompt_lower
-            for d in ["math", "ece", "film", "art", "phil", "his", "econ", "musc", "astr", "havc"]
+            re.search(r"\b" + re.escape(d) + r"\b", prompt_lower)
+            for d in ["math", "ece", "film", "art", "phil", "his", "econ", "musc", "astr", "havc", "stat"]
         )
     ):
         tool_calls_simulated.append(
             {"tool": "inspect_student_profile", "output": {"standing": standing, "major": major}}
         )
 
-        queried_dept = None
-        for d in ["MATH", "ECE", "FILM", "ART", "PHIL", "HIS", "ECON", "MUSC", "ASTR", "HAVC"]:
-            if d.lower() in prompt_lower:
-                queried_dept = d
+        # 1. Check if a specific course from catalog is being queried (e.g. "CSE 30", "when are the cse 30 sections...", "tell me about cse 101")
+        prompt_norm = prompt_lower.replace("-", " ")
+        known_codes = sorted(list({c.get("code") for c in catalog if c.get("code")}), key=len, reverse=True)
+        queried_course_code = None
+        for kcode in known_codes:
+            kcode_lower = kcode.lower()
+            kcode_no_space = kcode_lower.replace(" ", "")
+            if (
+                re.search(r"\b" + re.escape(kcode_lower) + r"\b", prompt_norm)
+                or re.search(r"\b" + re.escape(kcode_no_space) + r"\b", prompt_norm)
+            ):
+                queried_course_code = kcode
                 break
 
-        if queried_dept:
-            dept_matches = find_courses(department=queried_dept, term=term)
-            proposed_courses = [dict(c, pinned=False) for c in dept_matches]
-            tool_calls_simulated.append(
-                {
-                    "tool": "search_course_catalog",
-                    "args": {"department": queried_dept, "term": term},
-                    "output": [c["id"] for c in proposed_courses],
-                }
-            )
-            offerings = []
-            for c in proposed_courses:
-                days_str = ", ".join(c.get("days", []))
-                offerings.append(
-                    f"- **`{c.get('code')}` ({c.get('title')})**: {days_str} {c.get('startTime')}-{c.get('endTime')} ({c.get('credits')} credits) in {c.get('location')}"
+        if queried_course_code:
+            matches_in_term = find_courses(query=queried_course_code, term=term)
+            if matches_in_term:
+                proposed_courses = [dict(c, pinned=False) for c in matches_in_term]
+                tool_calls_simulated.append(
+                    {
+                        "tool": "search_course_catalog",
+                        "args": {"query": queried_course_code, "term": term},
+                        "output": [c["id"] for c in proposed_courses],
+                    }
                 )
-            response = (
-                f"Here are the active **{queried_dept}** courses available for **{term}**: 📚\n\n"
-                f"### Matching Course Offerings:\n"
-                + "\n".join(offerings)
-                + "\n\nLet me know which ones you would like to incorporate into your schedule!"
-            )
+                offerings = []
+                for c in proposed_courses:
+                    days_str = ", ".join(c.get("days", []))
+                    offerings.append(
+                        f"- **`{c.get('code')}` ({c.get('title')})**: {days_str} {c.get('startTime')}-{c.get('endTime')} ({c.get('credits')} credits) in {c.get('location')} (Instructor: {c.get('instructor')})"
+                    )
+                response = (
+                    f"Here are the active **`{queried_course_code}`** sections available for **{term}**: 📚\n\n"
+                    f"### Matching Course Offerings:\n"
+                    + "\n".join(offerings)
+                    + f"\n\nLet me know if you would like me to add one of these sections to your schedule!"
+                )
+            else:
+                matches_all_terms = find_courses(query=queried_course_code, term="")
+                tool_calls_simulated.append(
+                    {
+                        "tool": "search_course_catalog",
+                        "args": {"query": queried_course_code, "term": term},
+                        "output": [],
+                    }
+                )
+                if matches_all_terms:
+                    other_offerings = []
+                    for c in matches_all_terms:
+                        days_str = ", ".join(c.get("days", []))
+                        other_offerings.append(
+                            f"- **`{c.get('code')}` ({c.get('title')})** in **{c.get('term')}**: {days_str} {c.get('startTime')}-{c.get('endTime')} ({c.get('credits')} credits) in {c.get('location')} (Instructor: {c.get('instructor')})"
+                        )
+                    alt_dept = queried_course_code.split()[0]
+                    dept_alts = find_courses(department=alt_dept, term=term)
+                    alt_lines = []
+                    for ac in dept_alts[:2]:
+                        days_str = ", ".join(ac.get("days", []))
+                        alt_lines.append(f"- **`{ac.get('code')}` ({ac.get('title')})**: {days_str} {ac.get('startTime')}-{ac.get('endTime')} in {ac.get('location')}")
+                    alt_text = f"\n\n### Available {alt_dept} Alternatives for {term}:\n" + "\n".join(alt_lines) if alt_lines else ""
+
+                    response = (
+                        f"**`{queried_course_code}`** is not currently scheduled for **{term}**. 🗓️\n\n"
+                        f"### Scheduled Offerings in Other Quarters:\n"
+                        + "\n".join(other_offerings)
+                        + alt_text
+                        + f"\n\nWould you like to plan ahead for another term, or add an available {term} course to your schedule?"
+                    )
+                else:
+                    response = (
+                        f"I couldn't find any scheduled offerings for **`{queried_course_code}`** in the active UCSC catalog. "
+                        f"Would you like to browse available courses in {term} instead?"
+                    )
         else:
-            recs = []
-            for code in ["CSE 115A", "CSE 130", "CSE 101", "ART 10F", "PHIL 11"]:
-                matches = find_courses(query=code, term=term)
-                if matches:
-                    c_copy = dict(matches[0])
-                    c_copy["pinned"] = False
-                    recs.append(c_copy)
+            queried_dept = None
+            for d in ["CSE", "MATH", "ECE", "FILM", "ART", "PHIL", "HIS", "ECON", "MUSC", "ASTR", "HAVC", "STAT"]:
+                if re.search(r"\b" + re.escape(d.lower()) + r"\b", prompt_lower):
+                    queried_dept = d
+                    break
 
-            proposed_courses = recs
+            if queried_dept:
+                dept_matches = find_courses(department=queried_dept, term=term)
+                proposed_courses = [dict(c, pinned=False) for c in dept_matches]
+                tool_calls_simulated.append(
+                    {
+                        "tool": "search_course_catalog",
+                        "args": {"department": queried_dept, "term": term},
+                        "output": [c["id"] for c in proposed_courses],
+                    }
+                )
+                offerings = []
+                for c in proposed_courses:
+                    days_str = ", ".join(c.get("days", []))
+                    offerings.append(
+                        f"- **`{c.get('code')}` ({c.get('title')})**: {days_str} {c.get('startTime')}-{c.get('endTime')} ({c.get('credits')} credits) in {c.get('location')}"
+                    )
+                response = (
+                    f"Here are the active **{queried_dept}** courses available for **{term}**: 📚\n\n"
+                    f"### Matching Course Offerings:\n"
+                    + "\n".join(offerings)
+                    + f"\n\nLet me know which ones you would like to incorporate into your schedule!"
+                )
+            else:
+                recs = []
+                for code in ["CSE 115A", "CSE 130", "CSE 101", "ART 10F", "PHIL 11"]:
+                    matches = find_courses(query=code, term=term)
+                    if matches:
+                        c_copy = dict(matches[0])
+                        c_copy["pinned"] = False
+                        recs.append(c_copy)
 
-            tool_calls_simulated.append(
-                {
-                    "tool": "search_course_catalog",
-                    "args": {"department": "CSE", "term": term},
-                    "output": [c["id"] for c in proposed_courses],
-                }
-            )
+                if not recs:
+                    term_courses = find_courses(department="CSE", term=term) or find_courses(term=term)
+                    for c in term_courses:
+                        c_copy = dict(c)
+                        c_copy["pinned"] = False
+                        recs.append(c_copy)
 
-            response = (
-                f"Here is Sammy's recommended plan for a **{standing}** in `{major}`: 📚\n\n"
-                f"### High-Priority Core Courses:\n"
-                f"1. **`CSE 101` (Algorithms & Abstract Data Types)** – Critical prerequisite gatekeeper for virtually all upper-division electives.\n"
-                f"2. **`CSE 115A` (Intro to Software Engineering)** – Hands-on team project course; excellent preparation for industry internships.\n"
-                f"3. **`CSE 130` (Principles of Computer Systems Design)** – Rigorous systems programming covering concurrency, virtual memory, and distributed primitives.\n\n"
-                f"💡 **Pro-Tip**: Avoid taking `CSE 101` and `CSE 130` in the exact same quarter unless you have a lighter third course, as both require heavy weekly programming assignments."
-            )
+                proposed_courses = recs
+
+                tool_calls_simulated.append(
+                    {
+                        "tool": "search_course_catalog",
+                        "args": {"department": "CSE", "term": term},
+                        "output": [c["id"] for c in proposed_courses],
+                    }
+                )
+
+                response = (
+                    f"Here is Sammy's recommended plan for a **{standing}** in `{major}`: 📚\n\n"
+                    f"### High-Priority Core Courses:\n"
+                    f"1. **`CSE 101` (Algorithms & Abstract Data Types)** – Critical prerequisite gatekeeper for virtually all upper-division electives.\n"
+                    f"2. **`CSE 115A` (Intro to Software Engineering)** – Hands-on team project course; excellent preparation for industry internships.\n"
+                    f"3. **`CSE 130` (Principles of Computer Systems Design)** – Rigorous systems programming covering concurrency, virtual memory, and distributed primitives.\n\n"
+                    f"💡 **Pro-Tip**: Avoid taking `CSE 101` and `CSE 130` in the exact same quarter unless you have a lighter third course, as both require heavy weekly programming assignments."
+                )
 
     # Scenario 11: Calendar, schedule, conflicts, or breaks
     elif (

@@ -30,7 +30,25 @@ interface CalendarPreviewState {
   isDeadlinesOpen: boolean;
 }
 
+export function getInitialDateForTerm(term: string): string {
+  const t = (term || '').toLowerCase();
+  if (t.includes('spring')) return '2027-03-30';
+  if (t.includes('fall')) return '2026-09-29';
+  if (t.includes('summer')) return '2027-06-22';
+  return '2027-01-05';
+}
+
+export function getTermDates(term: string): { startDate: string; endDate: string } {
+  const t = (term || '').toLowerCase();
+  if (t.includes('spring')) return { startDate: '2027-03-29', endDate: '2027-06-11' };
+  if (t.includes('fall')) return { startDate: '2026-09-24', endDate: '2026-12-11' };
+  if (t.includes('summer')) return { startDate: '2027-06-21', endDate: '2027-08-27' };
+  return { startDate: '2027-01-04', endDate: '2027-03-19' };
+}
+
 export class CalendarPreview extends BaseComponent<CalendarPreviewProps, CalendarPreviewState> {
+  private calendarRef = React.createRef<any>();
+
   constructor(props: CalendarPreviewProps) {
     super(props);
     this.state = {
@@ -50,6 +68,18 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
   async componentDidMount(): Promise<void> {
     super.componentDidMount();
     await this.loadSchedule();
+  }
+
+  componentDidUpdate(prevProps: CalendarPreviewProps): void {
+    if (prevProps.term !== this.props.term) {
+      const api = this.calendarRef.current?.getApi();
+      if (api) {
+        api.gotoDate(getInitialDateForTerm(this.props.term));
+      }
+      void this.loadSchedule();
+    } else if (prevProps.events !== this.props.events) {
+      void this.loadSchedule();
+    }
   }
 
   loadSchedule = async (): Promise<void> => {
@@ -220,6 +250,7 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
     } = this.state;
 
     // Convert items or fallback to mapped events from props
+    const { startDate, endDate } = getTermDates(term);
     let fullCalendarEvents: FullCalendarEventItem[] = [];
     if (scheduleItems.length > 0) {
       fullCalendarEvents = mapScheduleItemsToFullCalendar(scheduleItems);
@@ -244,8 +275,8 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
           .join(','),
         startTime: e.startTime,
         endTime: e.endTime,
-        startDate: '2027-01-04',
-        endDate: '2027-03-19',
+        startDate,
+        endDate,
         isImported: e.type === 'GOOGLE_CALENDAR_BUSY',
         syncStatus: 'synced',
         googleEventId: null,
@@ -388,8 +419,10 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
         {/* FullCalendar Component Container */}
         <div className="flex-1 overflow-y-auto p-2" style={{ minHeight: '580px' }}>
           <FullCalendar
+            ref={this.calendarRef}
             plugins={[timeGridPlugin]}
             initialView="timeGridWeek"
+            initialDate={getInitialDateForTerm(term)}
             headerToolbar={false}
             allDaySlot={false}
             slotMinTime="08:00:00"
