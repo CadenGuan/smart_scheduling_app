@@ -8,6 +8,8 @@ import usersRoutes from './routes/users.routes.js';
 import progressRoutes from './routes/progress.routes.js';
 import calendarRoutes from './routes/calendar.routes.js';
 import agentRoutes from './routes/agent.routes.js';
+import scheduleRoutes from './routes/schedule.routes.js';
+import syncRoutes from './routes/sync.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { securityHeadersMiddleware } from './middleware/security.middleware.js';
 
@@ -27,6 +29,8 @@ app.use('/api/users', usersRoutes);
 app.use('/api/users', progressRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/agent', agentRoutes);
+app.use('/api/user_schedule', scheduleRoutes);
+app.use('/api/sync', syncRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

@@ -5,6 +5,8 @@ export * from './calendar.schema.js';
 export * from './agent.schema.js';
 export * from './deadline.schema.js';
 
+export * from './schedule.schema.js';
+
 // Explicit re-exports for CommonJS/Rollup interop
 export {
   StandingEnum,

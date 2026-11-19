@@ -36,9 +36,10 @@ router.post(
 
     // 2. Assemble context & sliding window
     const context = ContextService.assembleContext(userId);
+    const sessionToken = req.headers.authorization?.replace(/^Bearer\s+/i, '');
 
     // 3. Query Django Agent Service
-    const agentResult = await AgentService.queryAgent(prompt, context);
+    const agentResult = await AgentService.queryAgent(prompt, context, sessionToken);
 
     // 3.5 Execute server-side actions triggered by agent tool calls
     let schedulePivot: MacroPivotResult | undefined;
