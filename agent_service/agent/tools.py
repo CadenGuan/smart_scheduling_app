@@ -199,7 +199,10 @@ def is_course_requested_or_pinned(prompt: str, course: Dict[str, Any]) -> bool:
     ):
         return False
     # Informational queries (e.g. "when are the sections...", "what time is...") are not addition requests
-    if re.search(r'\b(when\s+(?:are|is)|what\s+time|where\s+is|tell\s+me\s+about|info\s+on|details\s+on|how\s+many\s+sections|is\s+there)\b', prompt_lower):
+    if re.search(
+        r'\b(when\s+(?:are|is)|what\s+(?:time|sections?)|which\s+sections?|where\s+is|tell\s+me\s+about|info\s+on|details\s+on|how\s+many\s+sections|is\s+there|are\s+there)\b',
+        prompt_lower,
+    ):
         return False
 
     # Explicit pin keywords

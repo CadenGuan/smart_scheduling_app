@@ -199,7 +199,7 @@ describe('Calendar Schema Architectural Contract Tests [TESTING_GOLDEN_RULES.md 
       const courses = JSON.parse(rawData);
 
       expect(Array.isArray(courses)).toBe(true);
-      expect(courses).toHaveLength(21);
+      expect(courses).toHaveLength(22);
     });
 
     it('validates that all curated courses strictly conform to CourseSchema and CalendarEventSchema', () => {
@@ -237,10 +237,21 @@ describe('Calendar Schema Architectural Contract Tests [TESTING_GOLDEN_RULES.md 
       const spring = courses.filter((c) => c.term === 'Spring 2027');
       const summer = courses.filter((c) => c.term === 'Summer 2027');
 
-      expect(winter).toHaveLength(9);
+      expect(winter).toHaveLength(10);
       expect(fall).toHaveLength(4);
       expect(spring).toHaveLength(4);
       expect(summer).toHaveLength(4);
+
+      // Verify Winter 2027 CSE 30 offering
+      const cse30Sections = winter.filter((c) => c.code === 'CSE 30');
+      expect(cse30Sections).toHaveLength(1);
+      const cse30 = cse30Sections[0];
+      expect(cse30.id).toBe('cse-30-01');
+      expect(cse30.days).toEqual(['Monday', 'Wednesday', 'Friday']);
+      expect(cse30.startTime).toBe('10:00');
+      expect(cse30.endTime).toBe('11:05');
+      expect(cse30.location).toBe('Classroom Unit 2');
+      expect(cse30.instructor).toBe('Luca de Alfaro');
 
       // Verify Winter 2027 duplicate section test vector
       const cse101Sections = winter.filter((c) => c.code === 'CSE 101');

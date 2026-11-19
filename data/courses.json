@@ -130,6 +130,28 @@
     "description": "Introduction to computer architecture, assembly language programming, CPU control paths, registers, and memory hierarchy."
   },
   {
+    "id": "cse-30-01",
+    "code": "CSE 30",
+    "title": "CSE 30: Programming Abstractions: Python",
+    "department": "CSE",
+    "level": "LOWER",
+    "type": "MAJOR",
+    "instructor": "Luca de Alfaro",
+    "location": "Classroom Unit 2",
+    "days": [
+      "Monday",
+      "Wednesday",
+      "Friday"
+    ],
+    "startTime": "10:00",
+    "endTime": "11:05",
+    "color": "#00B4DB",
+    "credits": 5,
+    "term": "Winter 2027",
+    "ge": null,
+    "description": "Object-oriented programming, data structures, recursion, algorithm development, and abstraction using Python."
+  },
+  {
     "id": "math-21-01",
     "code": "MATH 21",
     "title": "MATH 21: Linear Algebra",

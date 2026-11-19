@@ -80,9 +80,18 @@ export function mapScheduleItemsToFullCalendar(items: UserScheduleItem[]): FullC
       ? '#64748b' // Slate/gray for external imported blocks
       : COURSE_PALETTE[index % COURSE_PALETTE.length];
 
+    let title = item.title;
+    if (item.courseCode) {
+      const escaped = item.courseCode.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const startsWithCode = new RegExp(`^${escaped}\\b`, 'i').test(item.title);
+      if (!startsWithCode) {
+        title = `${item.courseCode} - ${item.title}`;
+      }
+    }
+
     return {
       id: item.id,
-      title: item.courseCode ? `${item.courseCode} - ${item.title}` : item.title,
+      title,
       daysOfWeek: parseDaysToDaysOfWeek(item.days),
       startTime: normalizeTime(item.startTime),
       endTime: normalizeTime(item.endTime),

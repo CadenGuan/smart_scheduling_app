@@ -564,13 +564,61 @@ def run_mock_agent(
                         f"Would you like to browse available courses in {term} instead?"
                     )
         else:
+            is_list_all_query = any(
+                phrase in prompt_lower
+                for phrase in [
+                    "list all",
+                    "show all",
+                    "available courses",
+                    "all available",
+                    "all courses",
+                    "all classes",
+                    "what courses are available",
+                    "what is available",
+                    "courses offered",
+                    "courses available",
+                    "list courses",
+                    "browse catalog",
+                    "browse courses",
+                    "see all courses",
+                    "view all courses",
+                ]
+            )
+
             queried_dept = None
             for d in ["CSE", "MATH", "ECE", "FILM", "ART", "PHIL", "HIS", "ECON", "MUSC", "ASTR", "HAVC", "STAT"]:
                 if re.search(r"\b" + re.escape(d.lower()) + r"\b", prompt_lower):
                     queried_dept = d
                     break
 
-            if queried_dept:
+            if is_list_all_query:
+                term_courses = find_courses(department=queried_dept or "", term=term)
+                proposed_courses = [dict(c, pinned=False) for c in term_courses]
+                tool_args: Dict[str, Any] = {"term": term}
+                if queried_dept:
+                    tool_args["department"] = queried_dept
+                tool_calls_simulated.append(
+                    {
+                        "tool": "search_course_catalog",
+                        "args": tool_args,
+                        "output": [c["id"] for c in proposed_courses],
+                    }
+                )
+                offerings = []
+                for c in proposed_courses:
+                    days_str = ", ".join(c.get("days", []))
+                    instructor_str = f" (Instructor: {c.get('instructor')})" if c.get("instructor") else ""
+                    offerings.append(
+                        f"- **`{c.get('code')}` ({c.get('title')})**: {days_str} {c.get('startTime')}-{c.get('endTime')} ({c.get('credits')} credits) in {c.get('location')}{instructor_str}"
+                    )
+                dept_label = f"**{queried_dept}** " if queried_dept else ""
+                response = (
+                    f"Here are all available {dept_label}courses for **{term}**: 📚\n\n"
+                    f"### Active Course Offerings:\n"
+                    + "\n".join(offerings)
+                    + f"\n\nLet me know which courses or sections you would like to incorporate into your schedule!"
+                )
+            elif queried_dept:
                 dept_matches = find_courses(department=queried_dept, term=term)
                 proposed_courses = [dict(c, pinned=False) for c in dept_matches]
                 tool_calls_simulated.append(

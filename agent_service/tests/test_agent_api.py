@@ -731,10 +731,38 @@ class AgentApiTests(TestCase):
         # Must NOT confuse "quarter" with "ART" department
         self.assertNotIn("active **ART** courses", response_text)
         self.assertNotIn("ART 10F", response_text)
-        # Must accurately describe CSE 30 status and Spring 2027 offering
+        # Must accurately describe CSE 30 status and Winter 2027 offering
         self.assertIn("CSE 30", response_text)
-        self.assertIn("Spring 2027", response_text)
+        self.assertIn("Winter 2027", response_text)
         self.assertIn("Luca de Alfaro", response_text)
+        self.assertIn("10:00-11:05", response_text)
+
+    def test_list_all_available_winter_courses(self):
+        payload = {
+            "prompt": "list all available winter 2027 courses",
+            "student": {
+                "name": "Sammy Slug",
+                "major": "Computer Science B.S.",
+                "standing": "Junior",
+            },
+            "preferences": {
+                "targetTerm": "Winter 2027",
+                "targetCredits": 15,
+            },
+            "currentSchedule": [],
+            "history": [],
+        }
+        res = self.client.post("/api/agent/process/", data=json.dumps(payload), content_type="application/json")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        response_text = data["data"]["response"]
+        self.assertIn("Here are all available", response_text)
+        self.assertIn("CSE 30", response_text)
+        self.assertIn("CSE 101", response_text)
+        self.assertIn("CSE 115A", response_text)
+        self.assertIn("CSE 130", response_text)
+        self.assertNotIn("Sammy's recommended plan for a **Junior** in `Computer Science B.S.`", response_text)
 
     def test_query_standalone_cse30_no_default_fallback(self):
         payload = {

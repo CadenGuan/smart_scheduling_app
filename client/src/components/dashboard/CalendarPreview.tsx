@@ -201,24 +201,43 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
     const { extendedProps } = event;
     const isImported = extendedProps?.isImported;
     const syncStatus = extendedProps?.syncStatus;
+    const courseCode = extendedProps?.courseCode || '';
+
+    // Clean up redundant course code prefixes so card subtitle is clean
+    let displayTitle = event.title || '';
+    if (courseCode) {
+      const escapedCode = courseCode.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const prefixRegex = new RegExp(`^(?:${escapedCode}\\s*[-:]\\s*)+`, 'i');
+      displayTitle = displayTitle.replace(prefixRegex, '').trim();
+    }
+    if (!displayTitle) {
+      displayTitle = event.title || '';
+    }
+
+    // Only show sync badge if Google Calendar is actually connected by the user
+    const showSyncBadge =
+      Boolean(this.state.isConnectedToGoogle) &&
+      Boolean(syncStatus) &&
+      syncStatus.trim() !== '' &&
+      !isImported;
 
     return (
       <div className="p-1 text-xs h-full flex flex-col justify-between overflow-hidden leading-tight">
         <div>
           <div className="font-bold flex items-center gap-1 truncate">
-            {extendedProps?.courseCode && <span>{extendedProps.courseCode}</span>}
+            {courseCode && <span>{courseCode}</span>}
             {isImported && (
               <span className="text-[10px] px-1 py-0.2 bg-slate-700/40 rounded text-white font-semibold">
                 External
               </span>
             )}
           </div>
-          <div className="text-[11px] truncate opacity-90">{event.title}</div>
+          <div className="text-[11px] truncate opacity-90">{displayTitle}</div>
         </div>
 
         <div className="flex items-center justify-between text-[10px] mt-1 pt-1 border-t border-white/20">
           <span>{eventInfo.timeText}</span>
-          {syncStatus && (
+          {showSyncBadge && (
             <span
               className={`px-1 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
                 syncStatus === 'synced'
@@ -278,7 +297,7 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
         startDate,
         endDate,
         isImported: e.type === 'GOOGLE_CALENDAR_BUSY',
-        syncStatus: 'synced',
+        syncStatus: this.state.isConnectedToGoogle ? 'synced' : 'pending',
         googleEventId: null,
       }));
       fullCalendarEvents = mapScheduleItemsToFullCalendar(converted);

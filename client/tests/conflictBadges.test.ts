@@ -320,4 +320,62 @@ describe('CourseDetailsModal Conflict Notes Test Suite', () => {
       expect(getBadgesList({ ...baseEvent, conflictBadge: '   ' })).toEqual([]);
     });
   });
+
+  describe('CalendarPreview renderEventContent title deduplication & sync badge guard', () => {
+    it('deduplicates repetitive course codes from event title', () => {
+      const preview = new CalendarPreview({
+        term: 'Winter 2027',
+        events: [],
+      });
+      preview.state = {
+        ...preview.state,
+        isConnectedToGoogle: false,
+      };
+
+      const eventInfo = {
+        event: {
+          title: 'CSE 115A: Introduction to Software Engineering',
+          extendedProps: {
+            courseCode: 'CSE 115A',
+            syncStatus: 'synced',
+            isImported: false,
+          },
+        },
+        timeText: '9:00 – 10:15',
+      };
+
+      const rendered = renderToString(preview.renderEventContent(eventInfo));
+      expect(rendered).toContain('CSE 115A');
+      expect(rendered).toContain('Introduction to Software Engineering');
+      expect(rendered).not.toContain('CSE 115A: Introduction to Software Engineering');
+      // Must not display sync badge when isConnectedToGoogle is false
+      expect(rendered).not.toContain('synced');
+    });
+
+    it('displays sync badge when isConnectedToGoogle is true and syncStatus is provided', () => {
+      const preview = new CalendarPreview({
+        term: 'Winter 2027',
+        events: [],
+      });
+      preview.state = {
+        ...preview.state,
+        isConnectedToGoogle: true,
+      };
+
+      const eventInfo = {
+        event: {
+          title: 'CSE 101 - Algorithms',
+          extendedProps: {
+            courseCode: 'CSE 101',
+            syncStatus: 'synced',
+            isImported: false,
+          },
+        },
+        timeText: '10:30 – 11:45',
+      };
+
+      const rendered = renderToString(preview.renderEventContent(eventInfo));
+      expect(rendered).toContain('synced');
+    });
+  });
 });
