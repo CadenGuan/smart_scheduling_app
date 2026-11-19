@@ -40,6 +40,7 @@ __pycache__/
 *$py.class
 agent_service/.venv/
 agent_service/db.sqlite3
+agent_service/data/chroma_db/
 
 .vscode/
 .scratch/
