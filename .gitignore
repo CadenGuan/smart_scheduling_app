@@ -33,6 +33,7 @@ server/data/
 # OS Files
 .DS_Store
 Thumbs.db
+*.docx
 
 # Python & Agent Service
 __pycache__/

@@ -3,6 +3,10 @@ import os
 import re
 from typing import Any, Dict, List
 
+import json
+from typing import Dict, Any, List, Optional
+from .tools import set_tool_context, get_inspection_tools, get_course_catalog, is_course_requested_or_pinned
+from .mock_agent import run_mock_agent
 from agent_api.prompt_builder import build_system_prompt, format_history_messages
 
 from .mock_agent import run_mock_agent
@@ -21,6 +25,7 @@ def run_agent(
     schedule: List[Dict[str, Any]],
     history: List[Dict[str, Any]],
     use_mock_override: Any = None,
+    session_token: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Main entrypoint for the LangChain agent.
@@ -49,7 +54,7 @@ def run_agent(
         from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
         from langchain_google_genai import ChatGoogleGenerativeAI
 
-        set_tool_context(student, preferences, schedule)
+        set_tool_context(student, preferences, schedule, session_token=session_token)
         tools = get_inspection_tools()
 
         model_name = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")

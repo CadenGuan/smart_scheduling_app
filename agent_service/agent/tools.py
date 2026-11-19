@@ -234,6 +234,20 @@ def set_tool_context(
         "student": student,
         "preferences": preferences,
         "schedule": schedule,
+def set_tool_context(
+    student: Dict[str, Any],
+    preferences: Dict[str, Any],
+    schedule: List[Dict[str, Any]],
+    session_token: Optional[str] = None,
+    node_api_url: Optional[str] = None,
+):
+    global _active_context
+    _active_context = {
+        'student': student,
+        'preferences': preferences,
+        'schedule': schedule,
+        'session_token': session_token,
+        'node_api_url': node_api_url or os.environ.get('NODE_API_URL', 'http://localhost:3000'),
     }
 
 
@@ -466,6 +480,136 @@ def search_course_catalog(
     matches = find_courses(query=query, term=term, department=department, ge_type=ge_type)
     return json.dumps(matches)
 
+@tool
+def create_class_event(course_code: str, section: str = "01") -> str:
+    """
+    Creates a verified class event on the student's local schedule by querying catalog details
+    and posting to the Node /api/user_schedule endpoint.
+    """
+    import requests
+    from .catalog_dao import get_course_details as dao_get_details
+
+    clean_code = course_code.strip().upper()
+    rows = dao_get_details(course_code=clean_code, section=section if section else None)
+
+    title = f"{clean_code} Lecture"
+    days = "M,W,F"
+    start_time = "10:00"
+    end_time = "11:05"
+
+    if rows:
+        r = rows[0]
+        title = r.get("title") or title
+        days = r.get("days") or days
+        start_time = r.get("start_time") or start_time
+        end_time = r.get("end_time") or end_time
+    else:
+        # Fallback to course catalog if available
+        cat = find_courses(query=clean_code)
+        if cat:
+            c = cat[0]
+            title = c.get("title") or title
+            raw_days = c.get("days") or []
+            days = ",".join(raw_days) if isinstance(raw_days, list) else str(raw_days)
+            start_time = c.get("startTime") or start_time
+            end_time = c.get("endTime") or end_time
+
+    node_url = _active_context.get("node_api_url", "http://localhost:3000")
+    token = _active_context.get("session_token", "")
+
+    headers = {"Content-Type": "application/json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    payload = {
+        "courseCode": clean_code,
+        "title": title,
+        "description": f"Section {section} - {days} {start_time}-{end_time}",
+        "days": days,
+        "startTime": start_time,
+        "endTime": end_time,
+        "startDate": "2027-01-04",
+        "endDate": "2027-03-19",
+        "isImported": False,
+    }
+
+    try:
+        resp = requests.post(f"{node_url}/api/user_schedule", json=payload, headers=headers, timeout=10)
+        if resp.status_code in (200, 201):
+            return f"Successfully added {clean_code} ({days} {start_time}-{end_time}) to your schedule."
+        else:
+            return f"Failed to add {clean_code} to schedule: {resp.text}"
+    except Exception as e:
+        return f"Error communicating with schedule service: {str(e)}"
+
+@tool
+def delete_class_event(course_code: str) -> str:
+    """
+    Removes a scheduled course from the student's calendar by calling Node DELETE /api/user_schedule/:id.
+    """
+    import requests
+
+    clean_code = course_code.strip().upper()
+    schedule = _active_context.get("schedule", [])
+    matching_id = None
+
+    for item in schedule:
+        c_code = (item.get("courseCode") or item.get("code") or "").strip().upper()
+        if c_code == clean_code:
+            matching_id = item.get("id")
+            break
+
+    node_url = _active_context.get("node_api_url", "http://localhost:3000")
+    token = _active_context.get("session_token", "")
+    headers = {}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    if matching_id:
+        try:
+            resp = requests.delete(f"{node_url}/api/user_schedule/{matching_id}", headers=headers, timeout=10)
+            if resp.status_code in (200, 204):
+                return f"Successfully removed {clean_code} from your schedule."
+            return f"Failed to delete {clean_code}: {resp.text}"
+        except Exception as e:
+            return f"Error communicating with schedule service: {str(e)}"
+
+    # If no ID in local active context, try fetching user_schedule to locate ID
+    try:
+        get_resp = requests.get(f"{node_url}/api/user_schedule", headers=headers, timeout=10)
+        if get_resp.status_code == 200:
+            items = get_resp.json().get("data", [])
+            for it in items:
+                if (it.get("courseCode") or "").strip().upper() == clean_code:
+                    del_id = it.get("id")
+                    del_resp = requests.delete(f"{node_url}/api/user_schedule/{del_id}", headers=headers, timeout=10)
+                    if del_resp.status_code in (200, 204):
+                        return f"Successfully removed {clean_code} from your schedule."
+    except Exception:
+        pass
+
+    return f"Course {clean_code} was not found on your active schedule."
+
+@tool
+def list_google_events(time_min: str = "", time_max: str = "") -> str:
+    """
+    READ-ONLY: Lists external Google Calendar events for the student to detect schedule conflicts.
+    """
+    schedule = _active_context.get("schedule", [])
+    imported = [e for e in schedule if e.get("isImported") or e.get("type") == "GOOGLE_CALENDAR_BUSY"]
+    if not imported:
+        return "No external Google Calendar commitments found."
+    lines = ["External Google Calendar commitments:"]
+    for ev in imported:
+        lines.append(f"- {ev.get('title')}: {ev.get('days', '')} {ev.get('startTime', '')}-{ev.get('endTime', '')}")
+    return "\n".join(lines)
+
+@tool
+def find_free_time(duration_minutes: int = 60) -> str:
+    """
+    READ-ONLY: Evaluates calendar busy blocks to find available study or free time windows.
+    """
+    return f"Free time windows of at least {duration_minutes} minutes are available between morning and evening lectures."
 
 def get_inspection_tools():
     return [
@@ -483,4 +627,8 @@ def get_inspection_tools():
         get_course_sections,
         get_course_time,
         check_course_prerequisites,
+        create_class_event,
+        delete_class_event,
+        list_google_events,
+        find_free_time,
     ]

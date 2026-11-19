@@ -3,6 +3,8 @@ import { db } from '../db/database.js';
 import { userQueries } from '../db/queries/userQueries.js';
 import { sessionQueries } from '../db/queries/sessionQueries.js';
 import { progressQueries } from '../db/queries/progressQueries.js';
+import { settingsQueries } from '../db/queries/settingsQueries.js';
+import { SyncEngineService } from './syncEngine.service.js';
 import { TokenService } from './token.service.js';
 import { config } from '../config.js';
 
@@ -147,6 +149,10 @@ export class GoogleAuthService {
       expiresAt
     );
 
+    // Update settings and trigger background sync
+    settingsQueries.updateGoogleConnection(userId!, true);
+    SyncEngineService.triggerBackgroundSync(userId!);
+
     const token = TokenService.generateSessionToken({
       userId: userId!,
       email: user!.email,
@@ -245,6 +251,10 @@ export class GoogleAuthService {
       'https://www.googleapis.com/auth/calendar.events.readonly',
       new Date(Date.now() + 3600 * 1000).toISOString()
     );
+
+    // Update settings and trigger background sync
+    settingsQueries.updateGoogleConnection(userId!, true);
+    SyncEngineService.triggerBackgroundSync(userId!);
 
     const token = TokenService.generateSessionToken({
       userId: userId!,
