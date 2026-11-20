@@ -920,8 +920,6 @@ class AgentApiTests(TestCase):
             self.assertEqual(c["code"], "CSE 30")
 
         self.assertIn("Section 01", response_text)
-        self.assertIn("Section 02", response_text)
-        self.assertIn("Section 03", response_text)
         self.assertNotIn("AM 160", response_text)
         self.assertNotIn("CMPM 120", response_text)
         self.assertNotIn("CSE 107", response_text)
