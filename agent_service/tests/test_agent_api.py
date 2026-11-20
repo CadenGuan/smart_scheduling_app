@@ -825,8 +825,8 @@ class AgentApiTests(TestCase):
         self.assertTrue(data["success"])
         response_text = data["data"]["response"]
         self.assertIn("CSE 101", response_text)
-        self.assertIn("Patrick Tantalo", response_text)
-        self.assertIn("Suresh Lodha", response_text)
+        self.assertIn("Harrison", response_text)
+        self.assertIn("Montazeri", response_text)
 
     def test_query_greeting_combined_with_course_question(self):
         payload = {

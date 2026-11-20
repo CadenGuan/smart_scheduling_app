@@ -396,8 +396,7 @@ export class CalendarService {
         if (savedUserBusy.length > 0) {
           busyEvents = savedUserBusy;
         }
-      }
-      if (busyEvents.length === 0) {
+      } else if (isMock) {
         busyEvents = sampleCalendarEvents.filter(
           (e) => e.type === 'GOOGLE_CALENDAR_BUSY' && (!e.term || e.term === term)
         );

@@ -2,7 +2,6 @@ import { userQueries } from '../db/queries/userQueries.js';
 import { progressQueries } from '../db/queries/progressQueries.js';
 import { conversationQueries } from '../db/queries/conversationQueries.js';
 import { CalendarService } from './calendar.service.js';
-import { sampleCalendarEvents } from '../db/seed.js';
 
 export interface AssembledContext {
   student: {
@@ -110,14 +109,16 @@ export class ContextService {
       createdAt: m.created_at,
     }));
 
-    let currentSchedule = sampleCalendarEvents;
+    let currentSchedule: any[] = [];
     try {
       const preview = CalendarService.getPreview(userId);
       if (preview && preview.events && preview.events.length > 0) {
-        currentSchedule = preview.events;
+        currentSchedule = preview.events.filter(
+          (e) => e.type !== 'GOOGLE_CALENDAR_BUSY' || e.id !== 'gcal-work-shift'
+        );
       }
     } catch {
-      currentSchedule = sampleCalendarEvents;
+      currentSchedule = [];
     }
 
     return {

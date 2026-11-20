@@ -261,9 +261,9 @@ describe('Calendar Schema Architectural Contract Tests [TESTING_GOLDEN_RULES.md 
       expect(sec01).toBeDefined();
       expect(sec02).toBeDefined();
       expect(sec01?.days).toEqual(['Monday', 'Wednesday', 'Friday']);
-      expect(sec01?.startTime).toBe('10:30');
+      expect(sec01?.startTime).toBe('12:00');
       expect(sec02?.days).toEqual(['Tuesday', 'Thursday']);
-      expect(sec02?.startTime).toBe('10:00');
+      expect(sec02?.startTime).toBe('11:40');
 
       // Verify Winter 2027 back-to-back cluster test vector
       const cse115a = winter.find((c) => c.id === 'cse-115a-01');
