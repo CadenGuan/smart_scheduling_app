@@ -1,0 +1,113 @@
+---
+id: US-3-T-2
+story: 3
+sprint: 3
+estimate_hours: 6
+assignee: CadenGuan
+---
+
+# Interactive Calendar UI, SQLite Schedule Persistence, and Async Sync Engine
+
+## Description
+
+Using the FullCalendar API, replace the placeholder calendar. Allow the agent to add class events from the `user_schedule` database.
+
+## Specs
+
+### Interactive Calendar UI
+Using the FullCalendar API, replace the placeholder calendar. This is a **SCHEDULING** app, not a calendar app, so:
+- The user cannot create or delete an event directly. Every CRUD operation goes through the agent.
+- The agent generates only schedules, no arbitrary events.
+
+The FullCalendar UI should achieve the following:
+- The agent uses tools to create and update to the `user_schedule` local database first.
+- The events are displayed on the frontend in the `<FullCalendar>` component.
+
+### Syncing with External Calendar
+- If the user logs in with email & password, there should be a **"Sync to Google Calendar"** button available, where upon clicked, the user goes through the `calendar-mcp` auth process.
+- If the user logs in with their Google Account (attribute `isConnectedToGoogle`) and grants permission to access their calendar (i.e., `.json` generated with access and refresh tokens), any changes made by the user in the calendar UI should be reflected in the Google Calendar with some exceptions:
+  - The event does not belong to the user (imported external corporation calendar).
+  - The user explicitly states that they don’t want their calendar to be updated just yet (modification permission) [`Sync-Enabled` attribute].
+
+Thus, there should be a pending attribute for each entry in the `user_schedule` database.
+
+### Architectural Comments
+- Since we are writing locally first, React should NOT cheat by talking directly with the Django server to update the Google calendar and then draw the events to be displayed on the frontend. The events should ALWAYS be created locally first.
+- The agent is limited to what it can do with the Google MCP:
+  - No create or update or delete functions.
+  - Read only.
+- Synchronization:
+  - Node sends events tagged `pending` to a Django endpoint that uses the Google token to push them to the Google calendar.
+  - React reads from the local events database to fetch events.
+
+## Requirements
+
+### 1. Database Architecture (Production Standard)
+For the actual project, we must enforce relational integrity and track sync states accurately.
+
+**Table: `user_settings` (New)**
+We should not clutter the `users` table. Create a dedicated settings table:
+- `user_id` (Foreign Key)
+- `sync_enabled` (BOOLEAN, default TRUE) - User explicitly pauses/resumes sync.
+- `is_connected_to_google` (BOOLEAN, default FALSE) - Set to TRUE only when OAuth succeeds.
+
+**Table: `user_schedule` (Updated)**
+- `id` (Primary Key)
+- `user_id` (Foreign Key - Crucial for multi-user support)
+- `course_code` (String)
+- `title`, `description` (String)
+- `days`, `start_time`, `end_time`, `start_date`, `end_date` (String)
+- `is_imported` (BOOLEAN) - True if this came FROM the corporate Google Calendar. React will render it, but the Sync Engine will ignore it.
+- `sync_status` (Enum: 'pending', 'synced', 'failed')
+- `google_event_id` (String, nullable) - Returned by Google after successful push.
+
+### 2. The Agent's Restrictions (Django)
+The Agent is the only way to mutate the local schedule.
+
+**Tools Available:**
+- `get_course_time(course_code)`
+- `check_prerequisites(course_code, completed_courses)`
+- `create_class_event(course_code, section)`
+- `delete_class_event(course_code)`
+
+**Strict Security Rules:**
+- The Agent's `create_class_event` tool must only hit the Node `POST /api/user_schedule` endpoint.
+- **MCP Configuration:** The Google MCP server is initialized in **Read-Only mode**. The Agent is explicitly denied the `create_event`, `update_event`, and `delete_event` MCP tools. It can only use `list_events` or `find_free_time`.
+
+### 3. Node.js CRUD Routes
+React must talk to Node, not Django, for schedule viewing.
+- `GET /api/user_schedule` -> Returns all local events for the user.
+- `POST /api/user_schedule` -> Inserts event, sets `sync_status = 'pending'`.
+- `DELETE /api/user_schedule/:id` -> Deletes event.
+- `PUT /api/user_schedule/:id` -> Updates event, resets `sync_status = 'pending'`.
+
+### 4. React FullCalendar (Local-First)
+The UI is a pure reflection of the local Node database.
+- **Data Fetching:** React calls `http://localhost:3000/api/user_schedule`.
+- **Mapping:** React maps SQLite rows (`days: "M,W,F"`) to FullCalendar format (`daysOfWeek: [1,3,5]`).
+- **Read-Only:** `editable={false}`, `selectable={false}`. No arbitrary drag-and-drop. All changes happen via the Chat agent.
+- **Visual Distinction:** Imported events (`is_imported = true`) should render in a different color (e.g., Gray) to show the user they are external and cannot be modified.
+
+### 5. The Sync Engine (Node -> Django -> Google)
+This is the most complex part of the actual project. It runs asynchronously.
+
+**The Flow:**
+1. A background process (or a manual "Sync Now" button) triggers the Node Sync Engine.
+2. Node queries: `SELECT * FROM user_schedule WHERE sync_status = 'pending' AND is_imported = 0`.
+3. Node checks the `user_settings` table: Is `sync_enabled` true? Is `is_connected_to_google` true? If either is false, abort.
+4. For each pending event, Node sends an HTTP POST to Django (`/api/sync/push`).
+5. Django uses the user's OAuth token to push the event to Google.
+6. Django returns the `google_event_id`.
+7. Node updates the row: `sync_status = 'synced'`, `google_event_id = '...'`.
+
+### 6. Authentication & The "Sync" Button
+- **Email/Password Users:** The "Sync to Google Calendar" button is visible. Clicking it triggers the backend to initiate the `calendar-mcp` auth flow. Upon success, `is_connected_to_google` becomes true, and the Sync Engine starts processing pending events.
+- **Google OAuth Users:** Upon account creation/login, the system already has the tokens. `is_connected_to_google` is set to true immediately. The Sync Engine runs automatically.
+
+## Acceptance criteria
+
+- **Database Integrity:** No event can exist in `user_schedule` without a `user_id`.
+- **Agent Security:** The LangGraph agent's prompt and tool bindings explicitly forbid Google MCP write operations.
+- **Fail-Safe Sync:** If the Google token expires, the Sync Engine catches the error, changes the event status to `'failed'`, and alerts the user, rather than losing the event.
+- **Local-First Guarantee:** If the internet is down, the user can still add classes via the Agent (it writes to local SQLite). They will simply stay `'pending'` until the internet returns.
+- **External Event Protection:** Events with `is_imported = 1` are never sent to the Sync Engine.
