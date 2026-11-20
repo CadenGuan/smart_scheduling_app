@@ -22,6 +22,7 @@ def run_agent(
     history: List[Dict[str, Any]],
     use_mock_override: Any = None,
     session_token: Optional[str] = None,
+    node_api_url: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Main entrypoint for the LangChain agent.
@@ -35,6 +36,7 @@ def run_agent(
         else (
             os.environ.get("USE_MOCK_AGENT", "false").lower() in ("true", "1", "t")
             or os.environ.get("AGENT_MODE", "").lower() == "mock"
+            or "PYTEST_CURRENT_TEST" in os.environ
         )
     )
 
@@ -42,18 +44,30 @@ def run_agent(
     if use_mock:
         return run_mock_agent(prompt, student, preferences, schedule, history)
 
-    # If no API key configured, gracefully delegate to internal mock agent
+    # In live mode, do NOT fall back to mock agent if API key is missing
     if not api_key:
-        return run_mock_agent(prompt, student, preferences, schedule, history)
+        return {
+            "response": "⚠️ **Live Agent Configuration Error**: `GEMINI_API_KEY` is missing or empty. Please set `GEMINI_API_KEY` in `agent_service/.env` to run the live agent.",
+            "proposedCourses": [],
+            "toolCalls": [],
+            "error": "MISSING_GEMINI_API_KEY",
+            "model": "live-agent-error",
+        }
 
     try:
         from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
         from langchain_google_genai import ChatGoogleGenerativeAI
 
-        set_tool_context(student, preferences, schedule, session_token=session_token)
+        set_tool_context(
+            student,
+            preferences,
+            schedule,
+            session_token=session_token,
+            node_api_url=node_api_url,
+        )
         tools = get_inspection_tools()
 
-        model_name = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+        model_name = os.environ.get("GEMINI_MODEL", "gemini-3-flash-preview")
         llm = ChatGoogleGenerativeAI(
             model=model_name,
             google_api_key=api_key,
@@ -74,40 +88,76 @@ def run_agent(
         # Add current user prompt
         messages.append(HumanMessage(content=prompt))
 
-        ai_msg = llm_with_tools.invoke(messages)
+        from langchain_core.messages import ToolMessage
 
+        current_messages: List[Any] = list(messages)
         tool_calls_executed = []
-        # If the LLM requested tool calls, execute them
-        if hasattr(ai_msg, "tool_calls") and ai_msg.tool_calls:
-            for tc in ai_msg.tool_calls:
+        max_tool_hops = 5
+        hop = 0
+        ai_msg = None
+
+        while hop < max_tool_hops:
+            ai_msg = llm_with_tools.invoke(current_messages)
+            current_messages.append(ai_msg)
+
+            tool_calls = getattr(ai_msg, "tool_calls", None)
+            if not tool_calls:
+                # LLM finished its tool execution and returned conversational response
+                break
+
+            hop += 1
+            for tc in tool_calls:
                 tool_name = tc.get("name")
                 tool_args = tc.get("args", {})
                 matching_tool = next((t for t in tools if t.name == tool_name), None)
                 if matching_tool:
-                    tool_output = matching_tool.invoke(tool_args)
-                    tool_calls_executed.append(
-                        {
-                            "tool": tool_name,
-                            "args": tool_args,
-                            "output": tool_output,
-                        }
-                    )
+                    try:
+                        tool_output = matching_tool.invoke(tool_args)
+                    except Exception as err:
+                        tool_output = f"Tool execution error: {err}"
+                else:
+                    tool_output = f"Error: Tool '{tool_name}' not found."
 
-            # If tool calls were made, ask model to generate final answer incorporating tool outputs
-            second_messages: List[Any] = list(messages)
-            second_messages.append(ai_msg)
-            for tc, executed in zip(ai_msg.tool_calls, tool_calls_executed):
-                from langchain_core.messages import ToolMessage
-
-                second_messages.append(
+                tool_calls_executed.append(
+                    {
+                        "tool": tool_name,
+                        "args": tool_args,
+                        "output": tool_output,
+                    }
+                )
+                current_messages.append(
                     ToolMessage(
-                        content=str(executed["output"]), tool_call_id=tc.get("id", "tool-call-1")
+                        content=str(tool_output),
+                        tool_call_id=tc.get("id") or f"call-{hop}-{tool_name}",
                     )
                 )
-            final_response = llm.invoke(second_messages)
-            content_text = final_response.content
+
+        content_text = ai_msg.content if ai_msg else ""
+        if isinstance(content_text, list):
+            text_parts = [
+                (p.get("text", "") if isinstance(p, dict) else str(p)) for p in content_text
+            ]
+            content_text = "\n".join(text_parts).strip()
+        elif content_text is None:
+            content_text = ""
         else:
-            content_text = ai_msg.content
+            content_text = str(content_text).strip()
+
+        # If model exhausted all tool hops without generating conversational prose, invoke one last conversational completion
+        if not content_text:
+            current_messages.append(
+                HumanMessage(
+                    content="Please provide your final direct, conversational answer to the student based on the information retrieved above."
+                )
+            )
+            final_turn = llm.invoke(current_messages)
+            final_content = getattr(final_turn, "content", "")
+            if isinstance(final_content, list):
+                content_text = "\n".join(
+                    [(p.get("text", "") if isinstance(p, dict) else str(p)) for p in final_content]
+                ).strip()
+            elif final_content is not None:
+                content_text = str(final_content).strip()
 
         if isinstance(content_text, list):
             text_parts = [
@@ -175,9 +225,12 @@ def run_agent(
         }
 
     except Exception as e:
-        # Fallback to mock agent on API error or connection failure
-        mock_result = run_mock_agent(prompt, student, preferences, schedule, history)
-        if "proposedCourses" not in mock_result:
-            mock_result["proposedCourses"] = []
-        mock_result["metadata"] = {"fallbackReason": str(e)}
-        return mock_result
+        error_msg = str(e)
+        return {
+            "response": f"⚠️ **Live Agent Execution Error**: {error_msg}\n\n*(Mock agent fallback is disabled in live mode)*",
+            "proposedCourses": [],
+            "toolCalls": tool_calls_executed if "tool_calls_executed" in locals() else [],
+            "error": error_msg,
+            "metadata": {"fallbackReason": error_msg, "error": error_msg},
+            "model": model_name if "model_name" in locals() else "gemini-error",
+        }

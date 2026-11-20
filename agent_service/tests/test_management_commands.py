@@ -45,14 +45,18 @@ class TestManagementCommands(unittest.TestCase):
     def test_ingest_pisa_command_with_fixture(self):
         detail_fixture = os.path.join(FIXTURES_DIR, "pisa_detail.html")
         out = StringIO()
+        temp_json = os.path.join(self.temp_dir.name, "exported_courses.json")
         call_command(
             "ingest_pisa",
             detail_fixture=detail_fixture,
             db_path=self.db_path,
+            sync_courses_json=True,
+            json_output=temp_json,
             stdout=out,
         )
         output_str = out.getvalue()
         self.assertIn("Successfully inserted", output_str)
+        self.assertTrue(os.path.exists(temp_json))
 
         # Verify records in SQLite
         conn = sqlite3.connect(self.db_path)
@@ -67,6 +71,20 @@ class TestManagementCommands(unittest.TestCase):
         self.assertEqual(rows[0][2], "LECTURE")
         self.assertEqual(rows[1][1], "01A")
         self.assertEqual(rows[1][2], "DISCUSSION")
+
+    def test_ingest_pisa_results_fixture(self):
+        results_fixture = os.path.join(FIXTURES_DIR, "pisa_results.html")
+        out = StringIO()
+        call_command(
+            "ingest_pisa",
+            results_fixture=results_fixture,
+            db_path=self.db_path,
+            sync_courses_json=False,
+            stdout=out,
+        )
+        output_str = out.getvalue()
+        self.assertIn("Reading results fixture", output_str)
+        self.assertIn("Found", output_str)
 
     def test_parse_prereq_dag_command(self):
         # Prepare test database with a course

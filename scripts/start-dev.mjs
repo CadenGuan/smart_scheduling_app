@@ -45,13 +45,13 @@ function updateEnvFiles(isMock) {
 console.log('\n========================================');
 console.log('   SLUG SCHEDULER: SELECT AGENT MODE   ');
 console.log('========================================');
-console.log(' [1] Mock Agent (Offline greedy catalog testing - No live Gemini calls) [DEFAULT]');
-console.log(' [2] Live Agent (Gemini API with tools)');
+console.log(' [1] Live Agent (Gemini API with tools) [DEFAULT]');
+console.log(' [2] Mock Agent (Offline testing - No live Gemini calls)');
 
 rl.question('\nSelect mode (1 or 2, default is 1): ', (answer) => {
   rl.close();
   const choice = (answer || '').trim();
-  const isMock = choice !== '2';
+  const isMock = choice === '2';
 
   updateEnvFiles(isMock);
 

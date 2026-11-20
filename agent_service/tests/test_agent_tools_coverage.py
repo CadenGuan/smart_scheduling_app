@@ -2,6 +2,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 from agent.catalog_dao import execute_safe_query, init_db, insert_course
 from agent.degree_scraper import extract_degree_chunks_from_html, extract_degree_links
@@ -121,7 +122,9 @@ class TestAgentToolsAndParserCoverage(unittest.TestCase):
 
         # Empty schedule
         set_tool_context({}, {}, [])
-        self.assertIn("No external Google Calendar commitments found", list_google_events.invoke({}))
+        self.assertIn(
+            "No external Google Calendar commitments found", list_google_events.invoke({})
+        )
         self.assertIn("Free time windows of at least 60 minutes", find_free_time.invoke({}))
 
         # Populated schedule with imported event
@@ -141,6 +144,105 @@ class TestAgentToolsAndParserCoverage(unittest.TestCase):
         events_str = list_google_events.invoke({})
         self.assertIn("Work Shift", events_str)
         self.assertIn("Tuesday,Thursday", events_str)
+
+    @patch.dict(os.environ, {"GEMINI_API_KEY": "fake-api-key", "USE_MOCK_AGENT": "false"})
+    @patch("langchain_google_genai.ChatGoogleGenerativeAI")
+    def test_run_agent_live_gemini_path_with_tool_calls(self, mock_llm_cls):
+        from agent.agent import run_agent
+
+        mock_instance = MagicMock()
+        mock_llm_cls.return_value = mock_instance
+
+        # First invoke returns AI message with a tool call
+        ai_msg = MagicMock()
+        ai_msg.tool_calls = [
+            {
+                "id": "call-1",
+                "name": "search_course_catalog",
+                "args": {"query": "CSE 30", "term": "Winter 2027"},
+            }
+        ]
+        ai_msg.content = "Let me check CSE 30 for you."
+
+        # Second invoke returns final response
+        final_msg = MagicMock()
+        final_msg.tool_calls = []
+        final_msg.content = "Here is CSE 30 for Winter 2027."
+        mock_bound = MagicMock()
+        mock_bound.invoke.side_effect = [ai_msg, final_msg]
+        mock_instance.bind_tools.return_value = mock_bound
+        mock_instance.invoke.return_value = final_msg
+
+        res = run_agent(
+            prompt="I want CSE 30",
+            student={
+                "name": "Sammy Slug",
+                "major": "Computer Science B.S.",
+                "standing": "Junior",
+            },
+            preferences={"targetCredits": 15},
+            schedule=[],
+            history=[{"role": "user", "content": "Hi"}, {"role": "assistant", "content": "Hello"}],
+            use_mock_override=False,
+        )
+
+        self.assertIn("CSE 30", res["response"])
+        self.assertGreaterEqual(len(res["proposedCourses"]), 1)
+        self.assertEqual(len(res["toolCalls"]), 1)
+        self.assertEqual(res["toolCalls"][0]["tool"], "search_course_catalog")
+
+    @patch.dict(os.environ, {"GEMINI_API_KEY": "fake-api-key", "USE_MOCK_AGENT": "false"})
+    @patch("langchain_google_genai.ChatGoogleGenerativeAI")
+    def test_run_agent_direct_response(self, mock_llm_cls):
+        from agent.agent import run_agent
+
+        mock_instance = MagicMock()
+        mock_llm_cls.return_value = mock_instance
+
+        ai_msg = MagicMock()
+        ai_msg.tool_calls = []
+        ai_msg.content = [{"text": "Hello! I am your SlugAgent advisor."}]
+
+        mock_bound = MagicMock()
+        mock_bound.invoke.return_value = ai_msg
+        mock_instance.bind_tools.return_value = mock_bound
+
+        res = run_agent(
+            prompt="Hello",
+            student={},
+            preferences={},
+            schedule=[],
+            history=[],
+            use_mock_override=False,
+        )
+
+        self.assertIn("SlugAgent", res["response"])
+
+    @patch.dict(os.environ, {"GEMINI_API_KEY": "fake-api-key", "USE_MOCK_AGENT": "false"})
+    @patch("langchain_google_genai.ChatGoogleGenerativeAI")
+    def test_run_agent_exception_fallback_to_mock(self, mock_llm_cls):
+        from agent.agent import run_agent
+
+        mock_instance = MagicMock()
+        mock_llm_cls.return_value = mock_instance
+        mock_instance.bind_tools.side_effect = RuntimeError("API quota exceeded")
+
+        res = run_agent(
+            prompt="What CSE courses are offered?",
+            student={
+                "name": "Sammy Slug",
+                "major": "Computer Science B.S.",
+                "standing": "Junior",
+            },
+            preferences={},
+            schedule=[],
+            history=[],
+            use_mock_override=False,
+        )
+
+        self.assertIn("response", res)
+        self.assertIn("metadata", res)
+        self.assertIn("API quota exceeded", res["metadata"]["fallbackReason"])
 
 
 if __name__ == "__main__":

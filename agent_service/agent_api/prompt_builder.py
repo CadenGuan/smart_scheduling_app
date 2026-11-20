@@ -67,6 +67,11 @@ Never assume a prerequisite is completed unless it appears in the student's comp
 - **Major:** {major}
 - **Minor:** {minor}
 - **Target Quarterly Credits:** {target_credits}
+- **Active Planning Term:** Winter 2027 (Academic Year 2026-2027)
+
+### Academic Calendar Reference (UCSC 2026-2027):
+- **Winter 2027:** Instruction Begins Tuesday, January 5, 2027; Instruction Ends Friday, March 12, 2027; Finals Monday, March 15 – Friday, March 19, 2027.
+- **Spring 2027:** Instruction Begins Monday, March 29, 2027; Instruction Ends Friday, June 4, 2027; Finals Monday, June 7 – Friday, June 11, 2027.
 
 ### Onboarding & Degree Constraints:
 - **GE Completion Source:** {ge_source}

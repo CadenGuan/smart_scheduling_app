@@ -61,16 +61,16 @@ def parse_prerequisite_text_llm(raw_text: str) -> Dict[str, Any]:
     Falls back to deterministic rule-based parser if API key is not present.
     """
     api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-    if not api_key:
+    use_mock = os.environ.get("USE_MOCK_AGENT", "false").lower() in ("true", "1", "t")
+    if not api_key or use_mock or "PYTEST_CURRENT_TEST" in os.environ:
         return parse_prerequisite_text_rules(raw_text)
 
     try:
         from langchain_core.prompts import ChatPromptTemplate
         from langchain_google_genai import ChatGoogleGenerativeAI
 
-        llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash", google_api_key=api_key, temperature=0
-        )
+        model_name = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
+        llm = ChatGoogleGenerativeAI(model=model_name, google_api_key=api_key, temperature=0)
         structured_llm = llm.with_structured_output(Prerequisite)
 
         prompt = ChatPromptTemplate.from_messages(

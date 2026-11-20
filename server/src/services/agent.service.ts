@@ -17,8 +17,9 @@ export class AgentService {
     context: AssembledContext,
     sessionToken?: string
   ): Promise<AgentProcessResult> {
+    const timeoutMs = parseInt(process.env.AGENT_TIMEOUT_MS || '60000', 10);
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15-second timeout
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     const useMock =
       process.env.USE_MOCK_AGENT === 'true' ||
@@ -46,6 +47,7 @@ export class AgentService {
           history: context.history,
           sessionToken,
           useMock,
+          nodeApiUrl: `http://localhost:${config.PORT}`,
         }),
         signal: controller.signal,
       });
@@ -74,24 +76,16 @@ export class AgentService {
       clearTimeout(timeoutId);
 
       const isAbort = err.name === 'AbortError';
-      const fallbackReason = isAbort ? 'Agent request timed out after 15 seconds' : err.message;
-
-      // Graceful fallback response when Django service is unreachable or encounters an error
-      const name = context.student.name || 'Slug';
-      const standing = context.student.standing || 'Junior';
-      const major = context.student.major || 'Computer Science';
-      const credits = context.preferences.targetCredits || 15;
+      const fallbackReason = isAbort
+        ? `Agent request timed out after ${Math.round(timeoutMs / 1000)} seconds`
+        : err.message;
 
       return {
         response:
-          `Hey ${name}! 🐌 I'm having trouble reaching my high-level reasoning engine right now (${fallbackReason}), but based on your records as a **${standing}** in **\`${major}\`**, you're tracking toward a **${credits}-credit** quarter.\n\n` +
-          `### Quick Recommended Courses:\n` +
-          `- **\`CSE 115A\` (Software Engineering)** – Essential team project experience.\n` +
-          `- **\`CSE 101\` (Algorithms & Data Structures)** – Core upper-division gateway.\n` +
-          `- **\`PHIL 9\` (Logic)** – High-yield GE course satisfying foundational requirements.\n\n` +
-          `*Please check that the agent service is running on port 8000 and try your question again!*`,
+          `⚠️ **SlugAgent Error**: ${fallbackReason}.\n\n` +
+          `Live reasoning could not be completed and mock fallback is disabled. Please verify that the agent service is running on port 8000 with a valid \`GEMINI_API_KEY\`.`,
         toolCalls: [],
-        metadata: { fallback: true, error: fallbackReason },
+        metadata: { fallback: false, error: fallbackReason },
         proposedCourses: [],
       };
     }

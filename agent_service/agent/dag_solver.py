@@ -229,58 +229,93 @@ def get_prerequisite_chain(target_course: str, completed_courses: List[str]) -> 
     target = target_course.strip().upper()
     completed_set = {c.strip().upper() for c in completed_courses}
 
-    if target not in _DAG_INSTANCE:
-        return {
-            "target": target,
-            "status": "UNKNOWN_COURSE",
-            "message": f"Course '{target}' is not in the UCSC Computer Science catalog.",
-            "unmetPrerequisites": [],
-            "shortestPathQuarters": 0,
-        }
-
     if target in completed_set:
         return {
             "target": target,
             "status": "ALREADY_COMPLETED",
             "message": f"You have already completed {target}.",
             "unmetPrerequisites": [],
-            "shortestPathQuarters": 0,
+            "criticalPathQuarters": 0,
         }
 
-    ancestors = nx.ancestors(_DAG_INSTANCE, target)
-    unmet = [c for c in ancestors if c not in completed_set]
+    # 1. First check if course is part of the core CS NetworkX sequence
+    if target in _DAG_INSTANCE:
+        ancestors = nx.ancestors(_DAG_INSTANCE, target)
+        unmet = [c for c in ancestors if c not in completed_set]
 
-    if not unmet:
+        if not unmet:
+            return {
+                "target": target,
+                "status": "READY_TO_ENROLL",
+                "message": f"All prerequisites for {target} are completed! You are eligible to enroll immediately.",
+                "unmetPrerequisites": [],
+                "criticalPathQuarters": 1,
+            }
+
+        subgraph = _DAG_INSTANCE.subgraph(unmet + [target])
+        ordered_sequence = [c for c in nx.topological_sort(subgraph) if c != target]
+
+        try:
+            critical_path_length = nx.dag_longest_path_length(subgraph)
+        except Exception:
+            critical_path_length = len(ordered_sequence)
+
         return {
             "target": target,
-            "status": "READY_TO_ENROLL",
-            "message": f"All prerequisites for {target} are completed! You are eligible to enroll immediately.",
-            "unmetPrerequisites": [],
-            "shortestPathQuarters": 1,
+            "status": "PREREQUISITES_NEEDED",
+            "message": f"To enroll in {target}, you need to complete {len(ordered_sequence)} prerequisite course(s).",
+            "unmetPrerequisites": ordered_sequence,
+            "criticalPathQuarters": critical_path_length,
+            "courseDetails": [
+                {
+                    "code": c,
+                    "title": UCSC_COURSE_CATALOG[c]["title"],
+                    "credits": UCSC_COURSE_CATALOG[c]["credits"],
+                }
+                for c in ordered_sequence
+            ],
         }
 
-    subgraph = _DAG_INSTANCE.subgraph(unmet + [target])
-    ordered_sequence = [c for c in nx.topological_sort(subgraph) if c != target]
+    # 2. Check JSON DAG (covering all 1,092 parsed courses in course_dag.json)
+    dag = _ACTIVE_COURSE_DAG or load_course_dag()
+    if target in dag:
+        elig = evaluate_course_eligibility(target, completed_courses)
+        unmet_reqs = elig.get("unmetPrerequisites", [])
+        is_ready = elig.get("is_eligible", False)
+        status = "READY_TO_ENROLL" if is_ready else "PREREQUISITES_NEEDED"
+        return {
+            "target": target,
+            "status": status,
+            "message": elig.get("message", ""),
+            "unmetPrerequisites": unmet_reqs,
+            "criticalPathQuarters": 1 if is_ready else max(1, len(unmet_reqs)),
+            "requirements": elig.get("requirements", ""),
+        }
 
+    # 3. Check SQLite database catalog for raw prerequisites
     try:
-        critical_path_length = nx.dag_longest_path_length(subgraph)
+        from .catalog_dao import get_course_by_code
+
+        course_db = get_course_by_code(target)
+        if course_db and course_db.get("raw_prereqs"):
+            raw = course_db["raw_prereqs"]
+            return {
+                "target": target,
+                "status": "PREREQUISITES_NEEDED",
+                "message": f"Prerequisites for {target}: {raw}",
+                "unmetPrerequisites": [raw],
+                "criticalPathQuarters": 1,
+                "requirements": raw,
+            }
     except Exception:
-        critical_path_length = len(ordered_sequence)
+        pass
 
     return {
         "target": target,
-        "status": "PREREQUISITES_NEEDED",
-        "message": f"To enroll in {target}, you need to complete {len(ordered_sequence)} prerequisite course(s).",
-        "unmetPrerequisites": ordered_sequence,
-        "criticalPathQuarters": critical_path_length,
-        "courseDetails": [
-            {
-                "code": c,
-                "title": UCSC_COURSE_CATALOG[c]["title"],
-                "credits": UCSC_COURSE_CATALOG[c]["credits"],
-            }
-            for c in ordered_sequence
-        ],
+        "status": "UNKNOWN_COURSE",
+        "message": f"Course '{target}' is not in the UCSC Computer Science catalog.",
+        "unmetPrerequisites": [],
+        "criticalPathQuarters": 0,
     }
 
 

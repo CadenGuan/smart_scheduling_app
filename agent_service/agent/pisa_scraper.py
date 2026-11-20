@@ -177,8 +177,13 @@ def parse_pisa_detail_page(html: str) -> List[Dict[str, Any]]:
     }
     courses_found.append(lecture_course)
 
-    # Check for associated discussion sections
-    disc_panel = soup.find("h2", string=re.compile(r"Discussion", re.I))
+    # Check for associated discussion sections or secondary labs
+    disc_panel = soup.find(
+        lambda el: (
+            el.name in ["h2", "h3"]
+            and bool(re.search(r"Discussion|Secondary.*Section|Lab", el.get_text(), re.I))
+        )
+    )
     if disc_panel:
         parent_panel = disc_panel.find_parent("div", class_="panel")
         if parent_panel:
@@ -206,6 +211,45 @@ def parse_pisa_detail_page(html: str) -> List[Dict[str, Any]]:
                             "credits": None,
                             "ge": None,
                             "class_number": None,
+                            "days": disc_days,
+                            "start_time": disc_start,
+                            "end_time": disc_end,
+                            "room": disc_room.strip() if disc_room else None,
+                            "instructor": disc_instructor.strip() if disc_instructor else "Staff",
+                            "meeting_dates": meeting_dates.strip() if meeting_dates else None,
+                            "raw_prereqs": None,
+                            "section_type": "DISCUSSION",
+                            "status": disc_status.strip() if disc_status else "Open",
+                        }
+                        courses_found.append(discussion_record)
+            else:
+                striped_rows = parent_panel.find_all("div", class_=re.compile(r"row-striped", re.I))
+                for sr in striped_rows:
+                    cols = [
+                        c.get_text(strip=True)
+                        for c in sr.find_all("div", class_=re.compile(r"col-", re.I))
+                    ]
+                    if len(cols) >= 3:
+                        tokens = cols[0].split()
+                        sec_num = tokens[-1] if tokens else "01A"
+                        cl_num = tokens[0].replace("#", "").strip() if tokens else None
+                        time_raw = cols[1] if len(cols) > 1 else ""
+                        disc_instructor = cols[2] if len(cols) > 2 else "Staff"
+                        disc_room = cols[3].replace("Loc:", "").strip() if len(cols) > 3 else "TBA"
+                        disc_status = cols[6] if len(cols) > 6 else "Open"
+
+                        parsed_disc_time = parse_time(time_raw)
+                        disc_days = ",".join(parsed_disc_time["days"]) if parsed_disc_time else None
+                        disc_start = parsed_disc_time["start_time"] if parsed_disc_time else None
+                        disc_end = parsed_disc_time["end_time"] if parsed_disc_time else None
+
+                        discussion_record = {
+                            "course_code": course_code.strip(),
+                            "section": sec_num.strip(),
+                            "title": clean_title.strip(),
+                            "credits": None,
+                            "ge": None,
+                            "class_number": cl_num,
                             "days": disc_days,
                             "start_time": disc_start,
                             "end_time": disc_end,

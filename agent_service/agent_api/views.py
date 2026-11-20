@@ -46,6 +46,8 @@ def process_agent_query(request: HttpRequest) -> JsonResponse:
         if auth_header and auth_header.startswith("Bearer "):
             session_token = auth_header[7:].strip()
 
+    node_api_url = data.get("nodeApiUrl")
+
     try:
         result = run_agent(
             prompt=prompt,
@@ -55,6 +57,7 @@ def process_agent_query(request: HttpRequest) -> JsonResponse:
             history=history,
             use_mock_override=use_mock,
             session_token=session_token,
+            node_api_url=node_api_url,
         )
         if not isinstance(result, dict):
             result = {"response": str(result), "proposedCourses": [], "toolCalls": []}
@@ -128,6 +131,14 @@ def push_event_to_google(request: HttpRequest) -> JsonResponse:
             {"success": False, "error": "Missing googleToken or event payload."}, status=400
         )
 
+    if google_token.startswith("mock-") or google_token.startswith("test-"):
+        import uuid
+
+        return JsonResponse(
+            {"success": True, "data": {"googleEventId": f"mock_google_ev_{uuid.uuid4().hex[:12]}"}},
+            status=200,
+        )
+
     course_code = event.get("courseCode", "").strip()
     title = event.get("title", "").strip()
     description = event.get("description", "").strip()
@@ -159,9 +170,6 @@ def push_event_to_google(request: HttpRequest) -> JsonResponse:
     else:
         end_time_iso = end_time
 
-    start_datetime = f"{start_date}T{start_time_iso}"
-    end_datetime = f"{start_date}T{end_time_iso}"
-
     recurrence = []
     byday_str = _parse_days_to_byday(days) if days else ""
     if byday_str:
@@ -170,6 +178,44 @@ def push_event_to_google(request: HttpRequest) -> JsonResponse:
             recurrence.append(f"RRULE:FREQ=WEEKLY;BYDAY={byday_str};UNTIL={until_str}")
         else:
             recurrence.append(f"RRULE:FREQ=WEEKLY;BYDAY={byday_str}")
+
+    # Calculate actual first meeting day matching byday recurrence
+    import datetime
+    from zoneinfo import ZoneInfo
+
+    tz = ZoneInfo("America/Los_Angeles")
+    first_date = None
+    if start_date:
+        try:
+            base_date = datetime.date.fromisoformat(start_date)
+            day_to_int = {"MO": 0, "TU": 1, "WE": 2, "TH": 3, "FR": 4, "SA": 5, "SU": 6}
+            target_days = [
+                day_to_int[d]
+                for d in (byday_str.split(",") if byday_str else [])
+                if d in day_to_int
+            ]
+            if target_days:
+                offsets = [(d - base_date.weekday()) % 7 for d in target_days]
+                first_date = base_date + datetime.timedelta(days=min(offsets))
+            else:
+                first_date = base_date
+        except Exception:
+            first_date = None
+
+    first_date_str = first_date.isoformat() if first_date else start_date
+
+    try:
+        dt_start = datetime.datetime.fromisoformat(f"{first_date_str}T{start_time_iso}").replace(
+            tzinfo=tz
+        )
+        dt_end = datetime.datetime.fromisoformat(f"{first_date_str}T{end_time_iso}").replace(
+            tzinfo=tz
+        )
+        start_datetime = dt_start.isoformat()
+        end_datetime = dt_end.isoformat()
+    except Exception:
+        start_datetime = f"{first_date_str}T{start_time_iso}-08:00"
+        end_datetime = f"{first_date_str}T{end_time_iso}-08:00"
 
     google_payload: dict[str, Any] = {
         "summary": summary,
@@ -212,6 +258,16 @@ def push_event_to_google(request: HttpRequest) -> JsonResponse:
                     "message": "The provided Google OAuth access token is expired or unauthorized.",
                 },
                 status=401,
+            )
+
+        if resp.status_code == 403:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": "GOOGLE_INSUFFICIENT_PERMISSIONS",
+                    "message": "Google Calendar write permissions are required to sync events. Please reconnect your Google account to grant calendar permissions.",
+                },
+                status=403,
             )
 
         return JsonResponse(

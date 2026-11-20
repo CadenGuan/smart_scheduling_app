@@ -80,35 +80,55 @@ def find_courses(
 
         # Filter by query keyword if provided
         if q:
-            matchable = " ".join(
-                [
-                    str(course.get("code") or ""),
-                    str(course.get("title") or ""),
-                    str(course.get("instructor") or ""),
-                    str(course.get("location") or ""),
-                    str(course.get("description") or ""),
-                    str(course.get("department") or ""),
-                    str(course.get("ge") or ""),
-                ]
-            ).lower()
+            q_is_course_code = bool(re.match(r"^[a-zA-Z]{2,5}\s*\d{1,3}[a-zA-Z]?$", q))
+            if q_is_course_code:
+                q_code_norm = re.sub(r"\s+", "", q).lower()
+                course_code_norm = re.sub(r"\s+", "", str(course.get("code") or "")).lower()
+                if q_code_norm != course_code_norm:
+                    continue
+            else:
+                matchable = " ".join(
+                    [
+                        str(course.get("code") or ""),
+                        str(course.get("title") or ""),
+                        str(course.get("instructor") or ""),
+                        str(course.get("location") or ""),
+                        str(course.get("department") or ""),
+                        str(course.get("ge") or ""),
+                        str(course.get("description") or ""),
+                    ]
+                ).lower()
 
-            tokens = q.split()
-            matched_all_tokens = True
-            for token in tokens:
-                if re.match(r'^\w+$', token):
-                    if not re.search(r'\b' + re.escape(token) + r'\b', matchable):
-                        matched_all_tokens = False
-                        break
-                else:
-                    if token not in matchable:
-                        matched_all_tokens = False
-                        break
-            if not matched_all_tokens:
-                continue
+                tokens = q.split()
+                matched_all_tokens = True
+                for token in tokens:
+                    if re.match(r"^\w+$", token):
+                        if not re.search(r"\b" + re.escape(token) + r"\b", matchable):
+                            matched_all_tokens = False
+                            break
+                    else:
+                        if token not in matchable:
+                            matched_all_tokens = False
+                            break
+                if not matched_all_tokens:
+                    continue
 
         course_copy = dict(course)
         if "color" not in course_copy:
             course_copy["color"] = "#00B4DB"
+        term_val = str(course.get("term") or "Winter 2027")
+        if "Spring" in term_val:
+            course_copy.setdefault("startDate", "2027-03-29")
+            course_copy.setdefault("endDate", "2027-06-11")
+        elif "Fall" in term_val:
+            course_copy.setdefault("startDate", "2026-09-24")
+            course_copy.setdefault("endDate", "2026-12-11")
+        elif "Summer" in term_val:
+            course_copy.setdefault("startDate", "2027-06-21")
+            course_copy.setdefault("endDate", "2027-08-27")
+        else:
+            course_copy.setdefault("startDate", "2027-01-04")
+            course_copy.setdefault("endDate", "2027-03-19")
         results.append(course_copy)
 
     return results
@@ -186,9 +206,7 @@ def is_course_requested_or_pinned(prompt: str, course: Dict[str, Any]) -> bool:
     ):
         return False
     if re.search(
-        r"\b(why\s+(?:do\s+you\s+)?recommend|prereq|prerequisite|path\s+to\s+take)\b[^.?!;,]*\b"
-        + re.escape(code)
-        + r"\b",
+        r"\b(why\s+(?:do\s+you\s+)?recommend|prereqs?|prerequisites?|path\s+to\s+(?:take)?)\b",
         prompt_lower,
     ):
         return False
@@ -198,9 +216,9 @@ def is_course_requested_or_pinned(prompt: str, course: Dict[str, Any]) -> bool:
         r"\binstead\s+of\b[^.?!;,]*\b" + re.escape(number) + r"\b", prompt_lower
     ):
         return False
-    # Informational queries (e.g. "when are the sections...", "what time is...") are not addition requests
+    # Informational queries (e.g. "when are the sections...", "what time is...", "what cse 30 courses are offered...") are not addition requests
     if re.search(
-        r'\b(when\s+(?:are|is)|what\s+(?:time|sections?)|which\s+sections?|where\s+is|tell\s+me\s+about|info\s+on|details\s+on|how\s+many\s+sections|is\s+there|are\s+there)\b',
+        r"\b(when\s+(?:are|is)|what\b[^.?!;,]*\b(?:time|sections?|courses?|classes?|offerings?|prereqs?|prerequisites?)|which\b[^.?!;,]*\b(?:sections?|courses?|classes?)|where\s+is|tell\s+me\s+about|info\s+on|details\s+on|how\s+many|is\s+there|are\s+there|are\s+offered|is\s+offered)\b",
         prompt_lower,
     ):
         return False
@@ -217,15 +235,10 @@ def is_course_requested_or_pinned(prompt: str, course: Dict[str, Any]) -> bool:
         rf"\b{re.escape(code_no_space)}\b[^.?!;,]*\b(instead|please|is\s+required|must\s+be)\b",
         rf"\b(replace|swap|switch|substitute)\b[^.?!;,]*\b(with|for|to)\s+\b{re.escape(code)}\b",
         rf"\b(replace|swap|switch|substitute)\b[^.?!;,]*\b(with|for|to)\s+\b{re.escape(code_no_space)}\b",
-        rf"\b(with|for|to)\s+\b{re.escape(code)}\b",
-        rf"\b(with|for|to)\s+\b{re.escape(code_no_space)}\b",
     ]
     if number and number_in_prompt:
-        intent_patterns.extend(
-            [
-                rf"\b(replace|swap|switch|substitute)\b[^.?!;,]*\b(with|for|to)\s+\b{re.escape(number)}\b",
-                rf"\b(with|for|to)\s+\b{re.escape(number)}\b",
-            ]
+        intent_patterns.append(
+            rf"\b(replace|swap|switch|substitute)\b[^.?!;,]*\b(with|for|to)\s+\b{re.escape(number)}\b"
         )
         if has_letter:
             intent_patterns.append(
@@ -255,7 +268,7 @@ def set_tool_context(
         "preferences": preferences,
         "schedule": schedule,
         "session_token": session_token,
-        "node_api_url": node_api_url or os.environ.get("NODE_API_URL", "http://localhost:3000"),
+        "node_api_url": node_api_url or os.environ.get("NODE_API_URL", "http://localhost:3001"),
     }
 
 
@@ -271,6 +284,8 @@ def inspect_student_profile(query: str = "") -> str:
             "standing": student.get("standing", "Junior"),
             "minor": student.get("minor", None),
             "targetCredits": prefs.get("targetCredits", 15),
+            "currentTerm": "Winter 2027",
+            "academicYear": "2026-2027",
         }
     )
 
@@ -401,7 +416,7 @@ def check_course_prerequisites(
 
 @tool
 def get_course_details(course_code: str, section: str = "") -> str:
-    """Retrieves all attributes for a specific course or course section from the academic catalog database."""
+    """Retrieves all attributes for a specific course or course section from the academic catalog database, including meeting times, room, instructor, and quarter dates."""
     from .catalog_dao import get_course_details as dao_get_details
 
     rows = dao_get_details(course_code=course_code, section=section if section else None)
@@ -410,10 +425,21 @@ def get_course_details(course_code: str, section: str = "") -> str:
 
     details = []
     for r in rows:
+        term_val = r.get("meeting_dates") or "Winter 2027"
+        calendar_info = "Instruction: Jan 5 – Mar 12, 2027 | Quarter Dates: Jan 4 – Mar 19, 2027"
+        if "Spring" in term_val:
+            calendar_info = (
+                "Instruction: Mar 29 – Jun 4, 2027 | Quarter Dates: Mar 29 – Jun 11, 2027"
+            )
+        elif "Fall" in term_val:
+            calendar_info = (
+                "Instruction: Sep 24 – Dec 4, 2026 | Quarter Dates: Sep 24 – Dec 11, 2026"
+            )
         details.append(
             f"- **{r.get('course_code')}** Section {r.get('section')} ({r.get('section_type')}): "
             f"'{r.get('title')}' | Credits: {r.get('credits', 'N/A')} | GE: {r.get('ge', 'None')} | "
             f"Days/Time: {r.get('days', 'TBA')} {r.get('start_time', '')}-{r.get('end_time', '')} | "
+            f"Term: {term_val} ({calendar_info}) | "
             f"Room: {r.get('room', 'TBA')} | Instructor: {r.get('instructor', 'Staff')} | "
             f"Prereqs: {r.get('raw_prereqs', 'None')}"
         )
@@ -441,13 +467,66 @@ def get_course_sections(course_code: str) -> str:
 
 @tool
 def get_course_time(course_code: str, section: str = "01") -> str:
-    """Looks up the exact meeting days and times for a specific course section."""
+    """Looks up the exact meeting days, daily lecture times, and academic quarter start and end dates for a specific course section."""
     from .catalog_dao import get_course_time as dao_get_time
 
     row = dao_get_time(course_code=course_code, section=section)
     if not row:
         return f"No schedule found for {course_code.upper()} Section {section}."
-    return f"{row.get('course_code')} Section {row.get('section')} meets {row.get('days')} from {row.get('start_time')} to {row.get('end_time')} in {row.get('room')}."
+    return (
+        f"{row.get('course_code')} Section {row.get('section')} meets {row.get('days')} from {row.get('start_time')} to {row.get('end_time')} in {row.get('room')}. "
+        f"Quarter Session Dates: January 5, 2027 (instruction begins) to March 19, 2027 (quarter ends)."
+    )
+
+
+@tool
+def get_academic_calendar(term: str = "Winter 2027") -> str:
+    """Returns official UCSC academic calendar dates including quarter start/end dates, instruction begin/end dates, and finals examination week."""
+    clean_term = (term or "").strip().lower()
+    if "spring" in clean_term:
+        return json.dumps(
+            {
+                "term": "Spring 2027",
+                "quarterStartDate": "2027-03-29",
+                "quarterEndDate": "2027-06-11",
+                "instructionBegins": "Monday, March 29, 2027",
+                "instructionEnds": "Friday, June 4, 2027",
+                "finalsWeek": "Monday, June 7, 2027 - Friday, June 11, 2027",
+            }
+        )
+    elif "fall" in clean_term:
+        return json.dumps(
+            {
+                "term": "Fall 2026",
+                "quarterStartDate": "2026-09-24",
+                "quarterEndDate": "2026-12-11",
+                "instructionBegins": "Thursday, September 24, 2026",
+                "instructionEnds": "Friday, December 4, 2026",
+                "finalsWeek": "Monday, December 7, 2026 - Friday, December 11, 2026",
+            }
+        )
+    elif "summer" in clean_term:
+        return json.dumps(
+            {
+                "term": "Summer 2027",
+                "quarterStartDate": "2027-06-21",
+                "quarterEndDate": "2027-08-27",
+                "instructionBegins": "Monday, June 21, 2027",
+                "instructionEnds": "Friday, August 27, 2027",
+                "finalsWeek": "August 26 - August 27, 2027",
+            }
+        )
+    else:
+        return json.dumps(
+            {
+                "term": "Winter 2027",
+                "quarterStartDate": "2027-01-04",
+                "quarterEndDate": "2027-03-19",
+                "instructionBegins": "Tuesday, January 5, 2027",
+                "instructionEnds": "Friday, March 12, 2027",
+                "finalsWeek": "Monday, March 15, 2027 - Friday, March 19, 2027",
+            }
+        )
 
 
 @tool
@@ -524,7 +603,7 @@ def create_class_event(course_code: str, section: str = "01") -> str:
             start_time = c.get("startTime") or start_time
             end_time = c.get("endTime") or end_time
 
-    node_url = _active_context.get("node_api_url", "http://localhost:3000")
+    node_url = _active_context.get("node_api_url", "http://localhost:3001")
     token = _active_context.get("session_token", "")
 
     headers = {"Content-Type": "application/json"}
@@ -572,7 +651,7 @@ def delete_class_event(course_code: str) -> str:
             matching_id = item.get("id")
             break
 
-    node_url = _active_context.get("node_api_url", "http://localhost:3000")
+    node_url = _active_context.get("node_api_url", "http://localhost:3001")
     token = _active_context.get("session_token", "")
     headers = {}
     if token:
@@ -650,6 +729,7 @@ def get_inspection_tools():
         get_course_details,
         get_course_sections,
         get_course_time,
+        get_academic_calendar,
         check_course_prerequisites,
         create_class_event,
         delete_class_event,

@@ -32,11 +32,33 @@ def run_mock_agent(
     proposed_courses = []
 
     term_match = re.search(r"\b(Winter|Spring|Summer|Fall)\s+\d{4}\b", prompt, re.IGNORECASE)
-    term = (
-        term_match.group(0).title() if term_match else preferences.get("targetTerm", "Winter 2027")
-    )
+    if term_match:
+        term = term_match.group(0).title()
+    else:
+        quarter_match = re.search(r"\b(Winter|Spring|Summer|Fall)\b", prompt, re.IGNORECASE)
+        if quarter_match:
+            q_name = quarter_match.group(0).capitalize()
+            term = "Fall 2026" if q_name == "Fall" else f"{q_name} 2027"
+        else:
+            term = preferences.get("targetTerm", "Winter 2027")
 
     catalog = get_course_catalog()
+
+    is_greeting_word = any(
+        re.search(r"\b" + re.escape(g) + r"\b", prompt_lower)
+        for g in ["hello", "hi", "hey", "good morning", "good afternoon", "howdy", "yo"]
+    )
+    has_substantive_query = bool(
+        re.search(
+            r"\b(cse|math|ece|film|art|phil|his|econ|musc|astr|havc|stat|"
+            r"course|courses|class|classes|section|sections|schedule|calendar|"
+            r"prereq|prereqs|prerequisite|prerequisites|ge|ges|general\s+ed|"
+            r"winter|fall|spring|summer|term|quarter|credit|credits|"
+            r"what|when|where|which|how|why|"
+            r"add|drop|replace|swap|remove|take|enroll|pin|export|recommend|list|show|view)\b|\b\d{1,3}[a-z]?\b",
+            prompt_lower,
+        )
+    )
 
     # Identify any pinned or explicitly requested courses in the prompt
     pinned_courses = []
@@ -200,21 +222,13 @@ def run_mock_agent(
         or "how to take" in prompt_lower
         or "unlock" in prompt_lower
     ):
-        target_course = "CSE 130"
-        for code in [
-            "cse 130",
-            "cse 115a",
-            "cse 115b",
-            "cse 180",
-            "cse 101",
-            "cse 102",
-            "cse 103",
-            "cse 150",
-            "cse 185s",
-        ]:
-            if code in prompt_lower:
-                target_course = code.upper()
-                break
+        found_code_match = re.search(r"\b([A-Za-z]{2,5})\s*(\d{1,3}[A-Za-z]?)\b", prompt)
+        if found_code_match:
+            dept = found_code_match.group(1).upper()
+            num = found_code_match.group(2).upper()
+            target_course = f"{dept} {num}"
+        else:
+            target_course = "CSE 130"
 
         chain = get_prerequisite_chain(target_course, completed_major)
         tool_calls_simulated.append(
@@ -231,16 +245,25 @@ def run_mock_agent(
             )
         elif chain["status"] == "ALREADY_COMPLETED":
             response = f"You have already completed **`{target_course}`** in a prior quarter!"
+        elif chain["status"] == "UNKNOWN_COURSE":
+            response = (
+                f"I could not locate prerequisite rules for **`{target_course}`** in the UCSC catalog. "
+                f"Please verify the course code."
+            )
         else:
-            needed = ", ".join([f"`{c}`" for c in chain["unmetPrerequisites"]])
-            quarters = chain["criticalPathQuarters"]
+            unmet_list = chain.get("unmetPrerequisites", [])
+            needed = ", ".join([f"`{c}`" for c in unmet_list]) if unmet_list else "None"
+            req_str = chain.get("requirements")
+            quarters = chain.get("criticalPathQuarters", 1)
+            req_bullet = f"- **Prerequisite Requirements:** `{req_str}`\n" if req_str else ""
             response = (
                 f"### Shortest Prerequisite Path to `{target_course}`: 🗺️\n\n"
                 f"Based on your completed coursework ({', '.join(completed_major) if completed_major else 'none yet'}), "
-                f"you need to complete **{len(chain['unmetPrerequisites'])} course(s)** before enrolling in `{target_course}`:\n\n"
-                f"- **Prerequisite Sequence:** {needed}\n"
-                f"- **Minimum Timeline:** Approximately **{quarters} quarter(s)** along your critical degree path.\n\n"
-                f"Prioritizing `{chain['unmetPrerequisites'][0] if chain['unmetPrerequisites'] else 'the next foundation'}` next quarter will unblock this path fastest."
+                f"you need to complete the following prerequisite requirements before enrolling in `{target_course}`:\n\n"
+                f"{req_bullet}"
+                f"- **Prerequisite Sequence Needed:** {needed}\n"
+                f"- **Minimum Timeline:** Approximately **{quarters} quarter(s)** along your academic degree path.\n\n"
+                f"Prioritizing `{unmet_list[0] if unmet_list else 'the next foundation'}` next quarter will unblock this path fastest."
             )
 
     # Scenario 4: Workload Overload / "This is too much" (Sprint 3 Priority 3 User Story)
@@ -397,11 +420,8 @@ def run_mock_agent(
             f"Would you like me to look for alternative lecture times, explore secondary electives, or verify that your graduation timeline stays on track?"
         )
 
-    # Scenario 8: Greetings & Conversation Starter
-    elif any(
-        re.search(r"\b" + re.escape(g) + r"\b", prompt_lower)
-        for g in ["hello", "hi", "hey", "good morning", "good afternoon", "howdy", "yo"]
-    ):
+    # Scenario 8: Greetings & Conversation Starter (pure greetings only)
+    elif is_greeting_word and not has_substantive_query:
         if len(history) > 1:
             response = (
                 f"Welcome back, {name}! 🐌 Great to see you again.\n\n"
@@ -421,7 +441,7 @@ def run_mock_agent(
             )
 
     # Scenario 9: Inquiring about GE requirements
-    elif "ge" in prompt_lower or "general ed" in prompt_lower or "requirement" in prompt_lower:
+    elif re.search(r"\b(ge|ges|general\s+ed(?:ucation)?)\b", prompt_lower):
         tool_calls_simulated.append(
             {"tool": "query_degree_ge_requirements", "output": {"remaining": remaining_ges}}
         )
@@ -430,7 +450,17 @@ def run_mock_agent(
         for g in target_ges:
             matches = find_courses(ge_type=g, term=term)
             if matches:
-                m_copy = dict(matches[0])
+                preferred = next(
+                    (
+                        m
+                        for m in matches
+                        if (g == "CC" and "PHIL 11" in m.get("code", ""))
+                        or (g == "ER" and "HIS 10A" in m.get("code", ""))
+                        or (g.startswith("PR") and "ART 10F" in m.get("code", ""))
+                    ),
+                    matches[0],
+                )
+                m_copy = dict(preferred)
                 m_copy["pinned"] = False
                 if not any(gc["id"] == m_copy["id"] for gc in ge_candidates):
                     ge_candidates.append(m_copy)
@@ -481,9 +511,32 @@ def run_mock_agent(
         or "major" in prompt_lower
         or "schedule" in prompt_lower
         or "section" in prompt_lower
+        or "list all" in prompt_lower
+        or "show all" in prompt_lower
+        or "all of them" in prompt_lower
+        or "list them" in prompt_lower
+        or "show them" in prompt_lower
+        or "view all" in prompt_lower
+        or "see all" in prompt_lower
+        or "browse" in prompt_lower
+        or "available" in prompt_lower
+        or "offering" in prompt_lower
+        or "offerings" in prompt_lower
         or any(
             re.search(r"\b" + re.escape(d) + r"\b", prompt_lower)
-            for d in ["math", "ece", "film", "art", "phil", "his", "econ", "musc", "astr", "havc", "stat"]
+            for d in [
+                "math",
+                "ece",
+                "film",
+                "art",
+                "phil",
+                "his",
+                "econ",
+                "musc",
+                "astr",
+                "havc",
+                "stat",
+            ]
         )
     ):
         tool_calls_simulated.append(
@@ -492,17 +545,20 @@ def run_mock_agent(
 
         # 1. Check if a specific course from catalog is being queried (e.g. "CSE 30", "when are the cse 30 sections...", "tell me about cse 101")
         prompt_norm = prompt_lower.replace("-", " ")
-        known_codes = sorted(list({c.get("code") for c in catalog if c.get("code")}), key=len, reverse=True)
+        known_codes = sorted(
+            list({c.get("code") for c in catalog if c.get("code")}), key=len, reverse=True
+        )
         queried_course_code = None
         for kcode in known_codes:
             kcode_lower = kcode.lower()
             kcode_no_space = kcode_lower.replace(" ", "")
-            if (
-                re.search(r"\b" + re.escape(kcode_lower) + r"\b", prompt_norm)
-                or re.search(r"\b" + re.escape(kcode_no_space) + r"\b", prompt_norm)
+            if re.search(r"\b" + re.escape(kcode_lower) + r"\b", prompt_norm) or re.search(
+                r"\b" + re.escape(kcode_no_space) + r"\b", prompt_norm
             ):
                 queried_course_code = kcode
                 break
+
+        lead_greeting = f"Hello {name}! 🐌 " if is_greeting_word else ""
 
         if queried_course_code:
             matches_in_term = find_courses(query=queried_course_code, term=term)
@@ -518,14 +574,18 @@ def run_mock_agent(
                 offerings = []
                 for c in proposed_courses:
                     days_str = ", ".join(c.get("days", []))
+                    sec_val = c.get("section")
+                    if not sec_val:
+                        cid = c.get("id", "")
+                        sec_val = cid.split("-")[-1].upper() if "-" in cid else "01"
                     offerings.append(
-                        f"- **`{c.get('code')}` ({c.get('title')})**: {days_str} {c.get('startTime')}-{c.get('endTime')} ({c.get('credits')} credits) in {c.get('location')} (Instructor: {c.get('instructor')})"
+                        f"- **`{c.get('code')}` - Section {sec_val} ({c.get('title')})**: {days_str} {c.get('startTime')}-{c.get('endTime')} ({c.get('credits')} credits) in {c.get('location')} (Instructor: {c.get('instructor')})"
                     )
                 response = (
-                    f"Here are the active **`{queried_course_code}`** sections available for **{term}**: 📚\n\n"
+                    f"{lead_greeting}Here are the active **`{queried_course_code}`** sections available for **{term}**: 📚\n\n"
                     f"### Matching Course Offerings:\n"
                     + "\n".join(offerings)
-                    + f"\n\nLet me know if you would like me to add one of these sections to your schedule!"
+                    + "\n\nLet me know if you would like me to add one of these sections to your schedule!"
                 )
             else:
                 matches_all_terms = find_courses(query=queried_course_code, term="")
@@ -548,8 +608,15 @@ def run_mock_agent(
                     alt_lines = []
                     for ac in dept_alts[:2]:
                         days_str = ", ".join(ac.get("days", []))
-                        alt_lines.append(f"- **`{ac.get('code')}` ({ac.get('title')})**: {days_str} {ac.get('startTime')}-{ac.get('endTime')} in {ac.get('location')}")
-                    alt_text = f"\n\n### Available {alt_dept} Alternatives for {term}:\n" + "\n".join(alt_lines) if alt_lines else ""
+                        alt_lines.append(
+                            f"- **`{ac.get('code')}` ({ac.get('title')})**: {days_str} {ac.get('startTime')}-{ac.get('endTime')} in {ac.get('location')}"
+                        )
+                    alt_text = (
+                        f"\n\n### Available {alt_dept} Alternatives for {term}:\n"
+                        + "\n".join(alt_lines)
+                        if alt_lines
+                        else ""
+                    )
 
                     response = (
                         f"**`{queried_course_code}`** is not currently scheduled for **{term}**. 🗓️\n\n"
@@ -582,14 +649,56 @@ def run_mock_agent(
                     "browse courses",
                     "see all courses",
                     "view all courses",
+                    "all of them",
+                    "list them",
+                    "show them",
+                    "all offerings",
+                    "list all of them",
+                    "show all of them",
                 ]
             )
 
             queried_dept = None
-            for d in ["CSE", "MATH", "ECE", "FILM", "ART", "PHIL", "HIS", "ECON", "MUSC", "ASTR", "HAVC", "STAT"]:
+            for d in [
+                "CSE",
+                "MATH",
+                "ECE",
+                "FILM",
+                "ART",
+                "PHIL",
+                "HIS",
+                "ECON",
+                "MUSC",
+                "ASTR",
+                "HAVC",
+                "STAT",
+            ]:
                 if re.search(r"\b" + re.escape(d.lower()) + r"\b", prompt_lower):
                     queried_dept = d
                     break
+
+            if not queried_dept and history:
+                for h in reversed(history[-4:]):
+                    c_txt = h.get("content", "")
+                    for d in [
+                        "CSE",
+                        "MATH",
+                        "ECE",
+                        "FILM",
+                        "ART",
+                        "PHIL",
+                        "HIS",
+                        "ECON",
+                        "MUSC",
+                        "ASTR",
+                        "HAVC",
+                        "STAT",
+                    ]:
+                        if re.search(r"\b" + re.escape(d) + r"\b", c_txt, re.IGNORECASE):
+                            queried_dept = d
+                            break
+                    if queried_dept:
+                        break
 
             if is_list_all_query:
                 term_courses = find_courses(department=queried_dept or "", term=term)
@@ -607,7 +716,9 @@ def run_mock_agent(
                 offerings = []
                 for c in proposed_courses:
                     days_str = ", ".join(c.get("days", []))
-                    instructor_str = f" (Instructor: {c.get('instructor')})" if c.get("instructor") else ""
+                    instructor_str = (
+                        f" (Instructor: {c.get('instructor')})" if c.get("instructor") else ""
+                    )
                     offerings.append(
                         f"- **`{c.get('code')}` ({c.get('title')})**: {days_str} {c.get('startTime')}-{c.get('endTime')} ({c.get('credits')} credits) in {c.get('location')}{instructor_str}"
                     )
@@ -616,7 +727,7 @@ def run_mock_agent(
                     f"Here are all available {dept_label}courses for **{term}**: 📚\n\n"
                     f"### Active Course Offerings:\n"
                     + "\n".join(offerings)
-                    + f"\n\nLet me know which courses or sections you would like to incorporate into your schedule!"
+                    + "\n\nLet me know which courses or sections you would like to incorporate into your schedule!"
                 )
             elif queried_dept:
                 dept_matches = find_courses(department=queried_dept, term=term)
@@ -631,14 +742,18 @@ def run_mock_agent(
                 offerings = []
                 for c in proposed_courses:
                     days_str = ", ".join(c.get("days", []))
+                    sec_val = c.get("section")
+                    if not sec_val:
+                        cid = c.get("id", "")
+                        sec_val = cid.split("-")[-1].upper() if "-" in cid else "01"
                     offerings.append(
-                        f"- **`{c.get('code')}` ({c.get('title')})**: {days_str} {c.get('startTime')}-{c.get('endTime')} ({c.get('credits')} credits) in {c.get('location')}"
+                        f"- **`{c.get('code')}` - Section {sec_val} ({c.get('title')})**: {days_str} {c.get('startTime')}-{c.get('endTime')} ({c.get('credits')} credits) in {c.get('location')}"
                     )
                 response = (
                     f"Here are the active **{queried_dept}** courses available for **{term}**: 📚\n\n"
                     f"### Matching Course Offerings:\n"
                     + "\n".join(offerings)
-                    + f"\n\nLet me know which ones you would like to incorporate into your schedule!"
+                    + "\n\nLet me know which ones you would like to incorporate into your schedule!"
                 )
             else:
                 recs = []
@@ -650,7 +765,9 @@ def run_mock_agent(
                         recs.append(c_copy)
 
                 if not recs:
-                    term_courses = find_courses(department="CSE", term=term) or find_courses(term=term)
+                    term_courses = find_courses(department="CSE", term=term) or find_courses(
+                        term=term
+                    )
                     for c in term_courses:
                         c_copy = dict(c)
                         c_copy["pinned"] = False

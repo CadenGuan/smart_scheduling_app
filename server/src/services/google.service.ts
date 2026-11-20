@@ -30,7 +30,7 @@ export class GoogleAuthService {
       client_id: config.GOOGLE_CLIENT_ID,
       redirect_uri: config.GOOGLE_REDIRECT_URI || 'http://localhost:5173',
       response_type: 'code',
-      scope: 'openid email profile https://www.googleapis.com/auth/calendar.events.readonly',
+      scope: 'openid email profile https://www.googleapis.com/auth/calendar.events',
       access_type: 'offline',
       prompt: 'consent',
     });
@@ -139,13 +139,15 @@ export class GoogleAuthService {
       ON CONFLICT(user_id) DO UPDATE SET
         access_token = excluded.access_token,
         refresh_token = COALESCE(excluded.refresh_token, oauth_tokens.refresh_token),
+        scope = excluded.scope,
+        expires_at = excluded.expires_at,
         updated_at = CURRENT_TIMESTAMP
     `);
     tokenStmt.run(
       userId!,
       tokenData.access_token,
       tokenData.refresh_token || null,
-      tokenData.scope || 'https://www.googleapis.com/auth/calendar.events.readonly',
+      tokenData.scope || 'https://www.googleapis.com/auth/calendar.events',
       expiresAt
     );
 
@@ -242,13 +244,15 @@ export class GoogleAuthService {
       ON CONFLICT(user_id) DO UPDATE SET
         access_token = excluded.access_token,
         refresh_token = COALESCE(excluded.refresh_token, oauth_tokens.refresh_token),
+        scope = excluded.scope,
+        expires_at = excluded.expires_at,
         updated_at = CURRENT_TIMESTAMP
     `);
     tokenStmt.run(
       userId!,
       `mock-google-access-token-${Date.now()}`,
       `mock-google-refresh-token-${Date.now()}`,
-      'https://www.googleapis.com/auth/calendar.events.readonly',
+      'https://www.googleapis.com/auth/calendar.events',
       new Date(Date.now() + 3600 * 1000).toISOString()
     );
 

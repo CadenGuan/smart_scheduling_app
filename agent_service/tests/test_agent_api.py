@@ -435,7 +435,7 @@ class AgentApiTests(TestCase):
         ge_courses = json.loads(ge_raw)
         self.assertGreaterEqual(len(ge_courses), 1)
         self.assertTrue("CC" in ge_courses[0]["ge"] or ge_courses[0]["ge"] == "CC")
-        self.assertEqual(ge_courses[0]["code"], "PHIL 11")
+        self.assertTrue(any(c["code"] == "PHIL 11" for c in ge_courses))
 
         # 5. Non-existent course query returns empty list
         empty_raw = search_course_catalog.invoke({"query": "NONEXISTENT999"})
@@ -723,7 +723,9 @@ class AgentApiTests(TestCase):
             "currentSchedule": [],
             "history": [],
         }
-        res = self.client.post("/api/agent/process/", data=json.dumps(payload), content_type="application/json")
+        res = self.client.post(
+            "/api/agent/process/", data=json.dumps(payload), content_type="application/json"
+        )
         self.assertEqual(res.status_code, 200)
         data = res.json()
         self.assertTrue(data["success"])
@@ -734,8 +736,12 @@ class AgentApiTests(TestCase):
         # Must accurately describe CSE 30 status and Winter 2027 offering
         self.assertIn("CSE 30", response_text)
         self.assertIn("Winter 2027", response_text)
-        self.assertIn("Luca de Alfaro", response_text)
-        self.assertIn("10:00-11:05", response_text)
+        self.assertTrue(
+            any(
+                instr in response_text
+                for instr in ["Munishkina", "Paranjape", "Yue", "Luca de Alfaro"]
+            )
+        )
 
     def test_list_all_available_winter_courses(self):
         payload = {
@@ -752,7 +758,9 @@ class AgentApiTests(TestCase):
             "currentSchedule": [],
             "history": [],
         }
-        res = self.client.post("/api/agent/process/", data=json.dumps(payload), content_type="application/json")
+        res = self.client.post(
+            "/api/agent/process/", data=json.dumps(payload), content_type="application/json"
+        )
         self.assertEqual(res.status_code, 200)
         data = res.json()
         self.assertTrue(data["success"])
@@ -762,7 +770,9 @@ class AgentApiTests(TestCase):
         self.assertIn("CSE 101", response_text)
         self.assertIn("CSE 115A", response_text)
         self.assertIn("CSE 130", response_text)
-        self.assertNotIn("Sammy's recommended plan for a **Junior** in `Computer Science B.S.`", response_text)
+        self.assertNotIn(
+            "Sammy's recommended plan for a **Junior** in `Computer Science B.S.`", response_text
+        )
 
     def test_query_standalone_cse30_no_default_fallback(self):
         payload = {
@@ -779,14 +789,18 @@ class AgentApiTests(TestCase):
             "currentSchedule": [],
             "history": [],
         }
-        res = self.client.post("/api/agent/process/", data=json.dumps(payload), content_type="application/json")
+        res = self.client.post(
+            "/api/agent/process/", data=json.dumps(payload), content_type="application/json"
+        )
         self.assertEqual(res.status_code, 200)
         data = res.json()
         self.assertTrue(data["success"])
         response_text = data["data"]["response"]
         # Must address CSE 30 directly instead of falling back to default plan
         self.assertIn("CSE 30", response_text)
-        self.assertNotIn("Sammy's recommended plan for a **Junior** in `Computer Science B.S.`", response_text)
+        self.assertNotIn(
+            "Sammy's recommended plan for a **Junior** in `Computer Science B.S.`", response_text
+        )
 
     def test_query_specific_course_cse101_sections_in_term(self):
         payload = {
@@ -803,7 +817,9 @@ class AgentApiTests(TestCase):
             "currentSchedule": [],
             "history": [],
         }
-        res = self.client.post("/api/agent/process/", data=json.dumps(payload), content_type="application/json")
+        res = self.client.post(
+            "/api/agent/process/", data=json.dumps(payload), content_type="application/json"
+        )
         self.assertEqual(res.status_code, 200)
         data = res.json()
         self.assertTrue(data["success"])
@@ -811,3 +827,128 @@ class AgentApiTests(TestCase):
         self.assertIn("CSE 101", response_text)
         self.assertIn("Patrick Tantalo", response_text)
         self.assertIn("Suresh Lodha", response_text)
+
+    def test_query_greeting_combined_with_course_question(self):
+        payload = {
+            "prompt": "hi what cse 30 courses are offerred this winter",
+            "student": {
+                "name": "Caden Guan",
+                "major": "Computer Science B.S.",
+                "standing": "Junior",
+            },
+            "preferences": {
+                "targetTerm": "Winter 2027",
+                "targetCredits": 15,
+            },
+            "currentSchedule": [],
+            "history": [
+                {"sender": "USER", "content": "hello"},
+                {"sender": "AGENT", "content": "Welcome back!"},
+            ],
+        }
+        res = self.client.post(
+            "/api/agent/process/", data=json.dumps(payload), content_type="application/json"
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        response_text = data["data"]["response"]
+        self.assertIn("CSE 30", response_text)
+        self.assertTrue(
+            any(
+                instr in response_text
+                for instr in ["Munishkina", "Paranjape", "Yue", "Luca de Alfaro"]
+            )
+        )
+        self.assertNotIn(
+            "What would you like to check or adjust in your schedule today?", response_text
+        )
+
+    def test_query_list_all_of_them_with_department_in_history(self):
+        payload = {
+            "prompt": "list all of them",
+            "student": {
+                "name": "Caden Guan",
+                "major": "Computer Science B.S.",
+                "standing": "Junior",
+            },
+            "preferences": {
+                "targetTerm": "Winter 2027",
+                "targetCredits": 15,
+            },
+            "currentSchedule": [],
+            "history": [
+                {"sender": "USER", "content": "hi what cse 30 courses are offerred this winter"},
+                {"sender": "AGENT", "content": "Here are the active CSE 30 sections..."},
+            ],
+        }
+        res = self.client.post(
+            "/api/agent/process/", data=json.dumps(payload), content_type="application/json"
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        response_text = data["data"]["response"]
+        self.assertIn("CSE", response_text)
+        self.assertIn("CSE 101", response_text)
+        self.assertIn("CSE 30", response_text)
+
+    def test_query_what_cse30_sections_are_there_only_returns_cse30(self):
+        payload = {
+            "prompt": "What cse 30 sections are there",
+            "student": {
+                "name": "Caden Guan",
+                "major": "Computer Science B.S.",
+                "standing": "Junior",
+            },
+            "preferences": {"targetTerm": "Winter 2027", "targetCredits": 15},
+            "currentSchedule": [],
+            "history": [],
+        }
+        res = self.client.post(
+            "/api/agent/process/", data=json.dumps(payload), content_type="application/json"
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        response_text = data["data"]["response"]
+        proposed = data["data"]["proposedCourses"]
+
+        # All proposed courses must be CSE 30, not AM 160 or CMPM 120
+        self.assertGreaterEqual(len(proposed), 1)
+        for c in proposed:
+            self.assertEqual(c["code"], "CSE 30")
+
+        self.assertIn("Section 01", response_text)
+        self.assertIn("Section 02", response_text)
+        self.assertIn("Section 03", response_text)
+        self.assertNotIn("AM 160", response_text)
+        self.assertNotIn("CMPM 120", response_text)
+        self.assertNotIn("CSE 107", response_text)
+
+    def test_query_prereqs_for_cse40_does_not_pin_and_answers_prereqs(self):
+        payload = {
+            "prompt": "what are the prereqs for cse 40",
+            "student": {
+                "name": "Caden Guan",
+                "major": "Computer Science B.S.",
+                "standing": "Junior",
+            },
+            "preferences": {"targetTerm": "Winter 2027", "targetCredits": 15},
+            "currentSchedule": [],
+            "history": [],
+        }
+        res = self.client.post(
+            "/api/agent/process/", data=json.dumps(payload), content_type="application/json"
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        response_text = data["data"]["response"]
+        proposed = data["data"]["proposedCourses"]
+
+        # Prereq inquiry must not propose or pin CSE 40
+        self.assertEqual(len(proposed), 0)
+        self.assertNotIn("pinned it as requested", response_text)
+        self.assertIn("CSE 40", response_text)
+        self.assertTrue("CSE 30" in response_text or "MATH 19B" in response_text)

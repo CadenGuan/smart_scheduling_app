@@ -231,6 +231,44 @@ describe('CalendarPreview Test Suite', () => {
     expect(getTermDates('Fall 2026')).toEqual({ startDate: '2026-09-24', endDate: '2026-12-11' });
     expect(getTermDates('Summer 2027')).toEqual({ startDate: '2027-06-21', endDate: '2027-08-27' });
   });
+
+  it('supports week navigation prev, next, today and does not render deadlines button', () => {
+    const preview = new CalendarPreview({
+      events: [baseEvent],
+      term: 'Winter 2027',
+    });
+
+    const mockApi = {
+      prev: vi.fn(),
+      next: vi.fn(),
+      today: vi.fn(),
+      gotoDate: vi.fn(),
+    };
+    (preview as any).calendarRef = { current: { getApi: () => mockApi } };
+
+    preview.handlePrev();
+    expect(mockApi.prev).toHaveBeenCalledTimes(1);
+
+    preview.handleNext();
+    expect(mockApi.next).toHaveBeenCalledTimes(1);
+
+    preview.handleToday();
+    expect(mockApi.gotoDate).toHaveBeenCalledWith('2027-01-05');
+
+    const html = cleanHtml(
+      renderToString(
+        React.createElement(CalendarPreview, {
+          events: [baseEvent],
+          term: 'Winter 2027',
+        })
+      )
+    );
+
+    expect(html).toContain('‹');
+    expect(html).toContain('Today');
+    expect(html).toContain('›');
+    expect(html).not.toContain('🎯 Deadlines');
+  });
 });
 
 describe('CourseDetailsModal Conflict Notes Test Suite', () => {

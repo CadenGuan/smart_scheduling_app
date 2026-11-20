@@ -13,6 +13,7 @@ export interface FullCalendarEventItem {
   textColor: string;
   extendedProps: {
     courseCode: string;
+    section?: string;
     isImported: boolean;
     syncStatus: string;
     description: string;
@@ -89,6 +90,10 @@ export function mapScheduleItemsToFullCalendar(items: UserScheduleItem[]): FullC
       }
     }
 
+    const idParts = (item.id || '').split('-');
+    const lastToken = idParts[idParts.length - 1] || '';
+    const section = /^\d{2}[A-Za-z]?$/.test(lastToken) ? lastToken.toUpperCase() : '';
+
     return {
       id: item.id,
       title,
@@ -102,6 +107,7 @@ export function mapScheduleItemsToFullCalendar(items: UserScheduleItem[]): FullC
       textColor: '#FFFFFF',
       extendedProps: {
         courseCode: item.courseCode,
+        section,
         isImported,
         syncStatus: item.syncStatus,
         description: item.description,

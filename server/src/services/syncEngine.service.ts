@@ -135,6 +135,7 @@ export class SyncEngineService {
     let accessToken = tokenRow.access_token;
     let synced = 0;
     let failed = 0;
+    let hasPermissionError = false;
 
     for (const event of pendingEvents) {
       let pushResult = await this.pushEventToDjango(event, accessToken);
@@ -148,6 +149,10 @@ export class SyncEngineService {
         }
       }
 
+      if (pushResult.status === 403) {
+        hasPermissionError = true;
+      }
+
       if (pushResult.success && pushResult.googleEventId) {
         scheduleQueries.updateSyncStatus(event.id, 'synced', pushResult.googleEventId);
         synced++;
@@ -157,11 +162,17 @@ export class SyncEngineService {
       }
     }
 
+    let message = `Sync complete: ${synced} synced, ${failed} failed.`;
+    if (hasPermissionError) {
+      message =
+        'Google Calendar sync failed: Insufficient permissions. Your Google account was connected with read-only access. Please reconnect Google Calendar to grant write permissions.';
+    }
+
     return {
       syncedCount: synced,
       failedCount: failed,
       pendingCount: 0,
-      message: `Sync complete: ${synced} synced, ${failed} failed.`,
+      message,
     };
   }
 

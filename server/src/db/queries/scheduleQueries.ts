@@ -138,7 +138,7 @@ export const scheduleQueries = {
     const stmt = db.prepare(`
       SELECT id, user_id, course_code, title, description, days, start_time, end_time, start_date, end_date, is_imported, sync_status, google_event_id, created_at
       FROM user_schedule
-      WHERE user_id = ? AND sync_status = 'pending' AND is_imported = 0
+      WHERE user_id = ? AND sync_status IN ('pending', 'failed') AND is_imported = 0
       ORDER BY start_time ASC
     `);
     const rows = stmt.all(userId) as any[];

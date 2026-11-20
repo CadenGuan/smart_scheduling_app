@@ -1,10 +1,15 @@
 import React from 'react';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/react/timegrid';
+import classicThemePlugin from '@fullcalendar/react/themes/classic';
+
+import '@fullcalendar/react/skeleton.css';
+import '@fullcalendar/react/themes/classic/theme.css';
+import '@fullcalendar/react/themes/classic/palette.css';
+
 import { BaseComponent } from '../base/BaseComponent';
 import { CourseDetailsModal } from './CourseDetailsModal';
 import { PrereqTreeModal } from './PrereqTreeModal';
-import { DeadlinesModal } from './DeadlinesModal';
 import { CalendarEvent, UserScheduleItem } from 'shared';
 import { CalendarService } from '../../services/calendarService';
 import { ScheduleService } from '../../services/scheduleService';
@@ -19,6 +24,7 @@ interface CalendarPreviewProps {
 
 interface CalendarPreviewState {
   scheduleItems: UserScheduleItem[];
+  scheduleLoaded: boolean;
   hoveredCourseId: string | null;
   selectedEvent: CalendarEvent | null;
   isExporting: boolean;
@@ -27,7 +33,7 @@ interface CalendarPreviewState {
   syncMessage: string | null;
   syncError: string | null;
   isRoadmapOpen: boolean;
-  isDeadlinesOpen: boolean;
+  currentTitle: string;
 }
 
 export function getInitialDateForTerm(term: string): string {
@@ -53,6 +59,7 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
     super(props);
     this.state = {
       scheduleItems: [],
+      scheduleLoaded: false,
       hoveredCourseId: null,
       selectedEvent: null,
       isExporting: false,
@@ -61,9 +68,38 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
       syncMessage: null,
       syncError: null,
       isRoadmapOpen: false,
-      isDeadlinesOpen: false,
+      currentTitle: '',
     };
   }
+
+  handlePrev = (): void => {
+    const api = this.calendarRef.current?.getApi();
+    if (api) {
+      api.prev();
+    }
+  };
+
+  handleNext = (): void => {
+    const api = this.calendarRef.current?.getApi();
+    if (api) {
+      api.next();
+    }
+  };
+
+  handleToday = (): void => {
+    const api = this.calendarRef.current?.getApi();
+    if (api) {
+      const termRange = getTermDates(this.props.term);
+      const now = new Date();
+      const start = new Date(termRange.startDate);
+      const end = new Date(termRange.endDate);
+      if (now >= start && now <= end) {
+        api.today();
+      } else {
+        api.gotoDate(getInitialDateForTerm(this.props.term));
+      }
+    }
+  };
 
   async componentDidMount(): Promise<void> {
     super.componentDidMount();
@@ -85,9 +121,9 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
   loadSchedule = async (): Promise<void> => {
     try {
       const items = await ScheduleService.fetchSchedule();
-      this.safeSetState({ scheduleItems: items });
+      this.safeSetState({ scheduleItems: items, scheduleLoaded: true });
     } catch {
-      // Fall back to props
+      this.safeSetState({ scheduleLoaded: true });
     }
 
     try {
@@ -136,6 +172,17 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
     }
   };
 
+  handleReconnectGoogle = async (): Promise<void> => {
+    try {
+      const authData = await AuthService.getGoogleAuthUrl();
+      if (authData?.url) {
+        window.location.href = authData.url;
+      }
+    } catch (err: any) {
+      this.safeSetState({ syncError: err?.message || 'Failed to initiate Google authentication' });
+    }
+  };
+
   handleTriggerSync = async (): Promise<void> => {
     if (!this.state.isConnectedToGoogle) {
       try {
@@ -150,10 +197,17 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
     try {
       this.safeSetState({ isSyncing: true, syncMessage: null, syncError: null });
       const result = await ScheduleService.triggerSync();
-      this.safeSetState({
-        isSyncing: false,
-        syncMessage: result.message,
-      });
+      if (result.failedCount > 0) {
+        this.safeSetState({
+          isSyncing: false,
+          syncError: result.message,
+        });
+      } else {
+        this.safeSetState({
+          isSyncing: false,
+          syncMessage: result.message,
+        });
+      }
       await this.loadSchedule();
     } catch (err: any) {
       this.safeSetState({
@@ -202,6 +256,7 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
     const isImported = extendedProps?.isImported;
     const syncStatus = extendedProps?.syncStatus;
     const courseCode = extendedProps?.courseCode || '';
+    const section = extendedProps?.section || '';
 
     // Clean up redundant course code prefixes so card subtitle is clean
     let displayTitle = event.title || '';
@@ -226,6 +281,11 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
         <div>
           <div className="font-bold flex items-center gap-1 truncate">
             {courseCode && <span>{courseCode}</span>}
+            {section && (
+              <span className="text-[10px] px-1 py-0.2 bg-white/20 rounded font-semibold">
+                Sec {section}
+              </span>
+            )}
             {isImported && (
               <span className="text-[10px] px-1 py-0.2 bg-slate-700/40 rounded text-white font-semibold">
                 External
@@ -265,13 +325,15 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
       syncMessage,
       syncError,
       isRoadmapOpen,
-      isDeadlinesOpen,
     } = this.state;
 
     // Convert items or fallback to mapped events from props
     const { startDate, endDate } = getTermDates(term);
     let fullCalendarEvents: FullCalendarEventItem[] = [];
-    if (scheduleItems.length > 0) {
+    if (this.state.scheduleLoaded) {
+      // Authoritative database schedule: render directly (renders empty calendar if user has 0 saved classes)
+      fullCalendarEvents = mapScheduleItemsToFullCalendar(scheduleItems);
+    } else if (scheduleItems.length > 0) {
       fullCalendarEvents = mapScheduleItemsToFullCalendar(scheduleItems);
     } else if (this.props.events.length > 0) {
       const converted: UserScheduleItem[] = this.props.events.map((e) => ({
@@ -309,11 +371,49 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
         {/* Calendar Header */}
         <div className="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-slate-50/50">
-          <div className="flex items-center gap-3">
-            <h2 className="font-bold text-slate-800 text-base">Weekly Schedule Preview</h2>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#00B4DB]/10 text-[#00B4DB] border border-[#00B4DB]/20">
-              {term}
-            </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <h2 className="font-bold text-slate-800 text-base">Weekly Schedule Preview</h2>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#00B4DB]/10 text-[#00B4DB] border border-[#00B4DB]/20">
+                {term}
+              </span>
+            </div>
+
+            {/* Date / Week Navigation Controls */}
+            <div className="flex items-center bg-white border border-slate-200 rounded-xl p-0.5 shadow-xs">
+              <button
+                type="button"
+                onClick={this.handlePrev}
+                className="p-1.5 px-2 hover:bg-slate-100 text-slate-600 hover:text-slate-900 rounded-lg text-xs font-bold transition-colors"
+                title="Previous week"
+                aria-label="Previous week"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                onClick={this.handleToday}
+                className="px-2.5 py-1 hover:bg-slate-100 text-slate-700 hover:text-slate-900 rounded-lg text-xs font-medium transition-colors"
+                title="Jump to today / active term start"
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                onClick={this.handleNext}
+                className="p-1.5 px-2 hover:bg-slate-100 text-slate-600 hover:text-slate-900 rounded-lg text-xs font-bold transition-colors"
+                title="Next week"
+                aria-label="Next week"
+              >
+                ›
+              </button>
+            </div>
+
+            {this.state.currentTitle && (
+              <span className="text-xs font-semibold text-slate-600 tracking-tight ml-1">
+                {this.state.currentTitle}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
@@ -353,16 +453,6 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
               <span>🗺️ Prereq Roadmap</span>
             </button>
 
-            {/* Conference & Research Deadlines Button */}
-            <button
-              type="button"
-              onClick={() => this.safeSetState({ isDeadlinesOpen: true })}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 border shadow-xs bg-white text-slate-700 border-slate-200 hover:border-[#00B4DB] hover:text-[#00B4DB] hover:bg-slate-50"
-              title="View CS research conference deadlines and undergraduate symposiums"
-            >
-              <span>🎯 Deadlines</span>
-            </button>
-
             {/* Export .ics Button */}
             <button
               type="button"
@@ -395,18 +485,28 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
         )}
 
         {(syncError || hasFailedEvents) && (
-          <div className="bg-rose-50 border-b border-rose-200 px-4 py-2 text-xs text-rose-800 flex justify-between items-center">
+          <div className="bg-rose-50 border-b border-rose-200 px-4 py-2 text-xs text-rose-800 flex flex-wrap justify-between items-center gap-2">
             <span>
               ⚠️{' '}
               {syncError ||
                 'Some events failed to sync with Google Calendar. Click Sync Now to retry.'}
             </span>
-            <button
-              onClick={this.handleTriggerSync}
-              className="underline font-bold ml-2 hover:text-rose-950"
-            >
-              Retry
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={this.handleReconnectGoogle}
+                className="underline font-bold text-rose-900 hover:text-rose-950"
+              >
+                Reconnect Google
+              </button>
+              <button
+                type="button"
+                onClick={this.handleTriggerSync}
+                className="underline font-bold text-rose-900 hover:text-rose-950"
+              >
+                Retry
+              </button>
+            </div>
           </div>
         )}
 
@@ -439,7 +539,7 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
         <div className="flex-1 overflow-y-auto p-2" style={{ minHeight: '580px' }}>
           <FullCalendar
             ref={this.calendarRef}
-            plugins={[timeGridPlugin]}
+            plugins={[timeGridPlugin, classicThemePlugin]}
             initialView="timeGridWeek"
             initialDate={getInitialDateForTerm(term)}
             headerToolbar={false}
@@ -455,6 +555,11 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
             events={fullCalendarEvents}
             eventContent={this.renderEventContent}
             eventClick={this.handleFullCalendarEventClick}
+            datesSet={(arg) => {
+              if (this.state.currentTitle !== arg.view.title) {
+                this.safeSetState({ currentTitle: arg.view.title });
+              }
+            }}
             height="auto"
           />
         </div>
@@ -466,12 +571,6 @@ export class CalendarPreview extends BaseComponent<CalendarPreviewProps, Calenda
         <PrereqTreeModal
           isOpen={isRoadmapOpen}
           onClose={() => this.safeSetState({ isRoadmapOpen: false })}
-        />
-
-        {/* Research & Conference Deadlines Modal */}
-        <DeadlinesModal
-          isOpen={isDeadlinesOpen}
-          onClose={() => this.safeSetState({ isDeadlinesOpen: false })}
         />
       </div>
     );
