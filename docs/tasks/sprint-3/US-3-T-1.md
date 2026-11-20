@@ -1,0 +1,79 @@
+---
+id: US-3-T-1
+story: 3
+sprint: 3
+estimate_hours: 8
+assignee: CadenGuan
+---
+
+# UCSC Degree Catalog Scraping, ChromaDB RAG, and Prerequisite DAG Solver
+
+## Description
+
+We utilize web scraping to retrieve up to date, accurate information for our agent to operate on. Since the entries in the academic_catalog database are to be displayed on the eventually built FullCalendar UI they should be formatted if possible, for easier presentation on FullCalendar. This, however, should not be a main priority as the adjusting can be done in the frontend depending on the yields of this task.
+
+## Specs
+
+As of sprint 3, the web scraping component should do the following:
+
+For every bachelor’s degree under https://catalog.ucsc.edu/en/current/general-catalog/academic-programs/bachelors-degrees it:
+1. Scrapes the degree page as text
+2. Chunks the page on the “expand” class and headings
+3. Vectorizes the chunks via text embedding for RAG
+4. Stores vectors in ChromaDB (Do so by parsing hyperlinks in the catalog page mentioned above)
+
+For degrees with different concentrations, they should have their own entry.
+
+Goes to https://pisa.ucsc.edu/class_search/, after a POST request with the payload acting as the form submission search with `binds[:subject] = ""` (for all subjects):
+1. For all pages and all detail pages (href that goes to details of the class), goes to the detail URL with `detail_url = urljoin("https://pisa.ucsc.edu/class_search/", url['href'])` to retrieve at least the following attributes, stored in an `academic_catalog` database. The days & times should be properly handled using regular expression matching:
+   - a) Title
+   - b) Section Number
+   - c) Credits
+   - d) General Education
+   - e) Class number
+   - f) Days & Times
+   - g) Room
+   - h) Instructor
+   - i) Meeting Dates
+   - j) Prereqs (raw_text)
+   - k) Discussions (If any)
+2. For each course in the academic_catalog database, its prereqs will be represented as a DAG and stored in a JSON file.
+3. For the discussion section of each course, it should have attributes day, time, status (staff on html), and room (location on html). The meeting dates of a discussion should match that of the lecture. Attributes that don’t apply to discussion should have value N/A or None, depending on the implementation. To differentiate from the courses there should be a column in the academic_catalog database called `section_type`.
+
+Now for the agent’s interaction with the three components listed above: ChromaDB, academic_catalog database, and prereq DAG, there are tools to handle user queries such as:
+- Component:
+  - What courses do I need to take for graduation?
+  - What sections are there for CSE 30 this quarter?
+  - What time is CSE 30 01?
+  - What are the prereqs for CSE 40?
+- Composite:
+  - Do I need to take CSE 101 to graduate? If so which of its prereqs can I take this quarter?
+
+The following types of tools are indispensable:
+- Get tools: read every attribute of an entry in the academic_catalog database
+- Recursive DAG retrieval tools: check if student is eligible
+- Vector query tools: embed the user question, query through ChromaDB, and retrieve similar chunks.
+
+## Requirements
+
+1. **Agent System Prompt**: For synthesization of the components, the system prompt must assimilate to:
+   > "You are a university degree-planning assistant.
+   > Use the degree requirements retrieval tool to determine which courses are required for a student's degree.
+   > Use the course database to retrieve accurate course details.
+   > Use the prerequisite tools to determine prerequisite dependencies.
+   > Compare prerequisites against the student’s completed courses.
+   > Synthesize information from all tool results into a clear, accurate answer.
+   > Never assume a course is required unless supported by degree requirements retrieved from the knowledge base.
+   > Never assume a prerequisite is completed unless it appears in the student's completed courses."
+2. **Web Scraping**: The parsing should be done via BeautifulSoup (`beautifulsoup4`).
+3. **Text Embedding Model**: The embedding model should be `BAAI/bge-small-en-v1.5`.
+4. **Data Sanitization**: There should be no trailing or preceding whitespace for entries in the SQLite database for courses.
+5. **Architectural Isolation**: The data produced via data processing scripts should be accessible only to the agent (i.e., the Node backend should not cheat by directly modifying the academic catalog database).
+
+## Acceptance criteria
+
+- Code coverage of at least 80% across the new component test suite.
+- Database creation & operations tested (including valid operations and handling of invalid ones).
+- Retrieved information matching verified. Specifically for ChromaDB, domain constraints such as *"Course CSE 195 may be used either as an elective, or to satisfy the DC requirement, but not for both"* must be explicitly referred to after querying degree requirements.
+- Prerequisite DAG solver correctly parses prerequisite logic and verifies student eligibility against completed coursework.
+- Agent tools (`get_course_details`, `get_course_sections`, `check_course_prerequisites`, `query_degree_requirements`) successfully return accurate data matching the scraped catalog.
