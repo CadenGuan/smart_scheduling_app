@@ -4,7 +4,16 @@ import { StepIndicators } from '../components/onboarding/StepIndicators';
 import { ProgressService } from '../services/progressService';
 import { useAuthStore } from '../store/authStore';
 import { withRouter, WithRouterProps } from '../utils/withRouter';
-import { OnboardingQuestionnaire, Standing, GeSource, TargetTerm, Day } from 'shared';
+import {
+  OnboardingQuestionnaire,
+  Standing,
+  GeSource,
+  TargetTerm,
+  Day,
+  GE_REQUIREMENTS,
+} from 'shared';
+
+const MYUCSC_URL = 'https://my.ucsc.edu';
 
 const UCSC_LOWER_DIV_COURSES = [
   'CSE 12: Computer Systems & Assembly Language',
@@ -15,18 +24,6 @@ const UCSC_LOWER_DIV_COURSES = [
   'MATH 19B: Calculus for Science & Engineering II',
   'AM 10: Mathematical Methods for Engineers I',
   'AM 20: Mathematical Methods for Engineers II',
-];
-
-const GE_CATEGORIES = [
-  { code: 'CC', name: 'Cross-Cultural Analysis' },
-  { code: 'ER', name: 'Ethnicity and Race' },
-  { code: 'IM', name: 'Interpreting Arts and Media' },
-  { code: 'SI', name: 'Scientific Inquiry' },
-  { code: 'SR', name: 'Statistical Reasoning' },
-  { code: 'TA', name: 'Textual Analysis' },
-  { code: 'PE', name: 'Physical & Environmental Sciences' },
-  { code: 'PR', name: 'Practice: Collaborative & Creative' },
-  { code: 'C', name: 'Composition' },
 ];
 
 const DAYS: Day[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -40,7 +37,7 @@ interface OnboardingState extends BaseFormState {
   isLoading: boolean;
 }
 
-class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingState> {
+export class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingState> {
   constructor(props: WithRouterProps) {
     super(props);
     const user = useAuthStore.getState().user;
@@ -62,7 +59,7 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
         intendedMajor: user?.intendedMajor || '',
         majorRequirementsTaken: [],
         geSource: 'UCSC',
-        geCategoriesRemaining: ['CC', 'ER'],
+        geCategoriesCompleted: [],
         targetTerm: 'Winter 2027',
         targetCredits: 15,
         targetCourseCount: 3,
@@ -124,10 +121,10 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
     this.handleFieldChange('majorRequirementsTaken', updated);
   };
 
-  handleToggleGE = (code: string): void => {
-    const list = this.state.formData.geCategoriesRemaining || [];
+  handleToggleGE = (code: OnboardingQuestionnaire['geCategoriesCompleted'][number]): void => {
+    const list = this.state.formData.geCategoriesCompleted || [];
     const updated = list.includes(code) ? list.filter((c) => c !== code) : [...list, code];
-    this.handleFieldChange('geCategoriesRemaining', updated);
+    this.handleFieldChange('geCategoriesCompleted', updated);
   };
 
   handleToggleDay = (day: Day): void => {
@@ -350,30 +347,68 @@ class OnboardingPageComponent extends BaseFormView<WithRouterProps, OnboardingSt
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-2">
-                Remaining GE Requirements
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {GE_CATEGORIES.map((cat) => {
-                  const isSelected = formData.geCategoriesRemaining?.includes(cat.code);
+            <div className="rounded-xl border border-[#00B4DB]/30 bg-[#E0F7FA]/60 p-4">
+              <p className="text-xs font-semibold text-slate-700 uppercase mb-2">
+                Not sure which GEs you&apos;ve completed? Check MyUCSC:
+              </p>
+              <ol className="list-decimal list-inside space-y-1 text-sm text-slate-700">
+                <li>
+                  Log in to your{' '}
+                  <a
+                    href={MYUCSC_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-[#0098ba] underline"
+                  >
+                    MyUCSC
+                  </a>{' '}
+                  account
+                </li>
+                <li>
+                  Go to <span className="font-semibold">My Academics</span>
+                </li>
+                <li>
+                  Click <span className="font-semibold">Degree Progress Report</span> in the side
+                  navigation
+                </li>
+                <li>
+                  Scroll down to{' '}
+                  <span className="font-semibold">General Education Requirements</span> and expand
+                  the tab
+                </li>
+                <li>Check off every requirement marked as satisfied below</li>
+              </ol>
+            </div>
+
+            <fieldset>
+              <legend className="block text-xs font-semibold text-slate-700 uppercase mb-2">
+                Which GE requirements have you already satisfied?
+              </legend>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {GE_REQUIREMENTS.map((ge) => {
+                  const isSelected = formData.geCategoriesCompleted?.includes(ge.code) ?? false;
                   return (
                     <button
-                      key={cat.code}
+                      key={ge.code}
                       type="button"
-                      onClick={() => this.handleToggleGE(cat.code)}
-                      className={`p-2 rounded-lg border text-xs text-left transition-all ${
+                      aria-pressed={isSelected}
+                      aria-label={`${ge.code}: ${ge.name}`}
+                      onClick={() => this.handleToggleGE(ge.code)}
+                      className={`p-2 rounded-lg border text-xs text-left transition-all flex items-center justify-between gap-2 ${
                         isSelected
-                          ? 'border-[#FF6B6B] bg-[#FFEBEB] text-[#FF6B6B] font-bold'
-                          : 'border-slate-200 bg-white text-slate-600'
+                          ? 'border-[#00B4DB] bg-[#E0F7FA] text-[#0098ba] font-bold shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                       }`}
                     >
-                      <span className="font-bold">{cat.code}</span> — {cat.name}
+                      <span>
+                        <span className="font-bold">{ge.code}</span> — {ge.name}
+                      </span>
+                      {isSelected && <span aria-hidden="true">✓</span>}
                     </button>
                   );
                 })}
               </div>
-            </div>
+            </fieldset>
           </div>
         );
 

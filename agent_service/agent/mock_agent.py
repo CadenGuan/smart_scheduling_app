@@ -446,8 +446,8 @@ def run_mock_agent(
             {"tool": "query_degree_ge_requirements", "output": {"remaining": remaining_ges}}
         )
         ge_candidates: list[dict[str, Any]] = []
-        target_ges = remaining_ges if remaining_ges else ["CC", "ER", "PR-C"]
-        for g in target_ges:
+        # Only recommend GEs the student still needs; never fall back to satisfied ones
+        for g in remaining_ges:
             matches = find_courses(ge_type=g, term=term)
             if matches:
                 preferred = next(
@@ -488,13 +488,34 @@ def run_mock_agent(
 
         if remaining_ges:
             ge_list = ", ".join([f"`{g}`" for g in remaining_ges])
+            remaining_set = set(remaining_ges)
+            course_lines = []
+            for course in ge_candidates:
+                raw_ge = course.get("ge") or []
+                course_ges = [raw_ge] if isinstance(raw_ge, str) else list(raw_ge)
+                # A sub-area (PR-C) counts toward its parent requirement (PR)
+                satisfies = sorted(
+                    {str(g).upper().split("-")[0] for g in course_ges} & remaining_set
+                )
+                if satisfies:
+                    ge_codes = ", ".join(f"`{g}`" for g in satisfies)
+                    course_lines.append(
+                        f"- **`{course.get('code')}` ({course.get('title', '')})** – Satisfies {ge_codes}.\n"
+                    )
+            if course_lines:
+                recommendations = (
+                    "### Recommended UCSC GE Courses for Next Quarter:\n"
+                    + "".join(course_lines)
+                    + f"\nPairing one of these with your required major courses will keep you on pace for your **{target_credits}-credit** target without overloading your finals week!"
+                )
+            else:
+                recommendations = (
+                    f"I couldn't find courses for those GEs in the {term} catalog yet. "
+                    "Check back once more sections are posted, or ask me about a specific course."
+                )
             response = (
                 f"Hey {name}! 🐌 Based on your degree progress, you currently have the following **General Education (GE)** requirements remaining: {ge_list}.\n\n"
-                f"### Recommended UCSC GE Courses for Next Quarter:\n"
-                f"- **`PHIL 11` (Critical Thinking)** – Satisfies the `CC` requirement while reinforcing formal proof thinking for upper-division CS.\n"
-                f"- **`HIS 10A` (United States History to 1877)** – Satisfies `ER` with structured reading and analytical discussion.\n"
-                f"- **`ART 10F` (2D Design)** – Satisfies `PR` with a creative, studio-based workflow to balance heavy coding labs.\n\n"
-                f"Pairing one of these with your required major courses will keep you on pace for your **{target_credits}-credit** target without overloading your finals week!"
+                + recommendations
             )
         else:
             response = (

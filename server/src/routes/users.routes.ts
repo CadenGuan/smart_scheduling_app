@@ -4,9 +4,24 @@ import { PreferenceSyncService } from '../services/preferenceSync.service.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validate.middleware.js';
-import { UserPreferencesSchema, UpdateUserProfileSchema, UpdateUserProfile } from 'shared';
+import {
+  UserPreferencesSchema,
+  UpdateUserProfileSchema,
+  UpdateUserProfile,
+  normalizeGeStatus,
+} from 'shared';
 
 const router = Router();
+
+/** Stored ge_status may be missing, malformed, or in the legacy remaining-only shape. */
+function readGeStatus(raw: string | null | undefined) {
+  if (!raw) return normalizeGeStatus(null);
+  try {
+    return normalizeGeStatus(JSON.parse(raw));
+  } catch {
+    return normalizeGeStatus(null);
+  }
+}
 
 /**
  * Validates that the authenticated user matches the target route resource
@@ -53,7 +68,7 @@ router.get(
         major: user.major,
         minor: user.minor,
         intendedMajor: user.intended_major,
-        geStatus: user.ge_status ? JSON.parse(user.ge_status) : null,
+        geStatus: readGeStatus(user.ge_status),
         majorRequirementsTaken: JSON.parse(user.major_requirements_taken || '[]'),
         breaksPreference: JSON.parse(user.breaks_preference || '[]'),
         preferences: JSON.parse(user.preferences || '{}'),
@@ -183,7 +198,7 @@ router.get(
         minor: user.minor,
         intendedMajor: user.intended_major,
       },
-      geStatus: user.ge_status ? JSON.parse(user.ge_status) : null,
+      geStatus: readGeStatus(user.ge_status),
       majorRequirementsTaken: JSON.parse(user.major_requirements_taken || '[]'),
       breaksPreference: JSON.parse(user.breaks_preference || '[]'),
       preferences: user.preferences ? JSON.parse(user.preferences) : {},

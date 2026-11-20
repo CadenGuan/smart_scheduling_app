@@ -75,7 +75,8 @@ def find_courses(
                 ge_list = [raw_ge.strip().upper()]
             else:
                 ge_list = []
-            if not any(ge in item or item.startswith(ge) for item in ge_list):
+            # Exact code, or a sub-area of it (PR matches PR-C); C must not match CC
+            if not any(item == ge or item.startswith(f"{ge}-") for item in ge_list):
                 continue
 
         # Filter by query keyword if provided
@@ -295,13 +296,17 @@ def query_degree_ge_requirements(query: str = "") -> str:
     """Queries general education (GE) completion status and required major course requirements."""
     prefs = _active_context.get("preferences", {})
     ge_status = prefs.get("geStatus", {})
-    remaining = ge_status.get("remaining", []) if isinstance(ge_status, dict) else []
+    if not isinstance(ge_status, dict):
+        ge_status = {}
+    remaining = ge_status.get("remaining", [])
+    completed = ge_status.get("completed", [])
     completed_major = prefs.get("majorRequirementsTaken", [])
     return json.dumps(
         {
             "remainingGEs": remaining,
+            "completedGEs": completed,
             "completedMajorRequirements": completed_major,
-            "geSource": ge_status.get("source", "UCSC") if isinstance(ge_status, dict) else "UCSC",
+            "geSource": ge_status.get("source", "UCSC"),
         }
     )
 
