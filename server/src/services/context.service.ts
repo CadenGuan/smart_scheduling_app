@@ -2,6 +2,7 @@ import { userQueries } from '../db/queries/userQueries.js';
 import { progressQueries } from '../db/queries/progressQueries.js';
 import { conversationQueries } from '../db/queries/conversationQueries.js';
 import { CalendarService } from './calendar.service.js';
+import { normalizeGeStatus } from 'shared';
 
 export interface AssembledContext {
   student: {
@@ -54,19 +55,20 @@ export class ContextService {
       }
     }
 
-    let geStatus: any = {};
+    let storedGeStatus: unknown = null;
     if (user?.ge_status) {
       try {
-        geStatus = JSON.parse(user.ge_status);
+        storedGeStatus = JSON.parse(user.ge_status);
       } catch {
-        geStatus = { source: 'UCSC', remaining: [] };
+        storedGeStatus = null;
       }
-    } else if (draftAnswers.geSource || draftAnswers.remainingGEs) {
-      geStatus = {
-        source: draftAnswers.geSource || 'UCSC',
-        remaining: draftAnswers.remainingGEs || [],
+    } else if (draftAnswers.geSource || draftAnswers.geCategoriesCompleted) {
+      storedGeStatus = {
+        source: draftAnswers.geSource,
+        completed: draftAnswers.geCategoriesCompleted ?? [],
       };
     }
+    const geStatus = normalizeGeStatus(storedGeStatus);
 
     let majorReqs: string[] = [];
     if (user?.major_requirements_taken) {

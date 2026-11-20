@@ -6,6 +6,70 @@ export { TargetTermEnum, TargetTerm, DayEnum, Day };
 export const GeSourceEnum = z.enum(['UCSC', 'Community College / IGETC', 'Hybrid']);
 export type GeSource = z.infer<typeof GeSourceEnum>;
 
+/**
+ * UCSC General Education requirements, in catalog order.
+ * Source: UCSC General Catalog, General Education Requirements
+ * https://catalog.ucsc.edu/en/current/general-catalog/undergraduate-information/undergraduate-academic-program/general-education-requirements
+ * PE and PR are one requirement each, satisfied by any one of their sub-areas.
+ */
+export const GE_REQUIREMENTS = [
+  { code: 'CC', name: 'Cross-Cultural Analysis' },
+  { code: 'ER', name: 'Ethnicity and Race' },
+  { code: 'IM', name: 'Interpreting Arts and Media' },
+  { code: 'MF', name: 'Mathematical and Formal Reasoning' },
+  { code: 'SI', name: 'Scientific Inquiry' },
+  { code: 'SR', name: 'Statistical Reasoning' },
+  { code: 'TA', name: 'Textual Analysis and Interpretation' },
+  { code: 'PE', name: 'Perspectives (Environmental, Human Behavior, or Technology and Society)' },
+  { code: 'PR', name: 'Practice (Collaborative Endeavor, Creative Process, or Service Learning)' },
+  { code: 'C', name: 'Composition' },
+  { code: 'DC', name: 'Disciplinary Communication' },
+] as const;
+
+export const GeCodeEnum = z.enum(['CC', 'ER', 'IM', 'MF', 'SI', 'SR', 'TA', 'PE', 'PR', 'C', 'DC']);
+export type GeCode = z.infer<typeof GeCodeEnum>;
+
+const isGeCode = (value: unknown): value is GeCode => GeCodeEnum.safeParse(value).success;
+
+/** Every GE requirement not in `completed`, in catalog order. */
+export function computeRemainingGEs(completed: readonly string[]): GeCode[] {
+  const done = new Set(completed);
+  return GE_REQUIREMENTS.map((ge) => ge.code).filter((code) => !done.has(code));
+}
+
+export interface GeStatus {
+  source: GeSource;
+  completed: GeCode[];
+  remaining: GeCode[];
+}
+
+/**
+ * Normalizes stored GE status into { source, completed, remaining }.
+ * Handles the current shape (completed), the legacy shape (remaining only),
+ * and missing or malformed data (nothing completed). Unknown codes are dropped.
+ */
+export function normalizeGeStatus(raw: unknown): GeStatus {
+  const obj = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  const sourceResult = GeSourceEnum.safeParse(obj.source);
+  const source: GeSource = sourceResult.success ? sourceResult.data : 'UCSC';
+  const validCodes = (value: unknown): GeCode[] =>
+    Array.isArray(value) ? Array.from(new Set(value.filter(isGeCode))) : [];
+
+  if (Array.isArray(obj.completed)) {
+    const completed = validCodes(obj.completed);
+    return { source, completed, remaining: computeRemainingGEs(completed) };
+  }
+
+  if (Array.isArray(obj.remaining)) {
+    const remaining = validCodes(obj.remaining);
+    const left = new Set<string>(remaining);
+    const completed = GE_REQUIREMENTS.map((ge) => ge.code).filter((code) => !left.has(code));
+    return { source, completed, remaining };
+  }
+
+  return { source, completed: [], remaining: computeRemainingGEs([]) };
+}
+
 export const TimeWindowSchema = z.object({
   label: z.string().min(1, 'Label is required'),
   days: z.array(DayEnum),
@@ -28,7 +92,7 @@ export const OnboardingQuestionnaireSchema = z.object({
 
   // Step 3: General Education
   geSource: GeSourceEnum.default('UCSC'),
-  geCategoriesRemaining: z.array(z.string()).default([]),
+  geCategoriesCompleted: z.array(GeCodeEnum).default([]),
 
   // Step 4: Quarter Planning & Capacity
   targetTerm: TargetTermEnum.default('Winter 2027'),

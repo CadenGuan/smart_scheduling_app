@@ -22,28 +22,28 @@ description: "Task list for GT22 GE requirements checklist"
 
 ## Phase 2: Shared
 
-- [ ] T005 [US1] Add `GE_REQUIREMENTS`, `GeCodeEnum`, `computeRemainingGEs`, `normalizeGeStatus` to `shared/src/onboarding.schema.ts` and re-export from `shared/src/index.ts` (FR-001, FR-003, FR-004)
-- [ ] T006 [US1] Add `geCategoriesCompleted` to `OnboardingQuestionnaireSchema`; rebuild `shared` (FR-002)
+- [X] T005 [US1] Add `GE_REQUIREMENTS`, `GeCodeEnum`, `computeRemainingGEs`, `normalizeGeStatus` to `shared/src/onboarding.schema.ts` and re-export from `shared/src/index.ts` (FR-001, FR-003, FR-004)
+- [X] T006 [US1] Add `geCategoriesCompleted` to `OnboardingQuestionnaireSchema`; rebuild `shared` (FR-002)
 
 ## Phase 3: Server
 
-- [ ] T007 [US3] Store `{ source, completed, remaining }` in `ProgressService.saveProgress` (FR-005)
-- [ ] T008 [US4] Normalize `geStatus` in `GET /api/users/:id`, the export route, and `ContextService.assembleContext` (FR-006)
+- [X] T007 [US3] Store `{ source, completed, remaining }` in `ProgressService.saveProgress` (FR-005)
+- [X] T008 [US4] Normalize `geStatus` in `GET /api/users/:id`, the export route, and `ContextService.assembleContext` (FR-006)
 
 ## Phase 4: Client
 
-- [ ] T009 [US1] Replace the local `GE_CATEGORIES` with the shared `GE_REQUIREMENTS`; switch Step 3 to `geCategoriesCompleted` with no default selection; export `OnboardingPageComponent` (FR-007, FR-008)
-- [ ] T010 [US2] Add the MyUCSC instruction panel and new-tab link (FR-009)
-- [ ] T011 [US1] Make each GE toggle accessible (`aria-pressed` or checkbox, with label) (FR-010)
+- [X] T009 [US1] Replace the local `GE_CATEGORIES` with the shared `GE_REQUIREMENTS`; switch Step 3 to `geCategoriesCompleted` with no default selection; export `OnboardingPageComponent` (FR-007, FR-008)
+- [X] T010 [US2] Add the MyUCSC instruction panel and new-tab link (FR-009)
+- [X] T011 [US1] Make each GE toggle accessible (`aria-pressed` or checkbox, with label) (FR-010)
 
 ## Phase 5: Agent
 
-- [ ] T012 [US5] Return `completedGEs` from `query_degree_ge_requirements` (FR-011)
-- [ ] T013 [US5] Recommend GE courses only from `remaining` in `mock_agent.py`; drop the `CC`/`ER`/`PR-C` fallback and the hard-coded GE course list in the reply (FR-012)
+- [X] T012 [US5] Return `completedGEs` from `query_degree_ge_requirements` (FR-011)
+- [X] T013 [US5] Recommend GE courses only from `remaining` in `mock_agent.py`; drop the `CC`/`ER`/`PR-C` fallback and the hard-coded GE course list in the reply (FR-012)
 
 ## Phase 6: Verify
 
-- [ ] T014 Run `npm test` and `npm run test:agent`; all `GT22` tests green, existing suites still green
+- [X] T014 Run `npm test` and `npm run test:agent`; all `GT22` tests green, existing suites still green
 - [ ] T015 Check Step 3 in the running app against `docs/tasks/sprint-4/GT22.md`
 
 ---

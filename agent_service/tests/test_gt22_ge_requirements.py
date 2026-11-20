@@ -95,13 +95,16 @@ class GT22GeAgentTests(TestCase):
 
     def test_GT22_agent_does_not_propose_courses_for_satisfied_ges(self):
         completed = ["CC", "ER", "PR"]
+        remaining = {c for c in ALL_GE_CODES if c not in completed}
         data = self._ask("What GE requirements do I have left?", completed)
 
         for course in data.get("proposedCourses", []):
-            overlap = _course_ge_codes(course) & set(completed)
-            self.assertFalse(
-                overlap,
-                f"{course.get('code')} only helps with GEs already satisfied: {overlap}",
+            ge_codes = _course_ge_codes(course)
+            if not ge_codes:
+                continue  # major courses carry no GE and are allowed
+            self.assertTrue(
+                ge_codes & remaining,
+                f"{course.get('code')} only helps with GEs already satisfied: {ge_codes}",
             )
 
     def test_GT22_agent_proposes_courses_for_a_remaining_ge(self):

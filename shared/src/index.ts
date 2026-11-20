@@ -28,6 +28,10 @@ export {
 
 export {
   GeSourceEnum,
+  GE_REQUIREMENTS,
+  GeCodeEnum,
+  computeRemainingGEs,
+  normalizeGeStatus,
   TimeWindowSchema,
   OnboardingQuestionnaireSchema,
   OnboardingProgressPayloadSchema,

@@ -1,6 +1,6 @@
 import { progressQueries } from '../db/queries/progressQueries.js';
 import { userQueries } from '../db/queries/userQueries.js';
-import { OnboardingProgressPayload } from 'shared';
+import { OnboardingProgressPayload, computeRemainingGEs } from 'shared';
 
 export class ProgressService {
   static getProgress(userId: string) {
@@ -42,12 +42,14 @@ export class ProgressService {
         major: answers.major,
         minor: answers.minor,
         intended_major: answers.intendedMajor,
-        ge_status: answers.geSource
-          ? JSON.stringify({
-              source: answers.geSource,
-              remaining: answers.geCategoriesRemaining ?? [],
-            })
-          : undefined,
+        ge_status:
+          answers.geSource || answers.geCategoriesCompleted
+            ? JSON.stringify({
+                source: answers.geSource ?? 'UCSC',
+                completed: answers.geCategoriesCompleted ?? [],
+                remaining: computeRemainingGEs(answers.geCategoriesCompleted ?? []),
+              })
+            : undefined,
         major_requirements_taken: answers.majorRequirementsTaken
           ? JSON.stringify(answers.majorRequirementsTaken)
           : undefined,

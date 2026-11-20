@@ -2,7 +2,7 @@
 
 **Feature Branch**: `GT22`  
 **Created**: 2026-11-19  
-**Status**: Tests written (red), implementation pending  
+**Status**: Implemented  
 **Input**: Sprint 4 Task GT22 (`docs/tasks/sprint-4/GT22.md`)
 
 ---
