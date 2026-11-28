@@ -714,6 +714,38 @@ def find_free_time(duration_minutes: int = 60) -> str:
     return f"Free time windows of at least {duration_minutes} minutes are available between morning and evening lectures."
 
 
+@tool
+def solve_schedule_tool(
+    target_credits: int = 15,
+    preferred_gap_minutes: int = 0,
+    orientation_goal: str = "",
+) -> str:
+    """
+    Runs the deterministic OR-Tools CP-SAT solver to compute a conflict-free schedule
+    respecting the student's preferences and existing Google Calendar busy blocks.
+    """
+    from .schedule_solver import load_catalog_for_solver, solve_schedule
+
+    prefs = dict(_active_context.get("preferences", {}))
+    if target_credits:
+        prefs["targetCredits"] = target_credits
+    schedule = _active_context.get("schedule", [])
+    busy_blocks = [
+        ev for ev in schedule if ev.get("isImported") or ev.get("type") == "GOOGLE_CALENDAR_BUSY"
+    ]
+    result = solve_schedule(
+        catalog=load_catalog_for_solver(),
+        completed_courses=prefs.get("majorRequirementsTaken", []),
+        preferences=prefs,
+        busy_blocks=busy_blocks,
+        chat_context={
+            "preferredGapMinutes": preferred_gap_minutes,
+            "orientationGoal": orientation_goal,
+        },
+    )
+    return json.dumps(result)
+
+
 def get_inspection_tools():
     return [
         inspect_student_profile,
@@ -735,4 +767,5 @@ def get_inspection_tools():
         delete_class_event,
         list_google_events,
         find_free_time,
+        solve_schedule_tool,
     ]

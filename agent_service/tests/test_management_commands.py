@@ -20,12 +20,18 @@ FIXTURES_DIR = os.path.join(Path(__file__).resolve().parent, "fixtures")
 
 class TestManagementCommands(unittest.TestCase):
     def setUp(self):
-        self.temp_dir = tempfile.TemporaryDirectory()
+        self.temp_dir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
         self.db_path = os.path.join(self.temp_dir.name, "test_catalog.db")
         self.chroma_path = os.path.join(self.temp_dir.name, "chroma")
         self.dag_json_path = os.path.join(self.temp_dir.name, "course_dag.json")
 
     def tearDown(self):
+        import gc
+
+        from chromadb.api.client import SharedSystemClient
+
+        SharedSystemClient.clear_system_cache()
+        gc.collect()
         self.temp_dir.cleanup()
 
     def test_ingest_degrees_command_with_fixture(self):

@@ -34,23 +34,15 @@ def parse_prerequisite_text_rules(raw_text: str) -> Dict[str, Any]:
             or_options = []
             for token in or_tokens:
                 c_matches = re.findall(r"\b([A-Z]{2,5}\s+\d+[A-Z]?)\b", token)
-                if c_matches:
-                    for cm in c_matches:
-                        or_options.append({"type": "COURSE", "course": cm.strip()})
-                else:
-                    stripped_tok = token.strip()
-                    if stripped_tok:
-                        or_options.append({"type": "COURSE", "course": stripped_tok})
+                for cm in c_matches:
+                    or_options.append({"type": "COURSE", "course": cm.strip()})
             if or_options:
                 and_courses.append({"type": "OR", "options": or_options})
         else:
-            # Simple AND course or single course
+            # Simple AND course or single course (strict course-code regex gate)
             c_matches = re.findall(r"\b([A-Z]{2,5}\s+\d+[A-Z]?)\b", part_clean)
-            if c_matches:
-                for cm in c_matches:
-                    and_courses.append({"type": "COURSE", "course": cm.strip()})
-            elif part_clean:
-                and_courses.append({"type": "COURSE", "course": part_clean.strip()})
+            for cm in c_matches:
+                and_courses.append({"type": "COURSE", "course": cm.strip()})
 
     return {"root_group": {"type": "AND", "courses": and_courses}}
 

@@ -1,7 +1,10 @@
+import gc
 import os
 import tempfile
 import unittest
 from pathlib import Path
+
+from chromadb.api.client import SharedSystemClient
 
 from agent.chroma_rag import (
     MockEmbeddingFunction,
@@ -16,7 +19,7 @@ FIXTURE_PATH = os.path.join(Path(__file__).resolve().parent, "fixtures", "cs_bs.
 
 class TestChromaRAG(unittest.TestCase):
     def setUp(self):
-        self.temp_dir = tempfile.TemporaryDirectory()
+        self.temp_dir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
         self.db_path = self.temp_dir.name
         self.collection = get_or_create_collection(
             name="test_degree_requirements",
@@ -25,6 +28,9 @@ class TestChromaRAG(unittest.TestCase):
         )
 
     def tearDown(self):
+        self.collection = None
+        SharedSystemClient.clear_system_cache()
+        gc.collect()
         self.temp_dir.cleanup()
 
     def test_mock_embedding_deterministic_vectors(self):

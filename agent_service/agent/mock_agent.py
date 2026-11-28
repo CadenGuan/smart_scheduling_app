@@ -68,6 +68,41 @@ def run_mock_agent(
             c_copy["pinned"] = True
             pinned_courses.append(c_copy)
 
+    # Scenario -1: Explicit OR-Tools optimization request
+    if any(kw in prompt_lower for kw in ["optimize", "ortools", "or-tools", "cp-sat", "solver"]):
+        from .schedule_solver import load_catalog_for_solver, solve_schedule
+
+        busy_blocks = [
+            ev
+            for ev in schedule
+            if ev.get("isImported") or ev.get("type") == "GOOGLE_CALENDAR_BUSY"
+        ]
+        solved = solve_schedule(
+            catalog=load_catalog_for_solver(),
+            completed_courses=completed_major,
+            preferences=preferences,
+            busy_blocks=busy_blocks,
+        )
+        tool_calls_simulated.append(
+            {"tool": "solve_schedule_tool", "output": {"status": solved["status"]}}
+        )
+        if solved["status"] in ("OPTIMAL", "FEASIBLE") and solved["proposedCourses"]:
+            proposed_courses = solved["proposedCourses"]
+            course_list = ", ".join(f"`{c['code']}`" for c in proposed_courses)
+            response = (
+                f"I ran the deterministic **OR-Tools CP-SAT** solver for `{major}` ({term})!\n\n"
+                f"- **Selected Courses ({solved['totalCredits']} credits):** {course_list}\n"
+                f"- **Conflicts:** 0 overlaps (respecting your calendar commitments)."
+            )
+        else:
+            response = f"No valid schedule satisfies all constraints ({solved.get('reason') or 'INFEASIBLE'})."
+        return {
+            "response": response,
+            "proposedCourses": proposed_courses,
+            "toolCalls": tool_calls_simulated,
+            "model": "mock-slug-advisor-v1",
+        }
+
     # Scenario 0: Explicit Course Addition / Pinning / Replacement Request
     if pinned_courses:
         pinned_codes = [f"`{c.get('code')}`" for c in pinned_courses]
