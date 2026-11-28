@@ -71,9 +71,27 @@ def run_agent(
         llm = ChatGoogleGenerativeAI(
             model=model_name,
             google_api_key=api_key,
-            temperature=0.4,
+            max_retries=3,
+            timeout=60,
         )
         llm_with_tools = llm.bind_tools(tools)
+
+        def _invoke_resilient(runnable: Any, msgs: List[Any]) -> Any:
+            last_err: Optional[Exception] = None
+            for attempt in range(3):
+                try:
+                    return runnable.invoke(msgs)
+                except Exception as exc:
+                    last_err = exc
+                    msg_l = str(exc).lower()
+                    if attempt < 2 and (
+                        "disconnected" in msg_l or "connection" in msg_l or "timeout" in msg_l
+                    ):
+                        continue
+                    raise
+            if last_err is not None:
+                raise last_err
+            raise RuntimeError("LLM invocation failed")
 
         system_prompt = build_system_prompt(student, preferences, schedule)
         messages: List[Any] = [SystemMessage(content=system_prompt)]
@@ -92,12 +110,12 @@ def run_agent(
 
         current_messages: List[Any] = list(messages)
         tool_calls_executed = []
-        max_tool_hops = 5
+        max_tool_hops = 3
         hop = 0
         ai_msg = None
 
         while hop < max_tool_hops:
-            ai_msg = llm_with_tools.invoke(current_messages)
+            ai_msg = _invoke_resilient(llm_with_tools, current_messages)
             current_messages.append(ai_msg)
 
             tool_calls = getattr(ai_msg, "tool_calls", None)
@@ -150,7 +168,7 @@ def run_agent(
                     content="Please provide your final direct, conversational answer to the student based on the information retrieved above."
                 )
             )
-            final_turn = llm.invoke(current_messages)
+            final_turn = _invoke_resilient(llm, current_messages)
             final_content = getattr(final_turn, "content", "")
             if isinstance(final_content, list):
                 content_text = "\n".join(
@@ -168,39 +186,64 @@ def run_agent(
         # Extract proposed courses matching CalendarEvent schema
         proposed_courses: List[Dict[str, Any]] = []
         course_ids_seen = set()
+        used_solver = False
 
-        # 1. Collect from executed search_course_catalog tool calls
+        # 0. Collect directly from solve_schedule_tool if the solver ran
         for tool_exec in tool_calls_executed:
-            if tool_exec.get("tool") == "search_course_catalog":
+            if tool_exec.get("tool") == "solve_schedule_tool":
                 output_val = tool_exec.get("output")
+                parsed_solver = None
                 if isinstance(output_val, str):
                     try:
-                        parsed = json.loads(output_val)
+                        parsed_solver = json.loads(output_val)
                     except Exception:
-                        parsed = []
-                elif isinstance(output_val, list):
-                    parsed = output_val
-                else:
-                    parsed = []
+                        parsed_solver = None
+                elif isinstance(output_val, dict):
+                    parsed_solver = output_val
 
-                if isinstance(parsed, list):
-                    for c in parsed:
+                if isinstance(parsed_solver, dict) and isinstance(
+                    parsed_solver.get("proposedCourses"), list
+                ):
+                    used_solver = True
+                    for c in parsed_solver["proposedCourses"]:
                         if isinstance(c, dict) and "id" in c and c["id"] not in course_ids_seen:
                             course_ids_seen.add(c["id"])
                             proposed_courses.append(dict(c))
 
-        # 2. Collect any courses mentioned by code or id in agent output or user prompt
-        catalog = get_course_catalog()
-        combined_text = (str(content_text) + " " + prompt).lower()
-        for cat_course in catalog:
-            code_lower = (cat_course.get("code") or "").lower()
-            id_lower = (cat_course.get("id") or "").lower()
-            if cat_course["id"] not in course_ids_seen:
-                if (
-                    code_lower and re.search(r"\b" + re.escape(code_lower) + r"\b", combined_text)
-                ) or (id_lower and id_lower in combined_text):
-                    course_ids_seen.add(cat_course["id"])
-                    proposed_courses.append(dict(cat_course))
+        # 1. Collect from executed search_course_catalog tool calls (when solver did not run)
+        if not used_solver:
+            for tool_exec in tool_calls_executed:
+                if tool_exec.get("tool") == "search_course_catalog":
+                    output_val = tool_exec.get("output")
+                    if isinstance(output_val, str):
+                        try:
+                            parsed = json.loads(output_val)
+                        except Exception:
+                            parsed = []
+                    elif isinstance(output_val, list):
+                        parsed = output_val
+                    else:
+                        parsed = []
+
+                    if isinstance(parsed, list):
+                        for c in parsed:
+                            if isinstance(c, dict) and "id" in c and c["id"] not in course_ids_seen:
+                                course_ids_seen.add(c["id"])
+                                proposed_courses.append(dict(c))
+
+            # 2. Collect any courses mentioned by code or id in agent output or user prompt
+            catalog = get_course_catalog()
+            combined_text = (str(content_text) + " " + prompt).lower()
+            for cat_course in catalog:
+                code_lower = (cat_course.get("code") or "").lower()
+                id_lower = (cat_course.get("id") or "").lower()
+                if cat_course["id"] not in course_ids_seen:
+                    if (
+                        code_lower
+                        and re.search(r"\b" + re.escape(code_lower) + r"\b", combined_text)
+                    ) or (id_lower and id_lower in combined_text):
+                        course_ids_seen.add(cat_course["id"])
+                        proposed_courses.append(dict(cat_course))
 
         # 3. Detect and set pinned status based on explicit user requests
         for candidate in proposed_courses:
