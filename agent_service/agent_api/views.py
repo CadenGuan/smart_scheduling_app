@@ -7,6 +7,7 @@ from django.http import HttpRequest, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from agent.agent import run_agent
+from agent.schedule_solver import load_catalog_for_solver, solve_schedule
 
 
 @csrf_exempt
@@ -279,3 +280,39 @@ def push_event_to_google(request: HttpRequest) -> JsonResponse:
         return JsonResponse(
             {"success": False, "error": f"Failed to push to Google Calendar: {str(e)}"}, status=500
         )
+
+
+@csrf_exempt
+def solve_schedule_endpoint(request: HttpRequest) -> JsonResponse:
+    """POST /api/agent/solve/ — Deterministic OR-Tools CP-SAT schedule solver endpoint."""
+    if request.method != "POST":
+        return JsonResponse(
+            {"success": False, "error": "Method not allowed. Use POST."}, status=405
+        )
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"success": False, "error": "Malformed JSON body."}, status=400)
+
+    catalog = data.get("catalog")
+    if not isinstance(catalog, list) or len(catalog) == 0:
+        catalog = load_catalog_for_solver()
+
+    preferences = data.get("preferences") or {}
+    current_schedule = data.get("currentSchedule") or []
+    busy_blocks = [
+        ev
+        for ev in current_schedule
+        if ev.get("isImported") or ev.get("type") == "GOOGLE_CALENDAR_BUSY"
+    ]
+    completed = preferences.get("majorRequirementsTaken") or data.get("completedCourses") or []
+
+    result = solve_schedule(
+        catalog=catalog,
+        dag=data.get("dag"),
+        completed_courses=completed,
+        preferences=preferences,
+        busy_blocks=busy_blocks,
+        chat_context=data.get("chatContext"),
+    )
+    return JsonResponse({"success": True, "data": result}, status=200)

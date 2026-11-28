@@ -16,7 +16,7 @@ from agent.tools import (
 
 class TestCompositeQueriesAndTools(unittest.TestCase):
     def setUp(self):
-        self.temp_dir = tempfile.TemporaryDirectory()
+        self.temp_dir = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
         self.db_path = os.path.join(self.temp_dir.name, "test_academic_catalog.db")
         init_db(self.db_path)
 
@@ -130,6 +130,13 @@ class TestCompositeQueriesAndTools(unittest.TestCase):
         set_tool_context(self.student, self.preferences, [])
 
     def tearDown(self):
+        import gc
+
+        from chromadb.api.client import SharedSystemClient
+
+        self.collection = None
+        SharedSystemClient.clear_system_cache()
+        gc.collect()
         self.temp_dir.cleanup()
 
     def test_component_query_what_sections_for_cse_30(self):

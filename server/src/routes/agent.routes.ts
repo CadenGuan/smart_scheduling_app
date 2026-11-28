@@ -7,6 +7,7 @@ import { AgentChatRequestSchema } from 'shared';
 import { conversationQueries } from '../db/queries/conversationQueries.js';
 import { userQueries } from '../db/queries/userQueries.js';
 import { calendarQueries } from '../db/queries/calendarQueries.js';
+import { scheduleQueries } from '../db/queries/scheduleQueries.js';
 import { ContextService } from '../services/context.service.js';
 import { AgentService } from '../services/agent.service.js';
 import { CalendarService, MacroPivotResult } from '../services/calendar.service.js';
@@ -96,9 +97,66 @@ router.post(
 
     // 4.5 Compute calendar preview and persist if proposedCourses present
     let preview;
+    const usedOrtoolsSolver = Boolean(
+      agentResult.toolCalls?.some((tc: any) => tc?.tool === 'solve_schedule_tool')
+    );
     if (agentResult.proposedCourses && agentResult.proposedCourses.length > 0) {
-      preview = CalendarService.getPreview(userId, undefined, agentResult.proposedCourses);
-      calendarQueries.saveUserCalendarEvents(userId, preview.term, preview.events);
+      if (usedOrtoolsSolver) {
+        const solverTerm =
+          agentResult.proposedCourses.find((c) => c.term)?.term ||
+          context.preferences.targetTerm ||
+          'Winter 2027';
+        const totalCredits = agentResult.proposedCourses.reduce(
+          (sum, c) => sum + (c.credits || 0),
+          0
+        );
+        preview = {
+          term: solverTerm,
+          totalCredits,
+          events: agentResult.proposedCourses,
+        };
+        calendarQueries.saveUserCalendarEvents(userId, preview.term, preview.events);
+
+        // Also sync to user_schedule (authoritative source rendered by CalendarPreview)
+        const existingSchedule = scheduleQueries.getScheduleByUserId(userId);
+        for (const item of existingSchedule) {
+          if (!item.isImported) {
+            scheduleQueries.deleteScheduleEvent(item.id, userId);
+          }
+        }
+        const dayShortMap: Record<string, string> = {
+          Monday: 'M',
+          Tuesday: 'Tu',
+          Wednesday: 'W',
+          Thursday: 'Th',
+          Friday: 'F',
+        };
+        const termLower = solverTerm.toLowerCase();
+        const [startDate, endDate] = termLower.includes('summer')
+          ? ['2027-06-21', '2027-09-03']
+          : termLower.includes('spring')
+            ? ['2027-03-29', '2027-06-11']
+            : termLower.includes('fall')
+              ? ['2026-09-24', '2026-12-11']
+              : ['2027-01-04', '2027-03-19'];
+        for (const ev of agentResult.proposedCourses) {
+          const daysStr = (ev.days || []).map((d) => dayShortMap[d] || d).join(',') || 'M';
+          scheduleQueries.createScheduleEvent(userId, {
+            courseCode: ev.code || 'COURSE',
+            title: ev.title,
+            description: ev.location ? `Location: ${ev.location}` : '',
+            days: daysStr,
+            startTime: ev.startTime,
+            endTime: ev.endTime,
+            startDate,
+            endDate,
+            isImported: false,
+          });
+        }
+      } else {
+        preview = CalendarService.getPreview(userId, undefined, agentResult.proposedCourses);
+        calendarQueries.saveUserCalendarEvents(userId, preview.term, preview.events);
+      }
     } else {
       preview = CalendarService.getPreview(userId);
     }
