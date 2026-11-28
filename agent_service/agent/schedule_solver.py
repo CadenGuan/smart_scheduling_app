@@ -180,6 +180,47 @@ def _extract_prereq_codes(node: Any) -> set[str]:
     return codes
 
 
+def _compute_prereq_depth(
+    code: str, dag: Dict[str, Any], visited: Optional[set[str]] = None
+) -> int:
+    """Computes the longest prerequisite chain depth for a course in the DAG."""
+    seen = visited or set()
+    norm = code.strip().upper()
+    if norm in seen:
+        return 0
+    entry = dag.get(norm)
+    if not entry:
+        return 0
+    prereqs = _extract_prereq_codes(entry)
+    if not prereqs:
+        return 0
+    next_seen = seen | {norm}
+    return 1 + max(_compute_prereq_depth(p, dag, next_seen) for p in prereqs)
+
+
+def score_electives_for_goal(
+    orientation_goal: str, candidates: List[Dict[str, Any]]
+) -> Dict[str, int]:
+    """Scores candidate electives (0-100) by alignment with the student's orientation goal."""
+    if not orientation_goal or not candidates:
+        return {}
+
+    goal_tokens = set(re.findall(r"[a-z0-9]+", orientation_goal.lower()))
+    stop_words = {"i", "want", "to", "in", "and", "or", "the", "a", "an", "for", "of", "with"}
+    meaningful = goal_tokens - stop_words or goal_tokens
+
+    scores: Dict[str, int] = {}
+    for cand in candidates:
+        code = str(cand.get("course_code") or cand.get("code") or "").strip().upper()
+        if not code:
+            continue
+        text = f"{cand.get('title', '')} {cand.get('description', '')}".lower()
+        cand_tokens = set(re.findall(r"[a-z0-9]+", text))
+        overlap = len(meaningful & cand_tokens)
+        scores[code] = min(100, overlap * 25)
+    return scores
+
+
 def _compute_core_unlock_weights(dag: Dict[str, Any]) -> Dict[str, int]:
     """Counts how many downstream courses each course unlocks (DAG + UCSC CS core graph)."""
     import networkx as nx
@@ -229,11 +270,23 @@ def solve_schedule(
     chat_context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Solves course and section selection using Google OR-Tools CP-SAT."""
-    _ = chat_context
+    ctx = chat_context or {}
     prefs = preferences or {}
     target_credits = int(prefs.get("targetCredits") or 15)
     term = str(prefs.get("targetTerm") or "Winter 2027")
     completed_set = {str(c).strip().upper() for c in (completed_courses or []) if str(c).strip()}
+
+    requested_electives = {
+        str(c).strip().upper() for c in (ctx.get("requestedElectives") or []) if str(c).strip()
+    }
+    required_courses = [
+        str(c).strip().upper() for c in (ctx.get("requiredCourses") or []) if str(c).strip()
+    ]
+    extraneous_courses = {
+        str(c).strip().upper() for c in (ctx.get("extraneousCourses") or []) if str(c).strip()
+    }
+    orientation_goal = str(ctx.get("orientationGoal") or "").strip()
+    elective_descs: Dict[str, str] = ctx.get("electiveDescriptions") or {}
 
     active_dag = dag if dag is not None else load_course_dag()
     cs_graph = build_ucsc_cs_dag()
@@ -248,6 +301,20 @@ def solve_schedule(
             s["course_code"], active_dag, completed_set, cs_graph, use_cs_fallback
         )
     ]
+
+    elective_scores: Dict[str, int] = {}
+    if orientation_goal and sections:
+        cands = [
+            {
+                "course_code": s["course_code"],
+                "title": s["title"],
+                "description": elective_descs.get(s["course_code"], ""),
+            }
+            for s in sections
+            if s["section_type"] == "LECTURE"
+        ]
+        elective_scores = score_electives_for_goal(orientation_goal, cands)
+
     model = cp_model.CpModel()
 
     sec_vars: List[cp_model.IntVar] = []
@@ -322,15 +389,82 @@ def solve_schedule(
                         model.add(sec_vars[i] == 0)
 
     # Credit cap
-    model.add(
-        sum(sections[i]["credits"] * sec_vars[i] for i in range(len(sections))) <= target_credits
-    )
+    total_credits_expr = sum(sections[i]["credits"] * sec_vars[i] for i in range(len(sections)))
+    model.add(total_credits_expr <= target_credits)
 
-    # Maximize scheduled LECTURE priority (unlock depth + credits; discussions = 0)
+    # GE limit: at most 1 course per GE category
+    by_ge: Dict[str, List[int]] = {}
+    for idx, sec in enumerate(sections):
+        if sec["section_type"] == "LECTURE" and sec.get("ge"):
+            ge_key = str(sec["ge"]).strip().upper()
+            if ge_key and ge_key not in ("NONE", "N/A"):
+                by_ge.setdefault(ge_key, []).append(idx)
+    for ge_indices in by_ge.values():
+        model.add(sum(sec_vars[i] for i in ge_indices) <= 1)
+
+    # Required courses (used for hard requirements & conflict diagnostics)
+    for req_code in required_courses:
+        req_indices = lectures_by_course.get(req_code, [])
+        if not req_indices:
+            return {
+                "status": "INFEASIBLE",
+                "proposedCourses": [],
+                "totalCredits": 0,
+                "reason": f"Required course {req_code} has no eligible schedulable sections.",
+            }
+        model.add(sum(sec_vars[i] for i in req_indices) == 1)
+
+    # Soft 12-unit full-time floor when targetCredits >= 12
+    full_time_bonus: Any = 0
+    if target_credits >= 12:
+        reached_12 = model.new_bool_var("reached_12_units")
+        model.add(total_credits_expr >= 12).only_enforce_if(reached_12)
+        full_time_bonus = 200 * reached_12
+
+    # Preferred gap time bonuses via OnlyEnforceIf (sparse same-day pairs)
+    gap_bonus: Any = 0
+    raw_gap = ctx.get("preferredGapMinutes")
+    preferred_gap_min = int(raw_gap) if raw_gap is not None and int(raw_gap) > 0 else 0
+    if preferred_gap_min > 0:
+        gap_terms: List[Any] = []
+        by_day_idx: Dict[str, List[int]] = {}
+        for idx, sec in enumerate(sections):
+            for day in sec["days"]:
+                by_day_idx.setdefault(day, []).append(idx)
+        for day, day_indices in by_day_idx.items():
+            for i in day_indices:
+                for j in day_indices:
+                    if i == j or sections[i]["course_code"] == sections[j]["course_code"]:
+                        continue
+                    diff = sections[j]["start_min"] - sections[i]["end_min"]
+                    if abs(diff - preferred_gap_min) <= 10:
+                        g_var = model.new_bool_var(f"gap_{i}_{j}_{day}")
+                        model.add_bool_and([sec_vars[i], sec_vars[j]]).only_enforce_if(g_var)
+                        model.add_bool_or([sec_vars[i].Not(), sec_vars[j].Not()]).only_enforce_if(
+                            g_var.Not()
+                        )
+                        gap_terms.append(8 * g_var)
+        if gap_terms:
+            gap_bonus = sum(gap_terms)
+
+    # Maximize scheduled LECTURE priority (unlock depth + electives + extraneous + credits)
+    def _lecture_weight(sec: Dict[str, Any]) -> int:
+        c_code = sec["course_code"]
+        w = 10 + sec["credits"] + 15 * unlock_weights.get(c_code, 0)
+        if c_code in requested_electives:
+            w += 150
+        if c_code in elective_scores:
+            w += elective_scores[c_code]
+        if c_code in extraneous_courses:
+            depth = _compute_prereq_depth(c_code, active_dag)
+            w += max(5, 40 - 10 * depth)
+        return w
+
     model.maximize(
-        sum(
-            (10 + sections[i]["credits"] + 15 * unlock_weights.get(sections[i]["course_code"], 0))
-            * sec_vars[i]
+        full_time_bonus
+        + gap_bonus
+        + sum(
+            _lecture_weight(sections[i]) * sec_vars[i]
             for i in range(len(sections))
             if sections[i]["section_type"] == "LECTURE"
         )
@@ -341,11 +475,15 @@ def solve_schedule(
     status_name = solver.status_name(status)
 
     if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+        req_msg = f" for {', '.join(required_courses)}" if required_courses else ""
         return {
             "status": "INFEASIBLE",
             "proposedCourses": [],
             "totalCredits": 0,
-            "reason": "No valid non-overlapping schedule satisfies the given constraints.",
+            "reason": (
+                f"No valid non-overlapping schedule{req_msg} fits within "
+                f"{target_credits} credits and your calendar commitments."
+            ),
         }
 
     proposed = [

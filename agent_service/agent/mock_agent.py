@@ -77,11 +77,16 @@ def run_mock_agent(
             for ev in schedule
             if ev.get("isImported") or ev.get("type") == "GOOGLE_CALENDAR_BUSY"
         ]
+        gap_match = re.search(r"(\d+)\s*(?:min|minute|minutes)\s*(?:gap|break)", prompt_lower)
+        chat_ctx: Dict[str, Any] = {"orientationGoal": prompt}
+        if gap_match:
+            chat_ctx["preferredGapMinutes"] = int(gap_match.group(1))
         solved = solve_schedule(
             catalog=load_catalog_for_solver(),
             completed_courses=completed_major,
             preferences=preferences,
             busy_blocks=busy_blocks,
+            chat_context=chat_ctx,
         )
         tool_calls_simulated.append(
             {"tool": "solve_schedule_tool", "output": {"status": solved["status"]}}
