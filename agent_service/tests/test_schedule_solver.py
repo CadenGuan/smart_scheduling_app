@@ -386,3 +386,50 @@ class TestOrtoolsSchedulerAC1(unittest.TestCase):
         self.assertNotIn("CSE 101", codes)
         self.assertNotIn("CSE 100L", codes)
         self.assertNotIn("ART 10F", codes)
+
+    def test_ortools_scheduler_ac3_discussion_title_and_unique_chat_summary(self):
+        """ortools-scheduler: AC3 - Discussions are titled '<CODE> Discussion' and chat lists each course once."""
+        from unittest.mock import patch
+
+        from agent.mock_agent import run_mock_agent
+
+        catalog = [
+            {
+                "course_code": "CSE 20",
+                "section": "01",
+                "title": "Intro Python",
+                "credits": 5,
+                "days": "M,W,F",
+                "start_time": "10:00",
+                "end_time": "11:05",
+                "section_type": "LECTURE",
+            },
+            {
+                "course_code": "CSE 20",
+                "section": "01A",
+                "title": "Intro Python",
+                "credits": None,
+                "days": "Tu",
+                "start_time": "09:00",
+                "end_time": "10:05",
+                "section_type": "DISCUSSION",
+            },
+        ]
+
+        result = solve_schedule(catalog=catalog, dag={}, preferences={"targetCredits": 10})
+        discs = [c for c in result["proposedCourses"] if c["sectionType"] == "DISCUSSION"]
+        self.assertEqual(len(discs), 1)
+        self.assertEqual(discs[0]["title"], "CSE 20 Discussion")
+
+        with (
+            patch("agent.schedule_solver.load_catalog_for_solver", return_value=catalog),
+            patch("agent.schedule_solver.load_course_dag", return_value={}),
+        ):
+            agent_res = run_mock_agent(
+                prompt="optimize my schedule",
+                student={"name": "Sammy", "major": "Computer Science B.S.", "standing": "Freshman"},
+                preferences={"targetCredits": 10, "targetTerm": "Winter 2027"},
+                schedule=[],
+                history=[],
+            )
+        self.assertEqual(agent_res["response"].count("`CSE 20`"), 1)

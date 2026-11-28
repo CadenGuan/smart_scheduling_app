@@ -115,10 +115,14 @@ def _to_calendar_event(sec: Dict[str, Any], term: str) -> Dict[str, Any]:
     ev_type = "GE" if ge else "MAJOR"
     num_match = re.search(r"\d+", code)
     level = "LOWER" if (num_match and int(num_match.group(0)) < 100) else "UPPER"
+    if sec["section_type"] == "DISCUSSION":
+        title = f"{code} Discussion"
+    else:
+        title = f"{code}: {sec['title']}" if not sec["title"].startswith(code) else sec["title"]
     return {
         "id": f"{slug}-{sec_slug}",
         "code": code,
-        "title": f"{code}: {sec['title']}" if not sec["title"].startswith(code) else sec["title"],
+        "title": title,
         "department": dept,
         "level": level,
         "type": ev_type,

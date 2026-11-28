@@ -88,7 +88,17 @@ def run_mock_agent(
         )
         if solved["status"] in ("OPTIMAL", "FEASIBLE") and solved["proposedCourses"]:
             proposed_courses = solved["proposedCourses"]
-            course_list = ", ".join(f"`{c['code']}`" for c in proposed_courses)
+            disc_codes = {
+                c["code"] for c in proposed_courses if c.get("sectionType") == "DISCUSSION"
+            }
+            seen_codes: list[str] = []
+            for c in proposed_courses:
+                if c.get("sectionType") != "DISCUSSION" and c["code"] not in seen_codes:
+                    seen_codes.append(c["code"])
+            course_list = ", ".join(
+                f"`{code}` (+ Discussion)" if code in disc_codes else f"`{code}`"
+                for code in seen_codes
+            )
             response = (
                 f"I ran the deterministic **OR-Tools CP-SAT** solver for `{major}` ({term})!\n\n"
                 f"- **Selected Courses ({solved['totalCredits']} credits):** {course_list}\n"
