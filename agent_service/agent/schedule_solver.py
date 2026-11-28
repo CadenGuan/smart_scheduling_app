@@ -59,6 +59,19 @@ def _parse_minutes(hhmm: Any) -> Optional[int]:
 
 
 def _dedup_and_normalize_catalog(catalog: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    timed_disc_codes: set[str] = set()
+    for row in catalog:
+        c_code = str(row.get("course_code") or row.get("code") or "").strip().upper()
+        s_type = str(row.get("section_type") or "LECTURE").strip().upper()
+        if (
+            c_code
+            and s_type != "LECTURE"
+            and _parse_days(row.get("days"))
+            and _parse_minutes(row.get("start_time") or row.get("startTime")) is not None
+            and _parse_minutes(row.get("end_time") or row.get("endTime")) is not None
+        ):
+            timed_disc_codes.add(c_code)
+
     seen: set[Tuple[str, str, str]] = set()
     cleaned: List[Dict[str, Any]] = []
     for row in catalog:
@@ -76,7 +89,14 @@ def _dedup_and_normalize_catalog(catalog: List[Dict[str, Any]]) -> List[Dict[str
         end_raw = row.get("end_time") or row.get("endTime")
         start_min = _parse_minutes(start_raw)
         end_min = _parse_minutes(end_raw)
-        if not days or start_min is None or end_min is None or end_min <= start_min:
+        is_async_lec = (
+            sec_type == "LECTURE"
+            and code in timed_disc_codes
+            and (not days or start_min is None or end_min is None)
+        )
+        if not is_async_lec and (
+            not days or start_min is None or end_min is None or end_min <= start_min
+        ):
             continue
 
         seen.add(key)
@@ -94,11 +114,11 @@ def _dedup_and_normalize_catalog(catalog: List[Dict[str, Any]]) -> List[Dict[str
                 "title": str(row.get("title") or code).strip(),
                 "credits": credits,
                 "ge": row.get("ge"),
-                "days": days,
-                "start_time": f"{start_min // 60:02d}:{start_min % 60:02d}",
-                "end_time": f"{end_min // 60:02d}:{end_min % 60:02d}",
-                "start_min": start_min,
-                "end_min": end_min,
+                "days": [] if is_async_lec else days,
+                "start_time": "" if is_async_lec else f"{start_min // 60:02d}:{start_min % 60:02d}",
+                "end_time": "" if is_async_lec else f"{end_min // 60:02d}:{end_min % 60:02d}",
+                "start_min": 0 if is_async_lec else start_min,
+                "end_min": 0 if is_async_lec else end_min,
                 "room": str(row.get("room") or row.get("location") or "TBA").strip(),
                 "instructor": str(row.get("instructor") or "Staff").strip(),
             }
@@ -106,12 +126,14 @@ def _dedup_and_normalize_catalog(catalog: List[Dict[str, Any]]) -> List[Dict[str
     return cleaned
 
 
-def _to_calendar_event(sec: Dict[str, Any], term: str) -> Dict[str, Any]:
+def _to_calendar_event(
+    sec: Dict[str, Any], term: str, is_major_course: bool = False
+) -> Dict[str, Any]:
     code = sec["course_code"]
     slug = code.lower().replace(" ", "-")
     sec_slug = sec["section"].lower()
     dept = code.split()[0] if " " in code else code
-    ge = sec.get("ge")
+    ge = None if is_major_course else sec.get("ge")
     ev_type = "GE" if ge else "MAJOR"
     num_match = re.search(r"\d+", code)
     level = "LOWER" if (num_match and int(num_match.group(0)) < 100) else "UPPER"
@@ -198,13 +220,9 @@ def _compute_prereq_depth(
     return 1 + max(_compute_prereq_depth(p, dag, next_seen) for p in prereqs)
 
 
-def score_electives_for_goal(
+def _keyword_score_electives(
     orientation_goal: str, candidates: List[Dict[str, Any]]
 ) -> Dict[str, int]:
-    """Scores candidate electives (0-100) by alignment with the student's orientation goal."""
-    if not orientation_goal or not candidates:
-        return {}
-
     goal_tokens = set(re.findall(r"[a-z0-9]+", orientation_goal.lower()))
     stop_words = {"i", "want", "to", "in", "and", "or", "the", "a", "an", "for", "of", "with"}
     meaningful = goal_tokens - stop_words or goal_tokens
@@ -219,6 +237,58 @@ def score_electives_for_goal(
         overlap = len(meaningful & cand_tokens)
         scores[code] = min(100, overlap * 25)
     return scores
+
+
+def score_electives_for_goal(
+    orientation_goal: str, candidates: List[Dict[str, Any]]
+) -> Dict[str, int]:
+    """Scores candidate electives (0-100) by alignment with the student's orientation goal."""
+    if not orientation_goal or not candidates:
+        return {}
+
+    is_mock = (
+        os.environ.get("USE_MOCK_AGENT", "false").lower() in ("true", "1", "t")
+        or os.environ.get("AGENT_MODE", "").lower() == "mock"
+        or "PYTEST_CURRENT_TEST" in os.environ
+    )
+    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    if not is_mock and api_key:
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+
+            model_name = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+            llm = ChatGoogleGenerativeAI(
+                model=model_name, google_api_key=api_key, max_retries=2, timeout=30
+            )
+            seen_codes: set[str] = set()
+            compact: List[Dict[str, str]] = []
+            for c in candidates:
+                code = str(c.get("course_code") or c.get("code") or "").strip().upper()
+                if code and code not in seen_codes:
+                    seen_codes.add(code)
+                    compact.append({"code": code, "title": str(c.get("title", ""))})
+                if len(compact) >= 50:
+                    break
+            prompt_text = (
+                f"Score each course 0-100 for relevance to the student goal: '{orientation_goal}'. "
+                f"Return ONLY a JSON object mapping course code to integer score (0-100). "
+                f"Courses: {json.dumps(compact)}"
+            )
+            resp = llm.invoke(prompt_text)
+            raw = str(getattr(resp, "content", "") or "")
+            m = re.search(r"\{[\s\S]*\}", raw)
+            if m:
+                parsed = json.loads(m.group(0))
+                if isinstance(parsed, dict):
+                    return {
+                        str(k).strip().upper(): max(0, min(100, int(v)))
+                        for k, v in parsed.items()
+                        if isinstance(v, (int, float))
+                    }
+        except Exception:
+            pass
+
+    return _keyword_score_electives(orientation_goal, candidates)
 
 
 def _compute_core_unlock_weights(dag: Dict[str, Any]) -> Dict[str, int]:
@@ -240,15 +310,67 @@ def _compute_core_unlock_weights(dag: Dict[str, Any]) -> Dict[str, int]:
     return weights
 
 
+def _course_number(code: str) -> int:
+    m = re.search(r"\d+", code)
+    return int(m.group(0)) if m else 0
+
+
+def _major_dept_prefixes(major: str) -> set[str]:
+    m = major.lower()
+    if not m:
+        return set()
+    if "computer science" in m or "cse" in m or m.startswith("cs "):
+        return {"CSE"}
+    if "art" in m:
+        return {"ART", "HAVC"}
+    if "math" in m:
+        return {"MATH"}
+    if "stat" in m:
+        return {"STAT"}
+    if "econ" in m:
+        return {"ECON"}
+    if "phil" in m:
+        return {"PHIL"}
+    return set()
+
+
+def _query_major_courses_from_chroma(major: str) -> set[str]:
+    if not major or "PYTEST_CURRENT_TEST" in os.environ:
+        return set()
+    try:
+        from .chroma_rag import query_degree_chunks
+
+        chunks = query_degree_chunks(
+            f"{major} major requirements core courses", major=major, n_results=5
+        )
+        codes: set[str] = set()
+        for ch in chunks:
+            text = str(ch.get("document") or ch.get("text") or "")
+            for match in re.findall(r"\b[A-Z]{2,5}\s+\d+[A-Z]?\b", text.upper()):
+                codes.add(match)
+        return codes
+    except Exception:
+        return set()
+
+
 def _is_course_eligible_for_solver(
     code: str,
     dag: Dict[str, Any],
     completed_set: set[str],
     cs_graph: Any,
     use_cs_fallback: bool,
+    standing: str = "",
+    explicit_allow: Optional[set[str]] = None,
 ) -> bool:
     if code in completed_set:
         return False
+    allowed = explicit_allow or set()
+    num = _course_number(code)
+    st_lower = standing.strip().lower()
+    is_undergrad = st_lower in ("freshman", "sophomore", "junior", "senior")
+    if is_undergrad and num >= 200 and code not in allowed:
+        return False
+
     entry = dag.get(code)
     if entry is not None:
         sanitized = _sanitize_dag_node(entry)
@@ -258,6 +380,8 @@ def _is_course_eligible_for_solver(
     if use_cs_fallback and code in cs_graph:
         preds = list(cs_graph.predecessors(code))
         return all(p in completed_set for p in preds)
+    if st_lower == "freshman" and num >= 100 and code not in allowed:
+        return False
     return True
 
 
@@ -287,18 +411,30 @@ def solve_schedule(
     }
     orientation_goal = str(ctx.get("orientationGoal") or "").strip()
     elective_descs: Dict[str, str] = ctx.get("electiveDescriptions") or {}
+    major = str(ctx.get("major") or prefs.get("major") or "").strip()
+    standing = str(ctx.get("standing") or prefs.get("standing") or "").strip()
+    major_depts = _major_dept_prefixes(major)
+    major_chroma_courses = _query_major_courses_from_chroma(major)
+    is_cs_major = (not major) or ("CSE" in major_depts)
 
     active_dag = dag if dag is not None else load_course_dag()
     cs_graph = build_ucsc_cs_dag()
-    use_cs_fallback = dag is None
-    unlock_weights = _compute_core_unlock_weights(active_dag)
+    use_cs_fallback = dag is None and is_cs_major
+    unlock_weights = _compute_core_unlock_weights(active_dag) if is_cs_major else {}
+    explicit_allow = requested_electives | set(required_courses) | extraneous_courses
 
     raw_sections = _dedup_and_normalize_catalog(catalog)
     sections = [
         s
         for s in raw_sections
         if _is_course_eligible_for_solver(
-            s["course_code"], active_dag, completed_set, cs_graph, use_cs_fallback
+            s["course_code"],
+            active_dag,
+            completed_set,
+            cs_graph,
+            use_cs_fallback,
+            standing=standing,
+            explicit_allow=explicit_allow,
         )
     ]
 
@@ -392,10 +528,18 @@ def solve_schedule(
     total_credits_expr = sum(sections[i]["credits"] * sec_vars[i] for i in range(len(sections)))
     model.add(total_credits_expr <= target_credits)
 
-    # GE limit: at most 1 course per GE category
+    def _is_major_course(c_code: str) -> bool:
+        dept = c_code.split()[0] if " " in c_code else ""
+        return bool((major_depts and dept in major_depts) or (c_code in major_chroma_courses))
+
+    # GE limit: at most 1 non-major course per GE category
     by_ge: Dict[str, List[int]] = {}
     for idx, sec in enumerate(sections):
-        if sec["section_type"] == "LECTURE" and sec.get("ge"):
+        if (
+            sec["section_type"] == "LECTURE"
+            and sec.get("ge")
+            and not _is_major_course(sec["course_code"])
+        ):
             ge_key = str(sec["ge"]).strip().upper()
             if ge_key and ge_key not in ("NONE", "N/A"):
                 by_ge.setdefault(ge_key, []).append(idx)
@@ -443,25 +587,68 @@ def solve_schedule(
                         model.add_bool_or([sec_vars[i].Not(), sec_vars[j].Not()]).only_enforce_if(
                             g_var.Not()
                         )
-                        gap_terms.append(8 * g_var)
+                        gap_terms.append(25 * g_var)
         if gap_terms:
             gap_bonus = sum(gap_terms)
 
-    # Maximize scheduled LECTURE priority (unlock depth + electives + extraneous + credits)
+    # Maximize scheduled LECTURE priority (unlock depth + major + standing + electives + extraneous + credits)
+    st_lower = standing.lower()
+
     def _lecture_weight(sec: Dict[str, Any]) -> int:
         c_code = sec["course_code"]
-        w = 10 + sec["credits"] + 15 * unlock_weights.get(c_code, 0)
+        dept = c_code.split()[0] if " " in c_code else ""
+        unlock_pts = min(90, 15 * unlock_weights.get(c_code, 0))
+        w = 10 + sec["credits"] + unlock_pts
+        is_maj = _is_major_course(c_code)
+        if major_depts and dept in major_depts:
+            w += 120
+        if c_code in major_chroma_courses:
+            w += 80
+        if not is_maj and sec.get("ge"):
+            w += 45 if (not major_depts or dept not in major_depts) else 15
+        if st_lower == "freshman" and _course_number(c_code) < 100:
+            w += 35
         if c_code in requested_electives:
-            w += 150
+            w += 300
         if c_code in elective_scores:
-            w += elective_scores[c_code]
+            w += 3 * elective_scores[c_code]
         if c_code in extraneous_courses:
             depth = _compute_prereq_depth(c_code, active_dag)
-            w += max(5, 40 - 10 * depth)
+            w += max(20, 180 - 30 * depth)
         return w
+
+    # Soft 2 major + 1 non-major GE preference when major is set and no explicit elective requested
+    balance_bonus: Any = 0
+    if major and not requested_electives and not extraneous_courses:
+        maj_lecs = [
+            i
+            for i in range(len(sections))
+            if sections[i]["section_type"] == "LECTURE"
+            and _is_major_course(sections[i]["course_code"])
+        ]
+        ge_lecs = [
+            i
+            for i in range(len(sections))
+            if sections[i]["section_type"] == "LECTURE"
+            and not _is_major_course(sections[i]["course_code"])
+            and sections[i].get("ge")
+            and str(sections[i]["ge"]).strip().upper() not in ("NONE", "N/A")
+        ]
+        terms: List[Any] = []
+        if maj_lecs:
+            has_2_maj = model.new_bool_var("has_2_major")
+            model.add(sum(sec_vars[i] for i in maj_lecs) >= 2).only_enforce_if(has_2_maj)
+            terms.append(400 * has_2_maj)
+        if ge_lecs:
+            has_1_ge = model.new_bool_var("has_1_ge")
+            model.add(sum(sec_vars[i] for i in ge_lecs) >= 1).only_enforce_if(has_1_ge)
+            terms.append(400 * has_1_ge)
+        if terms:
+            balance_bonus = sum(terms)
 
     model.maximize(
         full_time_bonus
+        + balance_bonus
         + gap_bonus
         + sum(
             _lecture_weight(sections[i]) * sec_vars[i]
@@ -487,7 +674,9 @@ def solve_schedule(
         }
 
     proposed = [
-        _to_calendar_event(sections[i], term)
+        _to_calendar_event(
+            sections[i], term, is_major_course=_is_major_course(sections[i]["course_code"])
+        )
         for i in range(len(sections))
         if solver.value(sec_vars[i]) == 1
     ]

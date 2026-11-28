@@ -19,6 +19,14 @@ def parse_prerequisite_text_rules(raw_text: str) -> Dict[str, Any]:
         return {"root_group": {"type": "AND", "courses": []}}
 
     clean = raw_text.replace("\xa0", " ").strip()
+    clean = re.sub(r"Antirequisite[s]?:.*$", "", clean, flags=re.I | re.S)
+    clean = re.sub(
+        r"Students\s+(?:cannot|may not)\s+(?:enroll|receive credit).*$",
+        "",
+        clean,
+        flags=re.I | re.S,
+    )
+    clean = re.sub(r"Credit\s+not\s+given.*$", "", clean, flags=re.I | re.S).strip()
 
     # Split major semicolon-separated clauses
     semicolon_parts = [p.strip() for p in clean.split(";") if p.strip()]

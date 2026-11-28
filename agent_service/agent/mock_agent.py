@@ -77,14 +77,39 @@ def run_mock_agent(
             for ev in schedule
             if ev.get("isImported") or ev.get("type") == "GOOGLE_CALENDAR_BUSY"
         ]
+        prefs_copy = dict(preferences)
+        cred_match = re.search(r"(\d+)\s*(?:credit|credits|unit|units)", prompt_lower)
+        if cred_match:
+            prefs_copy["targetCredits"] = int(cred_match.group(1))
+
         gap_match = re.search(r"(\d+)\s*(?:min|minute|minutes)\s*(?:gap|break)", prompt_lower)
-        chat_ctx: Dict[str, Any] = {"orientationGoal": prompt}
+        mentioned_codes = re.findall(r"\b([A-Za-z]{2,5}\s+\d+[A-Za-z]?)\b", prompt)
+        _non_dept = {"FOR", "WITH", "MAX", "MIN", "AND", "THE", "AT", "IN", "ON", "TO", "OF"}
+        norm_codes = [
+            re.sub(r"\s+", " ", c.strip().upper())
+            for c in mentioned_codes
+            if c.strip().split()[0].upper() not in _non_dept
+        ]
+
+        chat_ctx: Dict[str, Any] = {
+            "orientationGoal": prompt,
+            "major": major,
+            "standing": standing,
+        }
         if gap_match:
             chat_ctx["preferredGapMinutes"] = int(gap_match.group(1))
+        if norm_codes:
+            if any(k in prompt_lower for k in ("require", "requiring", "must take", "mandatory")):
+                chat_ctx["requiredCourses"] = norm_codes
+            elif any(k in prompt_lower for k in ("extraneous", "extra ", "outside")):
+                chat_ctx["extraneousCourses"] = norm_codes
+            else:
+                chat_ctx["requestedElectives"] = norm_codes
+
         solved = solve_schedule(
             catalog=load_catalog_for_solver(),
             completed_courses=completed_major,
-            preferences=preferences,
+            preferences=prefs_copy,
             busy_blocks=busy_blocks,
             chat_context=chat_ctx,
         )
@@ -96,18 +121,44 @@ def run_mock_agent(
             disc_codes = {
                 c["code"] for c in proposed_courses if c.get("sectionType") == "DISCUSSION"
             }
+            ge_by_code = {
+                c["code"]: c["ge"]
+                for c in proposed_courses
+                if c.get("sectionType") != "DISCUSSION" and c.get("ge")
+            }
             seen_codes: list[str] = []
             for c in proposed_courses:
                 if c.get("sectionType") != "DISCUSSION" and c["code"] not in seen_codes:
                     seen_codes.append(c["code"])
-            course_list = ", ".join(
-                f"`{code}` (+ Discussion)" if code in disc_codes else f"`{code}`"
-                for code in seen_codes
+
+            def _fmt_course(code: str) -> str:
+                parts = [f"`{code}`"]
+                if code in disc_codes:
+                    parts.append("(+ Discussion)")
+                if code in ge_by_code:
+                    ge_short = str(ge_by_code[code]).split("(")[0].strip()
+                    parts.append(f"[GE: {ge_short}]")
+                return " ".join(parts)
+
+            course_list = ", ".join(_fmt_course(code) for code in seen_codes)
+            requested_not_picked = [
+                c
+                for c in (
+                    chat_ctx.get("requestedElectives", []) + chat_ctx.get("extraneousCourses", [])
+                )
+                if c not in seen_codes
+            ]
+            note_line = (
+                f"\n- **Note:** {', '.join(f'`{c}`' for c in requested_not_picked)} "
+                f"could not be included (missing prerequisites, time conflict, or credit cap)."
+                if requested_not_picked
+                else ""
             )
             response = (
                 f"I ran the deterministic **OR-Tools CP-SAT** solver for `{major}` ({term})!\n\n"
                 f"- **Selected Courses ({solved['totalCredits']} credits):** {course_list}\n"
                 f"- **Conflicts:** 0 overlaps (respecting your calendar commitments)."
+                f"{note_line}"
             )
         else:
             response = f"No valid schedule satisfies all constraints ({solved.get('reason') or 'INFEASIBLE'})."

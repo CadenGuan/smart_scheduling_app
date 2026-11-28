@@ -17,7 +17,7 @@ export class AgentService {
     context: AssembledContext,
     sessionToken?: string
   ): Promise<AgentProcessResult> {
-    const timeoutMs = parseInt(process.env.AGENT_TIMEOUT_MS || '60000', 10);
+    const timeoutMs = parseInt(process.env.AGENT_TIMEOUT_MS || '180000', 10);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 

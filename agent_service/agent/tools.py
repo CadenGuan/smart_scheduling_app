@@ -719,13 +719,17 @@ def solve_schedule_tool(
     target_credits: int = 15,
     preferred_gap_minutes: int = 0,
     orientation_goal: str = "",
+    requested_electives: Optional[List[str]] = None,
+    required_courses: Optional[List[str]] = None,
+    extraneous_courses: Optional[List[str]] = None,
 ) -> str:
     """
     Runs the deterministic OR-Tools CP-SAT solver to compute a conflict-free schedule
-    respecting the student's preferences and existing Google Calendar busy blocks.
+    respecting the student's major, class standing, preferences, and busy blocks.
     """
     from .schedule_solver import load_catalog_for_solver, solve_schedule
 
+    student = dict(_active_context.get("student", {}))
     prefs = dict(_active_context.get("preferences", {}))
     if target_credits:
         prefs["targetCredits"] = target_credits
@@ -733,15 +737,25 @@ def solve_schedule_tool(
     busy_blocks = [
         ev for ev in schedule if ev.get("isImported") or ev.get("type") == "GOOGLE_CALENDAR_BUSY"
     ]
+    chat_ctx: Dict[str, Any] = {
+        "preferredGapMinutes": preferred_gap_minutes,
+        "orientationGoal": orientation_goal,
+        "major": student.get("major", ""),
+        "standing": student.get("standing", ""),
+    }
+    if requested_electives:
+        chat_ctx["requestedElectives"] = requested_electives
+    if required_courses:
+        chat_ctx["requiredCourses"] = required_courses
+    if extraneous_courses:
+        chat_ctx["extraneousCourses"] = extraneous_courses
+
     result = solve_schedule(
         catalog=load_catalog_for_solver(),
         completed_courses=prefs.get("majorRequirementsTaken", []),
         preferences=prefs,
         busy_blocks=busy_blocks,
-        chat_context={
-            "preferredGapMinutes": preferred_gap_minutes,
-            "orientationGoal": orientation_goal,
-        },
+        chat_context=chat_ctx,
     )
     return json.dumps(result)
 
